@@ -75,6 +75,7 @@ jobs:
       uses: codecov/codecov-action@v5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+        slug: ClassConnect-2024C1/Classconnect-Courses-Service-Api
         files: coverage/coverage.out
         fail_ci_if_error: true
         verbose: true
