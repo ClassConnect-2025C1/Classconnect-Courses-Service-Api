@@ -1,0 +1,100 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go build and test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22.2'
+
+
+    - name: Install Go dependencies
+      run: |
+          go mod tidy
+
+    
+    - name: Define env variables
+      run: echo "MONGO_URI=mongodb://localhost:27017" >> $GITHUB_ENV
+
+
+    - name: Wait for MongoDB
+      run: |
+        for i in {1..10}; do
+          nc -z localhost 27017 && echo "MongoDB is ready" && exit 0
+          echo "Wait mongoDB..."
+          sleep 3
+        done
+        echo "Mongodb not init" && exit 1
+
+    - name: Clean previous coverage files
+      run: rm -f coverage/coverage.out
+
+
+    - name: Run Tests with Coverage
+      run: |
+          mkdir -p coverage
+          go test -coverpkg=./... -coverprofile=coverage/coverage.out -v ./... || (echo "❌ Go tests failed" && exit 1)
+
+          
+    - name: Check coverage file
+      run: |
+          echo "📂 Check coverage files:"
+          ls -lah coverage/
+          if [ ! -f coverage/coverage.out ]; then
+            echo "❌ Error: The coverage.out file was not generated."
+            exit 1
+          fi
+          echo "✅Coverage file found."
+          echo "Content de coverage.out:"
+          cat coverage/coverage.out
+  
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: coverage/coverage.out
+        fail_ci_if_error: true
+        verbose: true
+
+    - name: Check Coverage Percentage
+      run: |
+          echo "Very min cov"
+          COVERAGE=$(go tool cover -func=coverage/coverage.out | grep 'total:' | awk '{print $3}' | sed 's/%//')
+          echo "Cobertura obtenida: $COVERAGE%"
+          if (( $(echo "$COVERAGE < 75" | bc -l) )); then
+            echo "Error: Coverage does not reach 75%"
+            exit 1
+          fi
+          echo "coverage meets the minimum"
+      
+
+  
+    - name: Deploy to production
+      if: github.ref == 'refs/heads/main' && success()
+      uses: johnbeynon/render-deploy-action@v0.0.8
+      with:
+        service-id: ${{ secrets.SERVICE_ID }}
+        api-key: ${{ secrets.RENDER_API_KEY }}
