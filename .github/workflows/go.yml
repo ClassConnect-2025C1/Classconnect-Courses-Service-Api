@@ -13,13 +13,28 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
 
     services:
       mongo:
         image: mongo:latest
         ports:
           - 27017:27017
-
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: classconnect
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
     - name: Checkout repository
@@ -37,17 +52,23 @@ jobs:
 
     
     - name: Define env variables
-      run: echo "MONGO_URI=mongodb://localhost:27017" >> $GITHUB_ENV
+      run: |
+        echo "MONGO_URI=mongodb://localhost:27017" >> $GITHUB_ENV
+        echo "DB_HOST=localhost" >> $GITHUB_ENV
+        echo "DB_PORT=5432" >> $GITHUB_ENV
+        echo "DB_USER=postgres" >> $GITHUB_ENV
+        echo "DB_PASSWORD=postgres" >> $GITHUB_ENV
+        echo "DB_NAME=classconnect" >> $GITHUB_ENV
+        echo "DB_SSLMODE=disable" >> $GITHUB_ENV
 
-
-    - name: Wait for MongoDB
+    - name: Wait for PostgreSQL
       run: |
         for i in {1..10}; do
-          nc -z localhost 27017 && echo "MongoDB is ready" && exit 0
-          echo "Wait mongoDB..."
+          pg_isready -h localhost -p 5432 -U postgres && echo "PostgreSQL is ready" && exit 0
+          echo "Waiting for PostgreSQL..."
           sleep 3
         done
-        echo "Mongodb not init" && exit 1
+        echo "PostgreSQL did not initialize" && exit 1
 
     - name: Clean previous coverage files
       run: rm -f coverage/coverage.out

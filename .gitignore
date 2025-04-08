@@ -1,0 +1,9 @@
+# jetbrains
+.idea
+
+# vs code
+.vscode
+
+# act
+.actrc
+bin

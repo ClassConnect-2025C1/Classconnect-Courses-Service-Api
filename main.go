@@ -2,15 +2,37 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 	"templateGo/controller"
+	"templateGo/dbConfig/sql"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load environment variables from .env file
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: No .env file found or error loading it")
+	}
+
+	// Connect to database
+	if err := sql.ConnectDB(); err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+	defer sql.CloseDB()
+
 	mux := controller.SetupRoutes()
-	port := "8080"
-	fmt.Printf("Servidor escuchando en el puerto %s\n", port)
+
+	// Get port from environment variable, default to 8080
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	fmt.Printf("Server listening on port %s\n", port)
 	if err := http.ListenAndServe(":"+port, mux); err != nil {
-		fmt.Printf("Error al iniciar el servidor: %s\n", err)
+		log.Fatalf("Error starting server: %v", err)
 	}
 }
