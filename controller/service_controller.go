@@ -14,6 +14,8 @@ import (
 func SetupRoutes() http.Handler {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
+	r.Use(gin.Logger())
+	r.Use(gin.Recovery())
 
 	// Health check endpoint
 	r.GET("/healthcheck", func(c *gin.Context) {
@@ -26,14 +28,30 @@ func SetupRoutes() http.Handler {
 	courseService := services.NewCourseService(courseRepo)
 	courseHandler := handlers.NewCourseHandler(courseService)
 
-	// Course endpoints
-	courseGroup := r.Group("/courses")
+	// API base path configuration
+	api := r.Group("/api")
+	// api.Use(middleware.AuthMiddleware()) // Middleware for authentication
 	{
-		courseGroup.POST("", courseHandler.CreateCourse)
-		courseGroup.GET("", courseHandler.GetAllCourses)
-		courseGroup.GET("/:id", courseHandler.GetCourseByID)
-		courseGroup.PUT("/:id", courseHandler.UpdateCourse)
-		courseGroup.DELETE("/:id", courseHandler.DeleteCourse)
+		// Rutas según especificación OpenAPI
+		api.POST("/", courseHandler.CreateCourse)
+		api.GET("/", courseHandler.GetAllCourses)
+
+		// Actualmente solo devuelve todos los cursos, deberia devolver los cursos
+		// disponibles para el usuario autenticado en base a los criterios de elegibilidad
+		api.GET("/available", courseHandler.GetAvailableCourses)
+
+		// Rutas específicas por ID de curso
+		api.GET("/:course_id", courseHandler.GetCourseByID)
+		api.PATCH("/:course_id", courseHandler.UpdateCourse)
+		api.DELETE("/:course_id", courseHandler.DeleteCourse)
+
+		// Rutas de inscripción
+		api.POST("/:course_id/enroll", courseHandler.EnrollUserInCourse)
+		api.DELETE("/:course_id/enroll", courseHandler.UnenrollUserFromCourse)
+
+		// Rutas de miembros
+		api.GET("/:course_id/members", courseHandler.GetCourseMembers)
+		api.PATCH("/:course_id/members/:user_email", courseHandler.UpdateMemberRole)
 	}
 
 	return r

@@ -42,8 +42,9 @@ func ConnectDB() error {
 		return fmt.Errorf("error connecting to database: %w", err)
 	}
 
-	if err := DB.AutoMigrate(&models.Course{}); err != nil {
-		log.Fatalf("Failed to auto migrate: %v", err)
+	// Auto migrate models
+	if err := DB.AutoMigrate(&models.Course{}, &models.Enrollment{}); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
 	// Get the underlying SQL DB

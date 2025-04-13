@@ -1,0 +1,450 @@
+openapi: 3.0.0
+info:
+  title: ClassConnect Courses Service API
+  version: 1.0.0
+
+security:
+  - bearerAuth: []
+
+paths:
+  /:
+    post:
+      summary: Create a new course
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCourseRequest'
+      responses:
+        '201':
+          description: Course created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Course'
+        '401':
+          description: Unauthorized (no or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '400':
+          description: Bad request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    get:
+      summary: Retrieve all courses of the current user
+      responses:
+        '200':
+          description: A list of courses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Course'
+        '401':
+          description: Unauthorized (no or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /available:
+    get:
+      summary: Retrieve all available courses for the current user
+      description:
+        Returns all courses that the currently authenticated user is eligible to join. Eligibility is determined based on user role, prerequisites, and availability.
+      responses:
+        '200':
+          description: A list of courses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Course'
+        '401':
+          description: Unauthorized (no or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+  /{course_id}/enroll:
+    post:
+      summary: Enroll the current user in a course
+      description:
+        Enrolls the currently authenticated user into the specified course. Eligibility is determined based on user role, prerequisites, and availability.
+      parameters:
+        - name: course_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully enrolled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully enrolled
+        '400':
+          description: User is not eligible or already enrolled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized (no or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Course not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Unenroll the current user from a course
+      description:
+        Unenrolls the currently authenticated user from the specified course.
+      parameters:
+        - name: course_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully unenrolled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Successfully unenrolled
+        '400':
+          description: User is not enrolled in the course
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized (no or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Course not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /{course_id}:
+    get:
+      summary: Retrieve a course by ID
+      parameters:
+        - in: path
+          name: course_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Course retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Course'
+        '401':
+          description: Unauthorized (no or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Course not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Update a course by ID
+      parameters:
+        - in: path
+          name: course_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCourseRequest'
+      responses:
+        '204':
+          description: Course updated successfully
+        '400':
+          description: Bad request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized (no or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Course not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Delete a course by ID
+      parameters:
+        - in: path
+          name: course_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Course deleted successfully
+        '401':
+          description: Unauthorized (no or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Course not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /{course_id}/members:
+    get:
+      summary: Retrieve members list for a course ID
+      parameters:
+        - in: path
+          name: course_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Members list retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MembersList'
+        '401':
+          description: Unauthorized (no or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Course not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /{course_id}/members/{user_email}:
+    patch:
+      summary: Update a member's role in a course
+      parameters:
+        - in: path
+          name: course_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: user_email
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role:
+                  type: string
+      responses:
+        '204':
+          description: Member role updated successfully
+        '400':
+          description: Bad request error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized (no or invalid token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Course or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Course:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        createdBy:
+          type: string
+
+    MembersList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              role:
+                type: string
+              name:
+                type: string
+              email:
+                type: string
+
+    CreateCourseRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        type:
+          type: string
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string

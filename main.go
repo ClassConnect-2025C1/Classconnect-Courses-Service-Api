@@ -5,17 +5,14 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"templateGo/config"
 	"templateGo/controller"
 	"templateGo/dbConfig/sql"
-
-	"github.com/joho/godotenv"
 )
 
 func main() {
 	// Load environment variables from .env file
-	if err := godotenv.Load(); err != nil {
-		log.Println("Warning: No .env file found or error loading it")
-	}
+	config.LoadEnv()
 
 	// Connect to database
 	if err := sql.ConnectDB(); err != nil {
