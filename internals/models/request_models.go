@@ -17,10 +17,9 @@ type CreateCourseRequest struct {
 // ToModel converts API request to internal Course model
 func (r *CreateCourseRequest) ToModel() *Course {
 	return &Course{
-		Title:       r.Title,
-		Description: r.Description,
-		CreatedBy:   r.CreatedBy,
-		// Set reasonable defaults for required fields
+		Title:               r.Title,
+		Description:         r.Description,
+		CreatedBy:           r.CreatedBy,
 		Capacity:            r.Capacity,
 		StartDate:           time.Now(),
 		EndDate:             time.Now().AddDate(0, 4, 0), // 4 months by default
