@@ -1,0 +1,475 @@
+package test
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+
+	"templateGo/controller"
+	"templateGo/dbConfig/sql"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/assert"
+)
+
+var router http.Handler
+
+// TestMain is the entry point for the test suite.
+func TestMain(m *testing.M) {
+	// Set up test environment
+	gin.SetMode(gin.TestMode)
+
+	// Try to load .env from different possible locations
+	err := godotenv.Load(".env")
+	if err != nil {
+		err = godotenv.Load("../.env")
+		if err != nil {
+			fmt.Println("No .env file found, using environment variables")
+		}
+	}
+
+	// Connect to test database
+	if err := sql.ConnectDB(); err != nil {
+		fmt.Printf("Error connecting to database: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Set up router
+	router = controller.SetupRoutes()
+
+	// Run tests
+	exitCode := m.Run()
+
+	// Clean up
+	sql.CloseDB()
+	os.Exit(exitCode)
+}
+
+// Helper function to make API requests and parse responses
+func makeRequest(method, url string, body any, target any) *httptest.ResponseRecorder {
+	var reqBody []byte
+	var err error
+
+	if body != nil {
+		reqBody, err = json.Marshal(body)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest(method, url, bytes.NewBuffer(reqBody))
+	req.Header.Set("Content-Type", "application/json")
+	router.ServeHTTP(w, req)
+
+	if target != nil && w.Code == http.StatusOK || w.Code == http.StatusCreated {
+		err = json.Unmarshal(w.Body.Bytes(), target)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	return w
+}
+
+// CREATE COURSE TESTS
+func TestCreateCourse_Success(t *testing.T) {
+	payload := map[string]any{
+		"title":       "Test Course",
+		"description": "Test Description",
+		"created_by":  "test@example.com",
+		"capacity":    30,
+	}
+
+	var response map[string]any
+	w := makeRequest("POST", "/api/", payload, &response)
+
+	assert.Equal(t, http.StatusCreated, w.Code)
+	assert.NotNil(t, response["data"])
+	data := response["data"].(map[string]any)
+	assert.Equal(t, "Test Course", data["title"])
+
+	// delete course
+	courseID := data["id"].(string)
+	makeRequest("DELETE", "/api/"+courseID, nil, nil)
+}
+
+func TestCreateCourse_MissingTitle(t *testing.T) {
+	payload := map[string]any{
+		"description": "Missing Title Course",
+		"created_by":  "test@example.com",
+		"capacity":    30,
+	}
+
+	w := makeRequest("POST", "/api/", payload, nil)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+	assert.Contains(t, w.Body.String(), "Validation Error")
+}
+
+func TestGetAllCourses(t *testing.T) {
+	// Create a course to ensure there is at least one course in the database
+	payload := map[string]any{
+		"title":       "Test Course",
+		"description": "Test Description",
+		"created_by":  "test@example.com",
+		"capacity":    25,
+	}
+
+	var response map[string]any
+	makeRequest("POST", "/api/", payload, &response)
+
+	payload2 := map[string]any{
+		"title":       "Test Course",
+		"description": "Test Description",
+		"created_by":  "test@example.com",
+		"capacity":    25,
+	}
+
+	var response2 map[string]any
+	makeRequest("POST", "/api/", payload2, &response2)
+
+	// La bdd deberia tener 2 cursos
+	var response3 map[string]any
+	w := makeRequest("GET", "/api/", nil, &response3)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.NotNil(t, response3["data"])
+	courses := response3["data"].([]any)
+	assert.GreaterOrEqual(t, len(courses), 2)
+
+	// delete courses
+	courseID := response["data"].(map[string]any)["id"].(string)
+	courseID2 := response2["data"].(map[string]any)["id"].(string)
+	makeRequest("DELETE", "/api/"+courseID, nil, nil)
+	makeRequest("DELETE", "/api/"+courseID2, nil, nil)
+}
+
+// GET ALL COURSES
+func TestCreatedCourseExist(t *testing.T) {
+	// Create a course to ensure there is at least one course in the database
+	payload := map[string]any{
+		"title":       "Test Course",
+		"description": "Test Description",
+		"created_by":  "test@example.com",
+		"capacity":    25,
+	}
+
+	var response map[string]any
+	makeRequest("POST", "/api/", payload, &response)
+
+	data := response["data"].(map[string]any)
+
+	createdCourseID := data["id"].(string)
+
+	// Get all courses
+	w := makeRequest("GET", "/api/", nil, &response)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.NotNil(t, response["data"])
+	courses := response["data"].([]any)
+
+	// Check if the created course is in the list
+	found := false
+	for _, course := range courses {
+		c := course.(map[string]any)
+		if c["id"] == createdCourseID {
+			found = true
+			break
+		}
+	}
+	// delete course
+	makeRequest("DELETE", "/api/"+createdCourseID, nil, nil)
+	assert.True(t, found, "Created course should be in the list of all courses")
+}
+
+// GET COURSE BY ID TESTS
+func TestGetCourseById_Success(t *testing.T) {
+	// Create a course to ensure there is at least one course in the database
+	payload := map[string]any{
+		"title":       "Test Course",
+		"description": "Test Description",
+		"created_by":  "test@example.com",
+		"capacity":    25,
+	}
+
+	var response map[string]any
+	makeRequest("POST", "/api/", payload, &response)
+
+	data := response["data"].(map[string]any)
+	createdCourseID := data["id"].(string)
+	// Get the course by ID
+	w := makeRequest("GET", "/api/"+createdCourseID, nil, &response)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.NotNil(t, response["data"])
+	course := response["data"].(map[string]any)
+	assert.Equal(t, createdCourseID, course["id"])
+	assert.Equal(t, "Test Course", course["title"])
+	assert.Equal(t, "Test Description", course["description"])
+
+	// delete course
+	makeRequest("DELETE", "/api/"+createdCourseID, nil, nil)
+}
+
+func TestGetCourseById_NotFound(t *testing.T) {
+	w := makeRequest("GET", "/api/999999", nil, nil)
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+// UPDATE COURSE TESTS
+func TestUpdateCourse_Success(t *testing.T) {
+	// Create a course to ensure there is at least one course in the database
+	payload := map[string]any{
+		"title":       "Test Course",
+		"description": "Test Description",
+		"created_by":  "test@example.com",
+		"capacity":    25,
+	}
+
+	var response map[string]any
+	makeRequest("POST", "/api/", payload, &response)
+
+	data := response["data"].(map[string]any)
+	createdCourseID := data["id"].(string)
+
+	// Update the course
+	updatePayload := map[string]any{
+		"title":       "Updated Course",
+		"description": "Updated Description",
+	}
+
+	w := makeRequest("PATCH", "/api/"+createdCourseID, updatePayload, nil)
+	assert.Equal(t, http.StatusNoContent, w.Code)
+
+	var updatedResponse map[string]any
+	w = makeRequest("GET", "/api/"+createdCourseID, nil, &updatedResponse)
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.NotNil(t, updatedResponse)
+	assert.Equal(t, "Updated Course", updatedResponse["title"])
+	assert.Equal(t, "Updated Description", updatedResponse["description"])
+	assert.Equal(t, createdCourseID, updatedResponse["id"])
+
+	// delete course
+	makeRequest("DELETE", "/api/"+createdCourseID, nil, nil)
+}
+
+func TestUpdateCourse_NotFound(t *testing.T) {
+	payload := map[string]any{
+		"title": "This Will Fail",
+	}
+
+	w := makeRequest("PATCH", "/api/999999", payload, nil)
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+// AVAILABLE COURSES TESTS, este test tiene que modificarse ya que el endpoint
+// solo devuelve todos los cursos sin filtrar
+func TestGetAvailableCourses_Success(t *testing.T) {
+	var response map[string]any
+	w := makeRequest("GET", "/api/", nil, &response)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.NotNil(t, response["data"])
+}
+
+func TestGetAvailableCourses_InvalidUserId(t *testing.T) {
+	w := makeRequest("GET", "/api/available?user_id=invalid", nil, nil)
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+}
+
+// ENROLLMENT TESTS
+func TestEnrollUserInCourse_Success(t *testing.T) {
+	// crear un curso
+	payload := map[string]any{
+		"title":       "Test Course",
+		"description": "Test Description",
+		"created_by":  "test@example.com",
+		"capacity":    10,
+	}
+
+	var response map[string]any
+	w := makeRequest("POST", "/api/", payload, &response)
+	assert.Equal(t, http.StatusCreated, w.Code)
+
+	createdCourseID := response["data"].(map[string]any)["id"].(string)
+
+	// inscribir a un alumno
+	enrollmentPayload := map[string]any{
+		"user_id": 1,
+		"email":   "estudiante@universidad.edu",
+		"name":    "Pedro",
+	}
+
+	w = makeRequest("POST", "/api/"+createdCourseID+"/enroll", enrollmentPayload, nil)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	// ver que el alumno esta en el curso
+	var membersResponse map[string]any
+	w = makeRequest("GET", "/api/"+createdCourseID+"/members", nil, &membersResponse)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.NotNil(t, membersResponse["data"])
+
+	members := membersResponse["data"].([]any)
+
+	assert.GreaterOrEqual(t, len(members), 1)
+	assert.Equal(t, "estudiante@universidad.edu", members[0].(map[string]any)["email"])
+	assert.Equal(t, "Pedro", members[0].(map[string]any)["name"])
+	assert.Equal(t, "student", members[0].(map[string]any)["role"])
+
+	// eliminar curso
+	makeRequest("DELETE", "/api/"+createdCourseID, nil, nil)
+}
+
+func TestEnrollUserInCourse_AlreadyEnrolled(t *testing.T) {
+	// crear un curso
+	payload := map[string]any{
+		"title":       "Test Course",
+		"description": "Test Description",
+		"created_by":  "test@example.com",
+		"capacity":    10,
+	}
+
+	var response map[string]any
+	w := makeRequest("POST", "/api/", payload, &response)
+	assert.Equal(t, http.StatusCreated, w.Code)
+
+	createdCourseID := response["data"].(map[string]any)["id"].(string)
+
+	// inscribir a un alumno
+	enrollmentPayload := map[string]any{
+		"user_id": 1,
+		"email":   "estudiante@universidad.edu",
+		"name":    "Pedro",
+	}
+
+	w = makeRequest("POST", "/api/"+createdCourseID+"/enroll", enrollmentPayload, nil)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	// ver que el alumno esta en el curso
+	var membersResponse map[string]any
+	w = makeRequest("GET", "/api/"+createdCourseID+"/members", nil, &membersResponse)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.NotNil(t, membersResponse["data"])
+
+	members := membersResponse["data"].([]any)
+
+	assert.GreaterOrEqual(t, len(members), 1)
+
+	// intentar inscribir al mismo alumno de nuevo
+	w = makeRequest("POST", "/api/"+createdCourseID+"/enroll", enrollmentPayload, nil)
+	assert.Equal(t, http.StatusConflict, w.Code)
+
+	// eliminar curso
+	makeRequest("DELETE", "/api/"+createdCourseID, nil, nil)
+}
+
+// GET MEMBERS TESTS
+func TestGetCourseMembers_Success(t *testing.T) {
+	// crear un curso
+	payload := map[string]any{
+		"title":       "Test Course",
+		"description": "Test Description",
+		"created_by":  "test@example.com",
+		"capacity":    10,
+	}
+
+	var response map[string]any
+	w := makeRequest("POST", "/api/", payload, &response)
+	assert.Equal(t, http.StatusCreated, w.Code)
+
+	createdCourseID := response["data"].(map[string]any)["id"].(string)
+
+	// inscribir a un alumno
+	enrollmentPayload := map[string]any{
+		"user_id": 1,
+		"email":   "estudiante@universidad.edu",
+		"name":    "Pedro",
+	}
+
+	enrollmentPayload2 := map[string]any{
+		"user_id": 2,
+		"email":   "tengo@muchosueño.com",
+		"name":    "Juan",
+	}
+
+	w = makeRequest("POST", "/api/"+createdCourseID+"/enroll", enrollmentPayload, nil)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	w = makeRequest("POST", "/api/"+createdCourseID+"/enroll", enrollmentPayload2, nil)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	// ver que el alumno esta en el curso
+	var membersResponse map[string]any
+	w = makeRequest("GET", "/api/"+createdCourseID+"/members", nil, &membersResponse)
+	assert.Equal(t, http.StatusOK, w.Code)
+
+	assert.NotNil(t, membersResponse["data"])
+	members := membersResponse["data"].([]any)
+	assert.GreaterOrEqual(t, len(members), 2)
+
+	// comparar los nombres de los inscriptos
+	assert.Equal(t, "Pedro", members[0].(map[string]any)["name"])
+	assert.Equal(t, "Juan", members[1].(map[string]any)["name"])
+
+	// eliminar curso
+	makeRequest("DELETE", "/api/"+createdCourseID, nil, nil)
+}
+
+func TestGetCourseMembers_CourseNotFound(t *testing.T) {
+	w := makeRequest("GET", "/api/999999/members", nil, nil)
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+// UPDATE MEMBER ROLE TESTS
+func TestUpdateMemberRole_Success(t *testing.T) {
+
+}
+
+func TestUpdateMemberRole_MemberNotFound(t *testing.T) {
+	// payload := map[string]any{
+	// 	"role": "teacher",
+	// }
+
+	// w := makeRequest("PATCH", "/api/"+createdCourseID+"/members/nonexistent@example.com", payload, nil)
+	// assert.NotEqual(t, http.StatusOK, w.Code)
+}
+
+// UNENROLL TESTS
+func TestUnenrollUserFromCourse_Success(t *testing.T) {
+	// payload := map[string]any{
+	// 	"user_id": 1,
+	// }
+
+	// w := makeRequest("DELETE", "/api/"+createdCourseID+"/enroll", payload, nil)
+	// assert.Equal(t, http.StatusOK, w.Code)
+
+	// // Verify user was removed
+	// var response map[string]any
+	// w = makeRequest("GET", "/api/"+createdCourseID+"/members", nil, &response)
+
+	// members := response["data"].([]any)
+	// for _, member := range members {
+	// 	m := member.(map[string]any)
+	// 	assert.NotEqual(t, "student@example.com", m["email"], "Unenrolled user should not be in members list")
+	// }
+}
+
+// DELETE COURSE TESTS
+func TestDeleteCourse_Success(t *testing.T) {
+	// w := makeRequest("DELETE", "/api/"+createdCourseID, nil, nil)
+	// assert.Equal(t, http.StatusNoContent, w.Code)
+
+	// // Verify course was deleted (should return NotFound)
+	// w = makeRequest("GET", "/api/"+createdCourseID, nil, nil)
+	// assert.Equal(t, http.StatusNotFound, w.Code)
+}
+
+func TestDeleteCourse_NotFound(t *testing.T) {
+	w := makeRequest("DELETE", "/api/999999", nil, nil)
+	assert.Equal(t, http.StatusNotFound, w.Code)
+}

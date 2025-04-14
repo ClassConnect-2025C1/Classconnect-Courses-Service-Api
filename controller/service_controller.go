@@ -14,8 +14,8 @@ import (
 func SetupRoutes() http.Handler {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	r.Use(gin.Logger())
-	r.Use(gin.Recovery())
+	// r.Use(gin.Logger())
+	// r.Use(gin.Recovery())
 
 	// Health check endpoint
 	r.GET("/healthcheck", func(c *gin.Context) {

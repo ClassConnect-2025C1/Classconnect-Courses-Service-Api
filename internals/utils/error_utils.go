@@ -1,9 +1,17 @@
 package utils
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+)
+
+// Errores personalizados
+var (
+	ErrUserAlreadyEnrolled = errors.New("user already enrolled in this course")
+	ErrUserNotEnrolled     = errors.New("user not enrolled in this course")
+	ErrCourseNotFound      = errors.New("course not found")
 )
 
 // ErrorResponse matches the OpenAPI error schema
@@ -24,13 +32,13 @@ func NewErrorResponse(c *gin.Context, status int, title string, detail string) {
 	errorType := "https://api.classconnect.edu/errors/generic"
 
 	switch status {
-	case http.StatusBadRequest:
+	case http.StatusBadRequest: // 400
 		errorType = "https://api.classconnect.edu/errors/bad-request"
-	case http.StatusUnauthorized:
+	case http.StatusUnauthorized: // 401
 		errorType = "https://api.classconnect.edu/errors/unauthorized"
-	case http.StatusNotFound:
+	case http.StatusNotFound: // 404
 		errorType = "https://api.classconnect.edu/errors/not-found"
-	case http.StatusInternalServerError:
+	case http.StatusConflict: // 409
 		errorType = "https://api.classconnect.edu/errors/server-error"
 	}
 

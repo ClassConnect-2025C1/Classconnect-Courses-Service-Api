@@ -3,6 +3,7 @@ package services
 import (
 	"templateGo/internals/models"
 	"templateGo/internals/repositories"
+	"templateGo/internals/utils"
 )
 
 type CourseService struct {
@@ -51,7 +52,7 @@ func (s *CourseService) EnrollUser(courseID, userID uint, email, name string) er
 		return err
 	}
 	if enrolled {
-		return nil // Usuario ya inscrito, no hacemos nada
+		return utils.ErrUserAlreadyEnrolled // Devuelve error específico
 	}
 	return s.repo.EnrollUser(courseID, userID, email, name)
 }

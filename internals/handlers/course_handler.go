@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 	"templateGo/internals/models"
@@ -191,8 +192,15 @@ func (h *CourseHandler) EnrollUserInCourse(c *gin.Context) {
 		return
 	}
 
-	if err := h.service.EnrollUser(courseID, req.UserID, req.Email, req.Name); err != nil {
-		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error enrolling user in course")
+	err := h.service.EnrollUser(courseID, req.UserID, req.Email, req.Name)
+	if err != nil {
+		if errors.Is(err, utils.ErrUserAlreadyEnrolled) {
+			// Error específico para usuario ya inscrito
+			utils.NewErrorResponse(c, http.StatusConflict, "Conflict", "User is already enrolled in this course")
+		} else {
+			// Otros errores
+			utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error enrolling user in course")
+		}
 		return
 	}
 
