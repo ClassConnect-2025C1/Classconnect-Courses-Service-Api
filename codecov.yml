@@ -1,4 +1,0 @@
-ignore:
-  "templateGo/config"
-  "templateGo/middleware"
-  "templateGo/controller"

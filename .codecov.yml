@@ -1,0 +1,6 @@
+coverage:
+  ignore:
+    - templateGo/middleware/**
+    - templateGo/config/**
+    - templateGo/controller/**
+
