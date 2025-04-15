@@ -22,7 +22,7 @@ var router http.Handler
 // TestMain is the entry point for the test suite.
 func TestMain(m *testing.M) {
 	// Set up test environment
-	gin.SetMode(gin.TestMode)
+	gin.SetMode(gin.ReleaseMode)
 
 	// Try to load .env from different possible locations
 	err := godotenv.Load(".env")

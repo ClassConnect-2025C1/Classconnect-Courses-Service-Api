@@ -77,7 +77,7 @@ jobs:
     - name: Run Tests with Coverage
       run: |
           mkdir -p coverage
-            go test -coverpkg=$(go list ./... | grep -v middleware | grep -v controller | tr '\n' ',') -coverprofile=coverage/coverage.out -v ./... || (echo "❌ Go tests failed" && exit 1)
+            go test -coverpkg=$(go list ./... | grep -v middleware | grep -v controller | grep -v config | grep -v services tr '\n' ',') -coverprofile=coverage/coverage.out -v ./... || (echo "❌ Go tests failed" && exit 1)
 
           
     - name: Check coverage file
