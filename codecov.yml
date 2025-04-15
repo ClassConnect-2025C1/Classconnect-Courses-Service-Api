@@ -1,4 +1,4 @@
 ignore:
-  - "templateGo/config/config.go"
-  - "templateGo/middleware/auth.go
-  - "teplateGo/controller/service_controller.go"
+  "templateGo/config"
+  "templateGo/middleware"
+  "templateGo/controller"
