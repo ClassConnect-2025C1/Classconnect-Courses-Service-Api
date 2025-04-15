@@ -1,12 +1,10 @@
-package test
+package utils
 
 import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"templateGo/internals/utils"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -22,19 +20,19 @@ func setupTestContext() (*gin.Context, *httptest.ResponseRecorder) {
 
 func TestErrorVariables(t *testing.T) {
 	// Test that predefined errors exist with correct messages
-	assert.Equal(t, "user already enrolled in this course", utils.ErrUserAlreadyEnrolled.Error())
-	assert.Equal(t, "user not enrolled in this course", utils.ErrUserNotEnrolled.Error())
-	assert.Equal(t, "course not found", utils.ErrCourseNotFound.Error())
+	assert.Equal(t, "user already enrolled in this course", ErrUserAlreadyEnrolled.Error())
+	assert.Equal(t, "user not enrolled in this course", ErrUserNotEnrolled.Error())
+	assert.Equal(t, "course not found", ErrCourseNotFound.Error())
 }
 
 func TestNewErrorResponse_BadRequest(t *testing.T) {
 	c, w := setupTestContext()
 
-	utils.NewErrorResponse(c, http.StatusBadRequest, "Validation Error", "Invalid input data")
+	NewErrorResponse(c, http.StatusBadRequest, "Validation Error", "Invalid input data")
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 
-	var response utils.ErrorResponse
+	var response ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 
@@ -48,11 +46,11 @@ func TestNewErrorResponse_BadRequest(t *testing.T) {
 func TestNewErrorResponse_Unauthorized(t *testing.T) {
 	c, w := setupTestContext()
 
-	utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "Invalid token")
+	NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "Invalid token")
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
 
-	var response utils.ErrorResponse
+	var response ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 
@@ -63,11 +61,11 @@ func TestNewErrorResponse_Unauthorized(t *testing.T) {
 func TestNewErrorResponse_NotFound(t *testing.T) {
 	c, w := setupTestContext()
 
-	utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Resource not found")
+	NewErrorResponse(c, http.StatusNotFound, "Not Found", "Resource not found")
 
 	assert.Equal(t, http.StatusNotFound, w.Code)
 
-	var response utils.ErrorResponse
+	var response ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 
@@ -77,11 +75,11 @@ func TestNewErrorResponse_NotFound(t *testing.T) {
 func TestNewErrorResponse_Conflict(t *testing.T) {
 	c, w := setupTestContext()
 
-	utils.NewErrorResponse(c, http.StatusConflict, "Conflict", "Resource already exists")
+	NewErrorResponse(c, http.StatusConflict, "Conflict", "Resource already exists")
 
 	assert.Equal(t, http.StatusConflict, w.Code)
 
-	var response utils.ErrorResponse
+	var response ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 
@@ -93,11 +91,11 @@ func TestNewErrorResponse_GenericError(t *testing.T) {
 	c, w := setupTestContext()
 
 	// Using a status code that doesn't have a specific mapping
-	utils.NewErrorResponse(c, http.StatusTeapot, "I'm a teapot", "Cannot brew coffee")
+	NewErrorResponse(c, http.StatusTeapot, "I'm a teapot", "Cannot brew coffee")
 
 	assert.Equal(t, http.StatusTeapot, w.Code)
 
-	var response utils.ErrorResponse
+	var response ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 
@@ -108,9 +106,9 @@ func TestNewErrorResponse_GenericError(t *testing.T) {
 func TestErrorResponse_AllFieldsPopulated(t *testing.T) {
 	c, w := setupTestContext()
 
-	utils.NewErrorResponse(c, http.StatusBadRequest, "Test Title", "Test Detail")
+	NewErrorResponse(c, http.StatusBadRequest, "Test Title", "Test Detail")
 
-	var response utils.ErrorResponse
+	var response ErrorResponse
 	err := json.Unmarshal(w.Body.Bytes(), &response)
 	assert.NoError(t, err)
 

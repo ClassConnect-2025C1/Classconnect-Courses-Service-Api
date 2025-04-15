@@ -4,13 +4,10 @@ import "time"
 
 // CreateCourseRequest represents the input for creating a course
 type CreateCourseRequest struct {
-	Title       string `json:"title" binding:"required"`
-	Description string `json:"description"`
-	CreatedBy   string `json:"created_by" binding:"required"`
-	Capacity    int    `json:"capacity" binding:"required,gte=1"`
-	// dejamos por dafult 4 meses
-	// StartDate           string `json:"start_date" binding:"required"`
-	// EndDate             string `json:"end_date" binding:"required"`
+	Title               string `json:"title" binding:"required"`
+	Description         string `json:"description"`
+	CreatedBy           string `json:"created_by" binding:"required"`
+	Capacity            int    `json:"capacity" binding:"required,gte=1"`
 	EligibilityCriteria string `json:"eligibility_criteria"`
 }
 

@@ -1,4 +1,4 @@
-package test
+package controller
 
 import (
 	"bytes"
@@ -9,7 +9,6 @@ import (
 	"os"
 	"testing"
 
-	"templateGo/controller"
 	"templateGo/dbConfig/sql"
 
 	"github.com/gin-gonic/gin"
@@ -40,7 +39,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// Set up router
-	router = controller.SetupRoutes()
+	router = SetupRoutes()
 
 	// Run tests
 	exitCode := m.Run()
