@@ -7,11 +7,11 @@ import (
 )
 
 type CourseService struct {
-	repo *repositories.CourseRepository
+	repo repositories.CourseRepositoryInterface // Usar la interfaz en lugar del tipo concreto
 }
 
-func NewCourseService(repo *repositories.CourseRepository) *CourseService {
-	return &CourseService{repo}
+func NewCourseService(repo repositories.CourseRepositoryInterface) *CourseService {
+	return &CourseService{repo: repo}
 }
 
 // Crear curso
