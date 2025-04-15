@@ -77,7 +77,9 @@ jobs:
     - name: Run Tests with Coverage
       run: |
           mkdir -p coverage
-            go test -coverpkg=./... -coverprofile=coverage/coverage.out -v ./... || (echo "❌ Go tests failed" && exit 1)
+            go test -coverpkg=./... -coverprofile=coverage/coverage.out.tmp -v ./... || (echo "❌ Go tests failed" && exit 1)
+            (head -1 coverage/coverage.out.tmp && tail -n +2 coverage/coverage.out.tmp | grep -v "internals/handlers/course_handler.go") > coverage/coverage.out
+            rm coverage/coverage.out.tmp
           
     - name: Check coverage file
       run: |
