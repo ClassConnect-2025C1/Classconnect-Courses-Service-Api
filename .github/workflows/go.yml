@@ -88,8 +88,14 @@ jobs:
             exit 1
           fi
           echo "✅Coverage file found."
-          echo "Content de coverage.out:"
-          cat coverage/coverage.out
+          
+          # Mostrar rutas únicas en el archivo de cobertura
+          echo "🔍 Rutas presentes en el archivo de cobertura:"
+          grep -v "^mode:" coverage/coverage.out | cut -d: -f1 | sort | uniq
+          
+          # Ver primeras líneas
+          echo "📊 Primeras líneas del archivo:"
+          head -n 10 coverage/coverage.out
   
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5
