@@ -1,3 +1,4 @@
 ignore:
-  - "dbConfig/*"
-  - "main.go"
+  - "templateGo/dbConfig/sq"
+  - "templateGo/internals/handlers"
+  - "templateGo/internals/repositories"
