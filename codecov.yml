@@ -1,5 +1,6 @@
-ignore:
-  - "templateGo/dbConfig/**/*"
-  - "templateGo/internals/repositories/**/*"
-  - "templateGo/internals/handlers/**/*"
-  - "templateGo/main.go"
+coverage:
+  ignore:
+    - "templateGo/dbConfig/**/*"
+    - "templateGo/internals/repositories/**/*"
+    - "templateGo/internals/handlers/**/*"
+    - "templateGo/main.go"
