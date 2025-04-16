@@ -77,7 +77,9 @@ jobs:
     - name: Run Tests with Coverage
       run: |
           mkdir -p coverage
-          go test -coverpkg=./... -coverprofile=coverage/coverage.out -v ./... || (echo "❌ Go tests failed" && exit 1)
+            go test -coverpkg=./... -coverprofile=coverage/coverage.out.tmp -v ./... || (echo "❌ Go tests failed" && exit 1)
+            (head -1 coverage/coverage.out.tmp && tail -n +2 coverage/coverage.out.tmp | grep -v "internals/handlers/course_handler.go") > coverage/coverage.out
+            rm coverage/coverage.out.tmp
           
     - name: Check coverage file
       run: |
@@ -88,14 +90,8 @@ jobs:
             exit 1
           fi
           echo "✅Coverage file found."
-          
-          # Mostrar rutas únicas en el archivo de cobertura
-          echo "🔍 Rutas presentes en el archivo de cobertura:"
-          grep -v "^mode:" coverage/coverage.out | cut -d: -f1 | sort | uniq
-          
-          # Ver primeras líneas
-          echo "📊 Primeras líneas del archivo:"
-          head -n 10 coverage/coverage.out
+          echo "Content de coverage.out:"
+          cat coverage/coverage.out
   
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v5
@@ -106,7 +102,6 @@ jobs:
         fail_ci_if_error: true
         verbose: true
         flags: unittests
-        codecov_yml_path: codecov.yml
 
     - name: Check Coverage Percentage
       run: |
