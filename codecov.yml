@@ -1,2 +1,3 @@
 ignore:
-  - "dbConfig/sql/database.go"
+  - "dbConfig/*"
+  - "main.go"
