@@ -1,4 +1,5 @@
 ignore:
-  - "templateGo/dbConfig/sq"
-  - "templateGo/internals/handlers"
-  - "templateGo/internals/repositories"
+  - "Classconnect-Courses-Service-Api/internals/dbConfig"
+  - "Classconnect-Courses-Service-Api/internals/handlers"
+  - "Classconnect-Courses-Service-Api/internals/repositories"
+  - "Classconnect-Courses-Service-Api/main.go"
