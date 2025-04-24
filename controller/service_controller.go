@@ -18,9 +18,9 @@ func SetupRoutes() http.Handler {
 	// r.Use(gin.Recovery())
 
 	// Health check endpoint
-	r.GET("/healthcheck", func(c *gin.Context) {
+	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
-		fmt.Println("Response: healthcheck")
+		fmt.Println("Response: healthcheck running wild")
 	})
 
 	// Create a new course handler
@@ -29,7 +29,7 @@ func SetupRoutes() http.Handler {
 	courseHandler := handlers.NewCourseHandler(courseService)
 
 	api := r.Group("/")
-	// api.Use(middleware.AuthMiddleware()) // Middleware for authentication
+	// api.Use(middleware.AuthMiddleware()) // Middleware for authentication if necessary
 	{
 		// Rutas según especificación OpenAPI
 		api.POST("/courses", courseHandler.CreateCourse)
