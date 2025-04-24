@@ -28,13 +28,12 @@ func SetupRoutes() http.Handler {
 	courseService := services.NewCourseService(courseRepo)
 	courseHandler := handlers.NewCourseHandler(courseService)
 
-	// API base path configuration
-	api := r.Group("/api")
+	api := r.Group("/")
 	// api.Use(middleware.AuthMiddleware()) // Middleware for authentication
 	{
 		// Rutas según especificación OpenAPI
-		api.POST("/", courseHandler.CreateCourse)
-		api.GET("/", courseHandler.GetAllCourses)
+		api.POST("/courses", courseHandler.CreateCourse)
+		api.GET("/courses", courseHandler.GetAllCourses)
 
 		// Actualmente solo devuelve todos los cursos, deberia devolver los cursos
 		// disponibles para el usuario autenticado en base a los criterios de elegibilidad
@@ -52,6 +51,10 @@ func SetupRoutes() http.Handler {
 		// Rutas de miembros
 		api.GET("/:course_id/members", courseHandler.GetCourseMembers)
 		api.PATCH("/:course_id/members/:user_email", courseHandler.UpdateMemberRole)
+
+		// Rutas de feedback de cursos
+		// api.POST("/:course_id/feedback", courseHandler.CreateCourseFeedback)
+		// api.GET("/:course_id/feedback", courseHandler.GetCourseFeedback)
 	}
 
 	return r
