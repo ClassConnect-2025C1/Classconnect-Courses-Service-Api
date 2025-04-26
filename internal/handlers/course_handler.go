@@ -301,3 +301,72 @@ func (h *courseHandler) IsUserEnrolled(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"is_enrolled": isEnrolled})
 }
+
+func (h *courseHandler) CreateCourseFeedback(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+
+	// Check if course exists
+	_, ok = h.getCourseByID(c, courseID)
+	if !ok {
+		return
+	}
+
+	var req model.CreateFeedbackRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Validation Error", err.Error())
+		return
+	}
+
+	// Check if user is enrolled in the course
+	isEnrolled, err := h.repo.IsUserEnrolled(courseID, req.UserID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error checking enrollment status")
+		return
+	}
+
+	if !isEnrolled {
+		utils.NewErrorResponse(c, http.StatusForbidden, "Forbidden", "Only enrolled users can provide feedback")
+		return
+	}
+
+	feedback := &model.CourseFeedback{
+		CourseID: courseID,
+		UserID:   req.UserID,
+		Rating:   req.Rating,
+		Comment:  req.Comment,
+	}
+
+	if err := h.repo.CreateFeedback(feedback); err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error creating feedback")
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Feedback submitted successfully",
+		"data":    feedback,
+	})
+}
+
+func (h *courseHandler) GetCourseFeedback(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+
+	// Check if course exists
+	_, ok = h.getCourseByID(c, courseID)
+	if !ok {
+		return
+	}
+
+	feedback, err := h.repo.GetFeedbackForCourse(courseID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving feedback")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": feedback})
+}

@@ -24,4 +24,8 @@ type CourseRepository interface {
 	GetCourseMembers(courseID uint) ([]map[string]interface{}, error)
 
 	UpdateMemberRole(courseID uint, userEmail string, role string) error
+
+	CreateFeedback(feedback *model.CourseFeedback) error
+
+	GetFeedbackForCourse(courseID uint) ([]model.CourseFeedback, error)
 }

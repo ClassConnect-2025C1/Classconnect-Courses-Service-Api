@@ -109,3 +109,13 @@ func (r *courseRepository) UpdateMemberRole(courseID uint, userEmail string, rol
 		Where("course_id = ? AND email = ?", courseID, userEmail).
 		Update("role", role).Error
 }
+
+func (r *courseRepository) CreateFeedback(feedback *model.CourseFeedback) error {
+	return DB.Create(feedback).Error
+}
+
+func (r *courseRepository) GetFeedbackForCourse(courseID uint) ([]model.CourseFeedback, error) {
+	var feedback []model.CourseFeedback
+	err := DB.Where("course_id = ?", courseID).Find(&feedback).Error
+	return feedback, err
+}

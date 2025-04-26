@@ -52,8 +52,8 @@ func SetupRoutes() http.Handler {
 		api.PATCH("/:course_id/members/:user_email", courseHandler.UpdateMemberRole)
 
 		// Rutas de feedback de cursos
-		// api.POST("/:course_id/feedback", courseHandler.CreateCourseFeedback)
-		// api.GET("/:course_id/feedback", courseHandler.GetCourseFeedback)
+		api.POST("/:course_id/feedback", courseHandler.CreateCourseFeedback)
+		api.GET("/:course_id/feedback", courseHandler.GetCourseFeedback)
 	}
 
 	return r
