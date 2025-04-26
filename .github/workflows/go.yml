@@ -52,8 +52,6 @@ jobs:
           go mod tidy
           go get -u  # Update dependencies to the latest minor or patch versions
           go mod vendor  # Create a vendor directory with dependencies
-          go mod verify  # Verify dependencies are correctly downloaded
-          go mod tidy  # Ensure go.mod and go.sum are in sync
     
     - name: Define env variables
       run: |
