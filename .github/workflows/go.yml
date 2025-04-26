@@ -44,14 +44,10 @@ jobs:
       uses: actions/setup-go@v4
       with:
         go-version: '1.24.1'
-        cache: true  # Enable caching for Go modules
-
 
     - name: Install Go dependencies
       run: |
           go mod tidy
-          go get -u  # Update dependencies to the latest minor or patch versions
-          go mod vendor  # Create a vendor directory with dependencies
     
     - name: Define env variables
       run: |
