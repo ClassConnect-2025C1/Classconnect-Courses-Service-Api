@@ -1,11 +1,10 @@
-package controller
+package services
 
 import (
 	"fmt"
 	"net/http"
-	"templateGo/internals/handlers"
-	"templateGo/internals/repositories"
-	"templateGo/internals/services"
+	"templateGo/internal/handlers"
+	"templateGo/internal/repositories"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,8 +24,8 @@ func SetupRoutes() http.Handler {
 
 	// Create a new course handler
 	courseRepo := repositories.NewCourseRepository()
-	courseService := services.NewCourseService(courseRepo)
-	courseHandler := handlers.NewCourseHandler(courseService)
+	// courseService := services.NewCourseService(courseRepo)
+	courseHandler := handlers.NewCourseHandler(courseRepo)
 
 	api := r.Group("/")
 	// api.Use(middleware.AuthMiddleware()) // Middleware for authentication if necessary

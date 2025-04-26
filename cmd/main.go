@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 	"templateGo/config"
-	"templateGo/controller"
-	"templateGo/dbConfig/sql"
+	sql "templateGo/internal/repositories"
+	controller "templateGo/internal/services"
 )
 
 func main() {

@@ -4,36 +4,36 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
-	"templateGo/internals/models"
-	"templateGo/internals/services"
-	"templateGo/internals/utils"
+	"templateGo/internal/model"
+	"templateGo/internal/repositories"
+	"templateGo/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
 
-type CourseHandler struct {
-	service *services.CourseService
+type courseHandler struct {
+	repo repositories.CourseRepository
 }
 
-type UpdateRoleRequest struct {
+type updateRoleRequest struct {
 	Role string `json:"role" binding:"required"`
 }
 
-type EnrollmentRequest struct {
+type enrollmentRequest struct {
 	UserID uint   `json:"user_id" binding:"required"`
 	Email  string `json:"email"`
 	Name   string `json:"name"`
 }
 
-type UnenrollRequest struct {
+type unenrollRequest struct {
 	UserID uint `json:"user_id" binding:"required"`
 }
 
-func NewCourseHandler(service *services.CourseService) *CourseHandler {
-	return &CourseHandler{service}
+func NewCourseHandler(repo repositories.CourseRepository) *courseHandler {
+	return &courseHandler{repo}
 }
 
-func (h *CourseHandler) getCourseID(c *gin.Context) (uint, bool) {
+func (h *courseHandler) getCourseID(c *gin.Context) (uint, bool) {
 	id, err := strconv.Atoi(c.Param("course_id"))
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "Course ID must be a number")
@@ -42,7 +42,7 @@ func (h *CourseHandler) getCourseID(c *gin.Context) (uint, bool) {
 	return uint(id), true
 }
 
-func (h *CourseHandler) getUserID(c *gin.Context) (uint, bool) {
+func (h *courseHandler) getUserID(c *gin.Context) (uint, bool) {
 	id, err := strconv.Atoi(c.Param("user_id"))
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID must be a number")
@@ -51,8 +51,8 @@ func (h *CourseHandler) getUserID(c *gin.Context) (uint, bool) {
 	return uint(id), true
 }
 
-func (h *CourseHandler) getCourseByID(c *gin.Context, courseID uint) (*models.Course, bool) {
-	course, err := h.service.GetCourseByID(courseID)
+func (h *courseHandler) getCourseByID(c *gin.Context, courseID uint) (*model.Course, bool) {
+	course, err := h.repo.GetByID(courseID)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Course not found")
 		return nil, false
@@ -61,7 +61,7 @@ func (h *CourseHandler) getCourseByID(c *gin.Context, courseID uint) (*models.Co
 }
 
 // formatCoursesResponse formats multiple courses for API response
-func formatCoursesResponse(courses []models.Course) []gin.H {
+func formatCoursesResponse(courses []model.Course) []gin.H {
 	response := make([]gin.H, 0, len(courses))
 	for _, course := range courses {
 		response = append(response, formatCourseResponse(&course))
@@ -69,7 +69,7 @@ func formatCoursesResponse(courses []models.Course) []gin.H {
 	return response
 }
 
-func formatCourseResponse(course *models.Course) gin.H {
+func formatCourseResponse(course *model.Course) gin.H {
 	return gin.H{
 		"id":                  strconv.FormatUint(uint64(course.ID), 10),
 		"title":               course.Title,
@@ -83,15 +83,15 @@ func formatCourseResponse(course *models.Course) gin.H {
 }
 
 // Handler methods
-func (h *CourseHandler) CreateCourse(c *gin.Context) {
-	var request models.CreateCourseRequest
+func (h *courseHandler) CreateCourse(c *gin.Context) {
+	var request model.CreateCourseRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.NewErrorResponse(c, http.StatusBadRequest, "Validation Error", err.Error())
 		return
 	}
 
 	course := request.ToModel()
-	if err := h.service.CreateCourse(course); err != nil {
+	if err := h.repo.Create(course); err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error creating course")
 		return
 	}
@@ -100,8 +100,8 @@ func (h *CourseHandler) CreateCourse(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"data": formatCourseResponse(course)})
 }
 
-func (h *CourseHandler) GetAllCourses(c *gin.Context) {
-	courses, err := h.service.GetAllCourses()
+func (h *courseHandler) GetAllCourses(c *gin.Context) {
+	courses, err := h.repo.GetAll()
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving courses")
 		return
@@ -110,7 +110,7 @@ func (h *CourseHandler) GetAllCourses(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": formatCoursesResponse(courses)})
 }
 
-func (h *CourseHandler) GetCourseByID(c *gin.Context) {
+func (h *courseHandler) GetCourseByID(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
@@ -124,7 +124,7 @@ func (h *CourseHandler) GetCourseByID(c *gin.Context) {
 	c.JSON(http.StatusOK, formatCourseResponse(course))
 }
 
-func (h *CourseHandler) UpdateCourse(c *gin.Context) {
+func (h *courseHandler) UpdateCourse(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
@@ -135,7 +135,7 @@ func (h *CourseHandler) UpdateCourse(c *gin.Context) {
 		return
 	}
 
-	var updateRequest models.UpdateCourseRequest
+	var updateRequest model.UpdateCourseRequest
 	if err := c.ShouldBindJSON(&updateRequest); err != nil {
 		utils.NewErrorResponse(c, http.StatusBadRequest, "Validation Error", err.Error())
 		return
@@ -143,7 +143,7 @@ func (h *CourseHandler) UpdateCourse(c *gin.Context) {
 
 	updateRequest.ApplyTo(existingCourse)
 
-	if err := h.service.UpdateCourse(existingCourse); err != nil {
+	if err := h.repo.Update(existingCourse); err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error updating course")
 		return
 	}
@@ -151,13 +151,13 @@ func (h *CourseHandler) UpdateCourse(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func (h *CourseHandler) DeleteCourse(c *gin.Context) {
+func (h *courseHandler) DeleteCourse(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
 	}
 
-	if err := h.service.DeleteCourse(courseID); err != nil {
+	if err := h.repo.Delete(courseID); err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error deleting course")
 		return
 	}
@@ -165,13 +165,13 @@ func (h *CourseHandler) DeleteCourse(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func (h *CourseHandler) GetAvailableCourses(c *gin.Context) {
+func (h *courseHandler) GetAvailableCourses(c *gin.Context) {
 	userID, ok := h.getUserID(c)
 	if !ok {
 		return
 	}
 
-	courses, err := h.service.GetAvailableCourses(userID)
+	courses, err := h.repo.GetAvailableCourses(userID)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving available courses")
 		return
@@ -180,25 +180,22 @@ func (h *CourseHandler) GetAvailableCourses(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": formatCoursesResponse(courses)})
 }
 
-func (h *CourseHandler) EnrollUserInCourse(c *gin.Context) {
+func (h *courseHandler) EnrollUserInCourse(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
 	}
 
-	var req EnrollmentRequest
+	var req enrollmentRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Request", "Invalid enrollment data: "+err.Error())
 		return
 	}
 
-	err := h.service.EnrollUser(courseID, req.UserID, req.Email, req.Name)
-	if err != nil {
+	if err := h.repo.EnrollUser(courseID, req.UserID, req.Email, req.Name); err != nil {
 		if errors.Is(err, utils.ErrUserAlreadyEnrolled) {
-			// Error específico para usuario ya inscrito
 			utils.NewErrorResponse(c, http.StatusConflict, "Conflict", "User is already enrolled in this course")
 		} else {
-			// Otros errores
 			utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error enrolling user in course")
 		}
 		return
@@ -207,14 +204,14 @@ func (h *CourseHandler) EnrollUserInCourse(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully enrolled"})
 }
 
-func (h *CourseHandler) UnenrollUserFromCourse(c *gin.Context) {
+func (h *courseHandler) UnenrollUserFromCourse(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
 	}
 
 	// First try JSON body
-	var req UnenrollRequest
+	var req unenrollRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		// If JSON binding fails
 		userIDStr := c.Query("user_id")
@@ -229,13 +226,13 @@ func (h *CourseHandler) UnenrollUserFromCourse(c *gin.Context) {
 			return
 		}
 
-		if err := h.service.UnenrollUser(courseID, uint(userID)); err != nil {
+		if err := h.repo.UnenrollUser(courseID, uint(userID)); err != nil {
 			utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error unenrolling user from course")
 			return
 		}
 	} else {
 		// JSON binding succeeded
-		if err := h.service.UnenrollUser(courseID, req.UserID); err != nil {
+		if err := h.repo.UnenrollUser(courseID, req.UserID); err != nil {
 			utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error unenrolling user from course")
 			return
 		}
@@ -244,13 +241,13 @@ func (h *CourseHandler) UnenrollUserFromCourse(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully unenrolled"})
 }
 
-func (h *CourseHandler) GetCourseMembers(c *gin.Context) {
+func (h *courseHandler) GetCourseMembers(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
 	}
 
-	members, err := h.service.GetCourseMembers(courseID)
+	members, err := h.repo.GetCourseMembers(courseID)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving course members")
 		return
@@ -259,7 +256,7 @@ func (h *CourseHandler) GetCourseMembers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": members})
 }
 
-func (h *CourseHandler) UpdateMemberRole(c *gin.Context) {
+func (h *courseHandler) UpdateMemberRole(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
@@ -271,13 +268,13 @@ func (h *CourseHandler) UpdateMemberRole(c *gin.Context) {
 		return
 	}
 
-	var req UpdateRoleRequest
+	var req updateRoleRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.NewErrorResponse(c, http.StatusBadRequest, "Validation Error", err.Error())
 		return
 	}
 
-	if err := h.service.UpdateMemberRole(courseID, userEmail, req.Role); err != nil {
+	if err := h.repo.UpdateMemberRole(courseID, userEmail, req.Role); err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error updating member role")
 		return
 	}
@@ -285,7 +282,7 @@ func (h *CourseHandler) UpdateMemberRole(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func (h *CourseHandler) IsUserEnrolled(c *gin.Context) {
+func (h *courseHandler) IsUserEnrolled(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
@@ -296,7 +293,7 @@ func (h *CourseHandler) IsUserEnrolled(c *gin.Context) {
 		return
 	}
 
-	isEnrolled, err := h.service.IsUserEnrolled(courseID, userID)
+	isEnrolled, err := h.repo.IsUserEnrolled(courseID, userID)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error checking user enrollment")
 		return

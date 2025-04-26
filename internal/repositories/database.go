@@ -1,10 +1,10 @@
-package sql
+package repositories
 
 import (
 	"fmt"
 	"log"
 	"os"
-	"templateGo/internals/models"
+	"templateGo/internal/model"
 	"time"
 
 	"gorm.io/driver/postgres"
@@ -42,8 +42,8 @@ func ConnectDB() error {
 		return fmt.Errorf("error connecting to database: %w", err)
 	}
 
-	// Auto migrate models
-	if err := DB.AutoMigrate(&models.Course{}, &models.Enrollment{}); err != nil {
+	// Auto migrate model
+	if err := DB.AutoMigrate(&model.Course{}, &model.Enrollment{}); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 

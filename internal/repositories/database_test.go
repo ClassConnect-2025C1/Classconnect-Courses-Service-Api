@@ -1,7 +1,7 @@
-package sql
+package repositories
 
 import (
-	"templateGo/internals/models"
+	"templateGo/internal/model"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ func setupTestDB(t *testing.T) {
 	assert.NoError(t, err, "Should connect to in-memory database")
 
 	// Run migrations
-	err = DB.AutoMigrate(&models.Course{})
+	err = DB.AutoMigrate(&model.Course{})
 	assert.NoError(t, err, "Should migrate tables")
 }
 

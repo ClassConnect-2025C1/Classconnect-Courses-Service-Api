@@ -1,4 +1,4 @@
-package controller
+package services
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"templateGo/dbConfig/sql"
+	sql "templateGo/internal/repositories"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
