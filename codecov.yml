@@ -1,2 +1,0 @@
-ignore:
-  - "templateGo/cmd/main.go"  # Ignoring main.go in the cmd directory
