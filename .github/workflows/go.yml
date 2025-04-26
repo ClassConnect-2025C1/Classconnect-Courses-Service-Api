@@ -74,14 +74,14 @@ jobs:
     - name: Run Tests with Coverage
       run: |
         mkdir -p coverage
-    
+
         echo "📋 Listando paquetes..."
-        EXCLUDED="templateGo/internals/handlers|templateGo/cmd|templateGo/config"
-        PACKAGES=$(go list ./... | grep -v "$EXCLUDED")
-    
+        EXCLUDED="templateGo/cmd|templateGo/config|templateGo/internals/handlers"
+        INCLUDED_PACKAGES=$(go list ./... | grep -vE "$EXCLUDED" | paste -sd "," -)
+
         echo "🏃 Ejecutando tests..."
-        go test -coverpkg=./... -coverprofile=coverage/coverage.out -v $PACKAGES || (echo "❌ Go tests failed" && exit 1)
-    
+        go test -coverpkg="$INCLUDED_PACKAGES" -coverprofile=coverage/coverage.out -v $(go list ./... | grep -vE "$EXCLUDED") || (echo "❌ Go tests failed" && exit 1)
+
         echo "✅ Tests ejecutados y coverage generado."
           
     - name: Check coverage file
