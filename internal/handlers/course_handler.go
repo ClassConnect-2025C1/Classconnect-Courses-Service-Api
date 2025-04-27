@@ -337,6 +337,7 @@ func (h *courseHandler) CreateCourseFeedback(c *gin.Context) {
 		UserID:   req.UserID,
 		Rating:   req.Rating,
 		Comment:  req.Comment,
+		Summary:  req.Summary,
 	}
 
 	if err := h.repo.CreateFeedback(feedback); err != nil {
@@ -344,9 +345,17 @@ func (h *courseHandler) CreateCourseFeedback(c *gin.Context) {
 		return
 	}
 
+	// Return response without including userID
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Feedback submitted successfully",
-		"data":    feedback,
+		"data": gin.H{
+			"id":         feedback.ID,
+			"course_id":  feedback.CourseID,
+			"rating":     feedback.Rating,
+			"comment":    feedback.Comment,
+			"summary":    feedback.Summary,
+			"created_at": feedback.CreatedAt,
+		},
 	})
 }
 
@@ -362,11 +371,24 @@ func (h *courseHandler) GetCourseFeedback(c *gin.Context) {
 		return
 	}
 
-	feedback, err := h.repo.GetFeedbackForCourse(courseID)
+	feedbackList, err := h.repo.GetFeedbackForCourse(courseID)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving feedback")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": feedback})
+	// Filter out userIDs from response
+	responseData := make([]gin.H, 0, len(feedbackList))
+	for _, item := range feedbackList {
+		responseData = append(responseData, gin.H{
+			"id":         item.ID,
+			"course_id":  item.CourseID,
+			"rating":     item.Rating,
+			"comment":    item.Comment,
+			"summary":    item.Summary,
+			"created_at": item.CreatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": responseData})
 }

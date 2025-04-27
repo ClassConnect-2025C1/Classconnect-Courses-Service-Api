@@ -12,6 +12,7 @@ type CourseFeedback struct {
 	UserID    uint           `gorm:"not null" json:"user_id"`
 	Rating    int            `gorm:"not null;check:rating >= 1 AND rating <= 5" json:"rating"`
 	Comment   string         `json:"comment"`
+	Summary   string         `json:"summary"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
@@ -24,4 +25,5 @@ type CreateFeedbackRequest struct {
 	UserID  uint   `json:"user_id" binding:"required"`
 	Rating  int    `json:"rating" binding:"required,min=1,max=5"`
 	Comment string `json:"comment"`
+	Summary string `json:"summary"`
 }
