@@ -24,7 +24,6 @@ func SetupRoutes() http.Handler {
 
 	// Create a new course handler
 	courseRepo := repositories.NewCourseRepository()
-	// courseService := services.NewCourseService(courseRepo)
 	courseHandler := handlers.NewCourseHandler(courseRepo)
 
 	api := r.Group("/")

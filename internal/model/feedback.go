@@ -9,7 +9,7 @@ import (
 type CourseFeedback struct {
 	ID        uint           `gorm:"primarykey" json:"id"`
 	CourseID  uint           `gorm:"not null" json:"course_id"`
-	UserID    uint           `gorm:"not null" json:"user_id"`
+	UserID    string         `gorm:"not null" json:"user_id"`
 	Rating    int            `gorm:"not null;check:rating >= 1 AND rating <= 5" json:"rating"`
 	Comment   string         `json:"comment"`
 	Summary   string         `json:"summary"`
@@ -22,7 +22,7 @@ type CourseFeedback struct {
 }
 
 type CreateFeedbackRequest struct {
-	UserID  uint   `json:"user_id" binding:"required"`
+	UserID  string `json:"user_id" binding:"required"`
 	Rating  int    `json:"rating" binding:"required,min=1,max=5"`
 	Comment string `json:"comment"`
 	Summary string `json:"summary"`

@@ -20,13 +20,13 @@ type updateRoleRequest struct {
 }
 
 type enrollmentRequest struct {
-	UserID uint   `json:"user_id" binding:"required"`
+	UserID string `json:"user_id" binding:"required"`
 	Email  string `json:"email"`
 	Name   string `json:"name"`
 }
 
 type unenrollRequest struct {
-	UserID uint `json:"user_id" binding:"required"`
+	UserID string `json:"user_id" binding:"required"`
 }
 
 func NewCourseHandler(repo repositories.CourseRepository) *courseHandler {
@@ -42,13 +42,13 @@ func (h *courseHandler) getCourseID(c *gin.Context) (uint, bool) {
 	return uint(id), true
 }
 
-func (h *courseHandler) getUserID(c *gin.Context) (uint, bool) {
-	id, err := strconv.Atoi(c.Param("user_id"))
-	if err != nil {
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID must be a number")
-		return 0, false
+func (h *courseHandler) getUserID(c *gin.Context) (string, bool) {
+	id := c.Param("user_id")
+	if id == "" {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID must be provided")
+		return "", false
 	}
-	return uint(id), true
+	return id, true
 }
 
 func (h *courseHandler) getCourseByID(c *gin.Context, courseID uint) (*model.Course, bool) {
@@ -220,13 +220,12 @@ func (h *courseHandler) UnenrollUserFromCourse(c *gin.Context) {
 			return
 		}
 
-		userID, err := strconv.ParseUint(userIDStr, 10, 64)
 		if err != nil {
 			utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID must be a number")
 			return
 		}
 
-		if err := h.repo.UnenrollUser(courseID, uint(userID)); err != nil {
+		if err := h.repo.UnenrollUser(courseID, userIDStr); err != nil {
 			utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error unenrolling user from course")
 			return
 		}

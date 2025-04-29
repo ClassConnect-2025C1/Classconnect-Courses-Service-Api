@@ -45,7 +45,7 @@ func (r *courseRepository) Delete(id uint) error {
 }
 
 // Obtener cursos disponibles para un usuario (a implementar según criterios de elegibilidad)
-func (r *courseRepository) GetAvailableCourses(userID uint) ([]model.Course, error) {
+func (r *courseRepository) GetAvailableCourses(userID string) ([]model.Course, error) {
 	var courses []model.Course
 	// Aquí implementarías la lógica para obtener cursos disponibles según el usuario
 	// Por ahora, simplemente retornamos todos los cursos no eliminados
@@ -54,7 +54,7 @@ func (r *courseRepository) GetAvailableCourses(userID uint) ([]model.Course, err
 }
 
 // Verificar si un usuario ya está inscrito en un curso
-func (r *courseRepository) IsUserEnrolled(courseID, userID uint) (bool, error) {
+func (r *courseRepository) IsUserEnrolled(courseID uint, userID string) (bool, error) {
 	var count int64
 	err := r.db.Model(&model.Enrollment{}).
 		Where("course_id = ? AND user_id = ?", courseID, userID).
@@ -64,7 +64,7 @@ func (r *courseRepository) IsUserEnrolled(courseID, userID uint) (bool, error) {
 }
 
 // Inscribir a un usuario en un curso
-func (r *courseRepository) EnrollUser(courseID, userID uint, email, name string) error {
+func (r *courseRepository) EnrollUser(courseID uint, userID string, email, name string) error {
 	enrollment := model.Enrollment{
 		CourseID: courseID,
 		UserID:   userID,
@@ -77,7 +77,7 @@ func (r *courseRepository) EnrollUser(courseID, userID uint, email, name string)
 }
 
 // Desinscribir a un usuario de un curso
-func (r *courseRepository) UnenrollUser(courseID, userID uint) error {
+func (r *courseRepository) UnenrollUser(courseID uint, userID string) error {
 	return r.db.Where("course_id = ? AND user_id = ?", courseID, userID).
 		Delete(&model.Enrollment{}).Error
 }

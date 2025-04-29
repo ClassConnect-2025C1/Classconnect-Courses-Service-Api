@@ -13,13 +13,13 @@ type CourseRepository interface {
 
 	Delete(id uint) error
 
-	GetAvailableCourses(userID uint) ([]model.Course, error)
+	GetAvailableCourses(userID string) ([]model.Course, error)
 
-	IsUserEnrolled(courseID, userID uint) (bool, error)
+	IsUserEnrolled(courseID uint, userID string) (bool, error)
 
-	EnrollUser(courseID, userID uint, email, name string) error
+	EnrollUser(courseID uint, userID string, email, name string) error
 
-	UnenrollUser(courseID, userID uint) error
+	UnenrollUser(courseID uint, userID string) error
 
 	GetCourseMembers(courseID uint) ([]map[string]interface{}, error)
 

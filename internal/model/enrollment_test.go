@@ -10,7 +10,7 @@ func TestEnrollmentCreation(t *testing.T) {
 	now := time.Now()
 	enrollment := Enrollment{
 		ID:        1,
-		UserID:    100,
+		UserID:    "100",
 		CourseID:  200,
 		Role:      "instructor",
 		Email:     "test@example.com",
@@ -22,8 +22,8 @@ func TestEnrollmentCreation(t *testing.T) {
 	if enrollment.ID != 1 {
 		t.Errorf("Expected ID to be 1, got %d", enrollment.ID)
 	}
-	if enrollment.UserID != 100 {
-		t.Errorf("Expected UserID to be 100, got %d", enrollment.UserID)
+	if enrollment.UserID != "100" {
+		t.Errorf("Expected UserID to be 100, got %s", enrollment.UserID)
 	}
 	if enrollment.CourseID != 200 {
 		t.Errorf("Expected CourseID to be 200, got %d", enrollment.CourseID)
@@ -43,7 +43,7 @@ func TestEnrollmentJSON(t *testing.T) {
 	now := time.Now().Round(time.Second) // Round to avoid precision issues in comparison
 	enrollment := Enrollment{
 		ID:        1,
-		UserID:    100,
+		UserID:    "100",
 		CourseID:  200,
 		Role:      "instructor",
 		Email:     "test@example.com",
@@ -70,7 +70,7 @@ func TestEnrollmentJSON(t *testing.T) {
 		t.Errorf("ID mismatch: expected %d, got %d", enrollment.ID, unmarshaledEnrollment.ID)
 	}
 	if unmarshaledEnrollment.UserID != enrollment.UserID {
-		t.Errorf("UserID mismatch: expected %d, got %d", enrollment.UserID, unmarshaledEnrollment.UserID)
+		t.Errorf("UserID mismatch: expected %s, got %s", enrollment.UserID, unmarshaledEnrollment.UserID)
 	}
 	if unmarshaledEnrollment.CourseID != enrollment.CourseID {
 		t.Errorf("CourseID mismatch: expected %d, got %d", enrollment.CourseID, unmarshaledEnrollment.CourseID)
