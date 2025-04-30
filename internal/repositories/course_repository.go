@@ -53,6 +53,30 @@ func (r *courseRepository) GetAvailableCourses(userID string) ([]model.Course, e
 	return courses, err
 }
 
+// Obtener cursos en los que un usuario está inscrito
+func (r *courseRepository) GetEnrolledCourses(userID string) ([]model.Course, error) {
+	var courses []model.Course
+
+	var enrolledCourseIDs []uint
+	err := r.db.Model(&model.Enrollment{}).
+		Select("course_id").
+		Where("user_id = ?", userID).
+		Find(&enrolledCourseIDs).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(enrolledCourseIDs) == 0 {
+		return courses, nil
+	}
+
+	err = r.db.Where("id IN ? AND deleted_at IS NULL", enrolledCourseIDs).
+		Find(&courses).Error
+
+	return courses, err
+}
+
 // Verificar si un usuario ya está inscrito en un curso
 func (r *courseRepository) IsUserEnrolled(courseID uint, userID string) (bool, error) {
 	var count int64
@@ -83,7 +107,7 @@ func (r *courseRepository) UnenrollUser(courseID uint, userID string) error {
 }
 
 // Obtener miembros de un curso
-func (r *courseRepository) GetCourseMembers(courseID uint) ([]map[string]interface{}, error) {
+func (r *courseRepository) GetCourseMembers(courseID uint) ([]map[string]any, error) {
 	var enrollments []model.Enrollment
 
 	err := r.db.Where("course_id = ?", courseID).Find(&enrollments).Error
@@ -91,7 +115,7 @@ func (r *courseRepository) GetCourseMembers(courseID uint) ([]map[string]interfa
 		return nil, err
 	}
 
-	members := make([]map[string]interface{}, 0, len(enrollments))
+	members := make([]map[string]any, 0, len(enrollments))
 	for _, e := range enrollments {
 		members = append(members, map[string]any{
 			"role":  e.Role,

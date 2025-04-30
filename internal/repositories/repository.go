@@ -15,6 +15,8 @@ type CourseRepository interface {
 
 	GetAvailableCourses(userID string) ([]model.Course, error)
 
+	GetEnrolledCourses(userID string) ([]model.Course, error)
+
 	IsUserEnrolled(courseID uint, userID string) (bool, error)
 
 	EnrollUser(courseID uint, userID string, email, name string) error

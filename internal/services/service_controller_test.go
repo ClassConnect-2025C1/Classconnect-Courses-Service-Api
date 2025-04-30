@@ -125,7 +125,7 @@ func TestCreateCourse_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	w := makeRequest("POST", "/courses", payload, &response)
+	w := makeRequest("POST", "/course", payload, &response)
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 	assert.NotNil(t, response["data"])
@@ -144,7 +144,7 @@ func TestCreateCourse_MissingTitle(t *testing.T) {
 		"capacity":    30,
 	}
 
-	w := makeRequest("POST", "/courses", payload, nil)
+	w := makeRequest("POST", "/course", payload, nil)
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Contains(t, w.Body.String(), "Validation Error")
@@ -160,7 +160,7 @@ func TestGetAllCourses(t *testing.T) {
 	}
 
 	var response map[string]any
-	makeRequest("POST", "/courses", payload, &response)
+	makeRequest("POST", "/course", payload, &response)
 
 	payload2 := map[string]any{
 		"title":       "Test Course",
@@ -170,7 +170,7 @@ func TestGetAllCourses(t *testing.T) {
 	}
 
 	var response2 map[string]any
-	makeRequest("POST", "/courses", payload2, &response2)
+	makeRequest("POST", "/course", payload2, &response2)
 
 	// La bdd deberia tener 2 cursos
 	var response3 map[string]any
@@ -197,7 +197,7 @@ func TestCreatedCourseExist(t *testing.T) {
 	}
 
 	var response map[string]any
-	makeRequest("POST", "/courses", payload, &response)
+	makeRequest("POST", "/course", payload, &response)
 
 	data := response["data"].(map[string]any)
 
@@ -233,7 +233,7 @@ func TestGetCourseById_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	makeRequest("POST", "/courses", payload, &response)
+	makeRequest("POST", "/course", payload, &response)
 
 	data := response["data"].(map[string]any)
 	createdCourseID := data["id"].(string)
@@ -265,7 +265,7 @@ func TestUpdateCourse_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	makeRequest("POST", "/courses", payload, &response)
+	makeRequest("POST", "/course", payload, &response)
 
 	data := response["data"].(map[string]any)
 	createdCourseID := data["id"].(string)
@@ -323,7 +323,7 @@ func TestEnrollUserInCourse_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	w := makeRequest("POST", "/courses", payload, &response)
+	w := makeRequest("POST", "/course", payload, &response)
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	createdCourseID := response["data"].(map[string]any)["id"].(string)
@@ -366,7 +366,7 @@ func TestGetCourseMembers_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	w := makeRequest("POST", "/courses", payload, &response)
+	w := makeRequest("POST", "/course", payload, &response)
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	createdCourseID := response["data"].(map[string]any)["id"].(string)
@@ -417,7 +417,7 @@ func TestUpdateMemberRole_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	w := makeRequest("POST", "/courses", payload, &response)
+	w := makeRequest("POST", "/course", payload, &response)
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	createdCourseID := response["data"].(map[string]any)["id"].(string)
@@ -471,7 +471,7 @@ func TestUnenrollUserFromCourse_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	w := makeRequest("POST", "/courses", payload, &response)
+	w := makeRequest("POST", "/course", payload, &response)
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	createdCourseID := response["data"].(map[string]any)["id"].(string)
@@ -519,7 +519,7 @@ func TestDeleteCourse_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	w := makeRequest("POST", "/courses", payload, &response)
+	w := makeRequest("POST", "/course", payload, &response)
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	createdCourseID := response["data"].(map[string]any)["id"].(string)

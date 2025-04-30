@@ -30,12 +30,13 @@ func SetupRoutes() http.Handler {
 	// api.Use(middleware.AuthMiddleware()) // Middleware for authentication if necessary
 	{
 		// Rutas según especificación OpenAPI
-		api.POST("/courses", courseHandler.CreateCourse)
+		api.POST("/course", courseHandler.CreateCourse)
 		api.GET("/courses", courseHandler.GetAllCourses)
 
 		// Actualmente solo devuelve todos los cursos, deberia devolver los cursos
 		// disponibles para el usuario autenticado en base a los criterios de elegibilidad
 		api.GET("/available", courseHandler.GetAvailableCourses)
+		api.GET("/enrolled/:user_id", courseHandler.GetEnrolledCourses)
 
 		// Rutas específicas por ID de curso
 		api.GET("/:course_id", courseHandler.GetCourseByID)

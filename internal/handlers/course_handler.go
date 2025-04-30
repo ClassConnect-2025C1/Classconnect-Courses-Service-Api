@@ -180,6 +180,21 @@ func (h *courseHandler) GetAvailableCourses(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": formatCoursesResponse(courses)})
 }
 
+func (h *courseHandler) GetEnrolledCourses(c *gin.Context) {
+	userID, ok := h.getUserID(c)
+	if !ok {
+		return
+	}
+
+	courses, err := h.repo.GetEnrolledCourses(userID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving enrolled courses")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": formatCoursesResponse(courses)})
+}
+
 func (h *courseHandler) EnrollUserInCourse(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -217,11 +232,6 @@ func (h *courseHandler) UnenrollUserFromCourse(c *gin.Context) {
 		userIDStr := c.Query("user_id")
 		if userIDStr == "" {
 			utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID is required")
-			return
-		}
-
-		if err != nil {
-			utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID must be a number")
 			return
 		}
 
@@ -279,26 +289,6 @@ func (h *courseHandler) UpdateMemberRole(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
-}
-
-func (h *courseHandler) IsUserEnrolled(c *gin.Context) {
-	courseID, ok := h.getCourseID(c)
-	if !ok {
-		return
-	}
-
-	userID, ok := h.getUserID(c)
-	if !ok {
-		return
-	}
-
-	isEnrolled, err := h.repo.IsUserEnrolled(courseID, userID)
-	if err != nil {
-		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error checking user enrollment")
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"is_enrolled": isEnrolled})
 }
 
 func (h *courseHandler) CreateCourseFeedback(c *gin.Context) {
