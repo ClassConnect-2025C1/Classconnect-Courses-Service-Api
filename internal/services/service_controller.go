@@ -36,7 +36,7 @@ func SetupRoutes() http.Handler {
 		// Actualmente solo devuelve todos los cursos, deberia devolver los cursos
 		// disponibles para el usuario autenticado en base a los criterios de elegibilidad
 		api.GET("/available", courseHandler.GetAvailableCourses)
-		api.GET("/enrolled/:user_id", courseHandler.GetEnrolledCourses)
+		api.GET("/enrolled", courseHandler.GetEnrolledCourses)
 
 		// Rutas específicas por ID de curso
 		api.GET("/:course_id", courseHandler.GetCourseByID)
