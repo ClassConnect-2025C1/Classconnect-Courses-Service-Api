@@ -54,6 +54,16 @@ func SetupRoutes() http.Handler {
 		// Rutas de feedback de cursos
 		api.POST("/:course_id/feedback", courseHandler.CreateCourseFeedback)
 		api.GET("/:course_id/feedback", courseHandler.GetCourseFeedback)
+
+		// Rutas relacionadas a tareas(assignment)
+		api.POST("/:course_id/assignment", courseHandler.CreateAssignment)
+		api.PATCH("/:course_id/assignment/:assignment_id", courseHandler.UpdateAssignment)
+		api.DELETE("/:course_id/assignment/:assignment_id", courseHandler.DeleteAssignment)
+		api.GET("/:course_id/assignments", courseHandler.GetAssignments)
+
+		// // Rutas para completar tareas(assignment)
+		// api.PUT("/:course_id/assignment/:assignment_id/submission", courseHandler.PutSubmission)
+		// api.GET("/:course_id/assignment/:assignment_id/submissions", courseHandler.GetSubmissions)
 	}
 
 	return r

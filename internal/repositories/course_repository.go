@@ -143,3 +143,21 @@ func (r *courseRepository) GetFeedbackForCourse(courseID uint) ([]model.CourseFe
 	err := DB.Where("course_id = ?", courseID).Find(&feedback).Error
 	return feedback, err
 }
+
+func (r *courseRepository) CreateAssignment(assignment *model.Assignment) error {
+	return DB.Create(assignment).Error
+}
+
+func (r *courseRepository) UpdateAssignment(assignment *model.Assignment) error {
+	return DB.Save(assignment).Error
+}
+
+func (r *courseRepository) DeleteAssignment(assignmentID uint) error {
+	return DB.Delete(&model.Assignment{}, assignmentID).Error
+}
+
+func (r *courseRepository) GetAssignments(courseID uint) ([]model.Assignment, error) {
+	var assignments []model.Assignment
+	err := DB.Where("course_id = ?", courseID).Find(&assignments).Error
+	return assignments, err
+}

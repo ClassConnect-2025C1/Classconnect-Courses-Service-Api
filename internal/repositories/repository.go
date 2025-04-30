@@ -30,4 +30,12 @@ type CourseRepository interface {
 	CreateFeedback(feedback *model.CourseFeedback) error
 
 	GetFeedbackForCourse(courseID uint) ([]model.CourseFeedback, error)
+
+	CreateAssignment(assignment *model.Assignment) error
+
+	UpdateAssignment(assignment *model.Assignment) error
+
+	DeleteAssignment(assignmentID uint) error
+
+	GetAssignments(courseID uint) ([]model.Assignment, error)
 }
