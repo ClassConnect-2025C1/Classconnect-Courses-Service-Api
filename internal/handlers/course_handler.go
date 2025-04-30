@@ -348,7 +348,7 @@ func (h *courseHandler) CreateCourseFeedback(c *gin.Context) {
 	})
 }
 
-func (h *courseHandler) GetCourseFeedback(c *gin.Context) {
+func (h *courseHandler) GetCourseFeedbacks(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
@@ -360,7 +360,7 @@ func (h *courseHandler) GetCourseFeedback(c *gin.Context) {
 		return
 	}
 
-	feedbackList, err := h.repo.GetFeedbackForCourse(courseID)
+	feedbackList, err := h.repo.GetFeedbacksForCourse(courseID)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving feedback")
 		return

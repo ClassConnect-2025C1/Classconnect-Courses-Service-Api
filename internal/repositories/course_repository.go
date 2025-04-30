@@ -138,7 +138,7 @@ func (r *courseRepository) CreateFeedback(feedback *model.CourseFeedback) error 
 	return DB.Create(feedback).Error
 }
 
-func (r *courseRepository) GetFeedbackForCourse(courseID uint) ([]model.CourseFeedback, error) {
+func (r *courseRepository) GetFeedbacksForCourse(courseID uint) ([]model.CourseFeedback, error) {
 	var feedback []model.CourseFeedback
 	err := DB.Where("course_id = ?", courseID).Find(&feedback).Error
 	return feedback, err
