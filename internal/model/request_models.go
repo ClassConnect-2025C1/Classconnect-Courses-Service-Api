@@ -55,3 +55,32 @@ func (r *UpdateCourseRequest) ApplyTo(course *Course) {
 		course.EligibilityCriteria = *r.EligibilityCriteria
 	}
 }
+
+type CreateAssignmentRequest struct {
+	CourseID    uint      `json:"course_id" binding:"required"`
+	Title       string    `json:"title" binding:"required"`
+	Description string    `json:"description"`
+	Deadline    time.Time `json:"deadline" binding:"required"`
+}
+
+func (r *CreateAssignmentRequest) ToModel() *Assignment {
+	return &Assignment{
+		CourseID:    r.CourseID,
+		Title:       r.Title,
+		Description: r.Description,
+		Deadline:    r.Deadline,
+		CreatedAt:   time.Now(),
+	}
+}
+
+type UpdateAssignmentRequest struct {
+	Title       string    `json:"title" binding:"required"`
+	Description string    `json:"description"`
+	Deadline    time.Time `json:"deadline" binding:"required"`
+}
+
+func (r *UpdateAssignmentRequest) ApplyTo(assignment *Assignment) {
+	assignment.Title = r.Title
+	assignment.Description = r.Description
+	assignment.Deadline = r.Deadline
+}

@@ -348,7 +348,7 @@ func (h *courseHandler) CreateCourseFeedback(c *gin.Context) {
 	})
 }
 
-func (h *courseHandler) GetCourseFeedback(c *gin.Context) {
+func (h *courseHandler) GetCourseFeedbacks(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
@@ -360,7 +360,7 @@ func (h *courseHandler) GetCourseFeedback(c *gin.Context) {
 		return
 	}
 
-	feedbackList, err := h.repo.GetFeedbackForCourse(courseID)
+	feedbackList, err := h.repo.GetFeedbacksForCourse(courseID)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving feedback")
 		return
@@ -380,4 +380,124 @@ func (h *courseHandler) GetCourseFeedback(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": responseData})
+}
+
+func (h *courseHandler) CreateAssignment(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+
+	// Check if course exists
+	_, ok = h.getCourseByID(c, courseID)
+	if !ok {
+		return
+	}
+
+	var req model.CreateAssignmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Validation Error", err.Error())
+		return
+	}
+
+	assignment := &model.Assignment{
+		CourseID:    courseID,
+		Title:       req.Title,
+		Description: req.Description,
+		Deadline:    req.Deadline,
+	}
+
+	if err := h.repo.CreateAssignment(assignment); err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error creating assignment")
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"data": assignment})
+}
+
+func (h *courseHandler) UpdateAssignment(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+
+	assignmentID, err := strconv.Atoi(c.Param("assignment_id"))
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "Assignment ID must be a number")
+		return
+	}
+
+	// Check if course exists
+	_, ok = h.getCourseByID(c, courseID)
+	if !ok {
+		return
+	}
+
+	var req model.UpdateAssignmentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Validation Error", err.Error())
+		return
+	}
+
+	assignment := &model.Assignment{
+		ID:          uint(assignmentID),
+		CourseID:    courseID,
+		Title:       req.Title,
+		Description: req.Description,
+		Deadline:    req.Deadline,
+	}
+
+	if err := h.repo.UpdateAssignment(assignment); err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error updating assignment")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": assignment})
+}
+
+func (h *courseHandler) DeleteAssignment(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+
+	assignmentID, err := strconv.Atoi(c.Param("assignment_id"))
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "Assignment ID must be a number")
+		return
+	}
+
+	// Check if course exists
+	_, ok = h.getCourseByID(c, courseID)
+	if !ok {
+		return
+	}
+
+	if err := h.repo.DeleteAssignment(uint(assignmentID)); err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error deleting assignment")
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func (h *courseHandler) GetAssignments(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+
+	// Check if course exists
+	_, ok = h.getCourseByID(c, courseID)
+	if !ok {
+		return
+	}
+
+	assignments, err := h.repo.GetAssignments(courseID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving assignments")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": assignments})
 }

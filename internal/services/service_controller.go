@@ -35,7 +35,7 @@ func SetupRoutes() http.Handler {
 
 		// Actualmente solo devuelve todos los cursos, deberia devolver los cursos
 		// disponibles para el usuario autenticado en base a los criterios de elegibilidad
-		api.GET("/available", courseHandler.GetAvailableCourses)
+		api.GET("/available/:user_id", courseHandler.GetAvailableCourses)
 		api.GET("/enrolled/:user_id", courseHandler.GetEnrolledCourses)
 
 		// Rutas específicas por ID de curso
@@ -53,7 +53,17 @@ func SetupRoutes() http.Handler {
 
 		// Rutas de feedback de cursos
 		api.POST("/:course_id/feedback", courseHandler.CreateCourseFeedback)
-		api.GET("/:course_id/feedback", courseHandler.GetCourseFeedback)
+		api.GET("/:course_id/feedbacks", courseHandler.GetCourseFeedbacks)
+
+		// Rutas relacionadas a tareas(assignment)
+		api.POST("/:course_id/assignment", courseHandler.CreateAssignment)
+		api.PATCH("/:course_id/assignment/:assignment_id", courseHandler.UpdateAssignment)
+		api.DELETE("/:course_id/assignment/:assignment_id", courseHandler.DeleteAssignment)
+		api.GET("/:course_id/assignments", courseHandler.GetAssignments)
+
+		// // Rutas para completar tareas(assignment)
+		// api.PUT("/:course_id/assignment/:assignment_id/submission", courseHandler.PutSubmission)
+		// api.GET("/:course_id/assignment/:assignment_id/submissions", courseHandler.GetSubmissions)
 	}
 
 	return r

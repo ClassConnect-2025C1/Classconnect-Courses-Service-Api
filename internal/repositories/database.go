@@ -43,7 +43,7 @@ func ConnectDB() error {
 	}
 
 	// Auto migrate model
-	if err := DB.AutoMigrate(&model.Course{}, &model.Enrollment{}, &model.CourseFeedback{}); err != nil {
+	if err := DB.AutoMigrate(&model.Course{}, &model.Enrollment{}, &model.CourseFeedback{}, &model.Assignment{}); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
