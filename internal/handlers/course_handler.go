@@ -96,8 +96,7 @@ func (h *courseHandler) CreateCourse(c *gin.Context) {
 		return
 	}
 
-	// quizas devolver solo un ok
-	c.JSON(http.StatusCreated, gin.H{"data": formatCourseResponse(course)})
+	c.JSON(http.StatusCreated, gin.H{"message": "Course created successfully"})
 }
 
 func (h *courseHandler) GetAllCourses(c *gin.Context) {
