@@ -60,10 +60,6 @@ func SetupRoutes() http.Handler {
 		api.PATCH("/:course_id/assignment/:assignment_id", courseHandler.UpdateAssignment)
 		api.DELETE("/:course_id/assignment/:assignment_id", courseHandler.DeleteAssignment)
 		api.GET("/:course_id/assignments", courseHandler.GetAssignments)
-
-		// // Rutas para completar tareas(assignment)
-		// api.PUT("/:course_id/assignment/:assignment_id/submission", courseHandler.PutSubmission)
-		// api.GET("/:course_id/assignment/:assignment_id/submissions", courseHandler.GetSubmissions)
 	}
 
 	return r

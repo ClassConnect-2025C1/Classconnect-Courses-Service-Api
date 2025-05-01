@@ -225,26 +225,15 @@ func (h *courseHandler) UnenrollUserFromCourse(c *gin.Context) {
 		return
 	}
 
-	// First try JSON body
 	var req unenrollRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		// If JSON binding fails
-		userIDStr := c.Query("user_id")
-		if userIDStr == "" {
-			utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID is required")
-			return
-		}
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Request", "Invalid unenrollment data: "+err.Error())
+		return
+	}
 
-		if err := h.repo.UnenrollUser(courseID, userIDStr); err != nil {
-			utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error unenrolling user from course")
-			return
-		}
-	} else {
-		// JSON binding succeeded
-		if err := h.repo.UnenrollUser(courseID, req.UserID); err != nil {
-			utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error unenrolling user from course")
-			return
-		}
+	if err := h.repo.UnenrollUser(courseID, req.UserID); err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error unenrolling user from course")
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully unenrolled"})
@@ -293,6 +282,7 @@ func (h *courseHandler) UpdateMemberRole(c *gin.Context) {
 
 func (h *courseHandler) CreateCourseFeedback(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
+
 	if !ok {
 		return
 	}
@@ -323,7 +313,6 @@ func (h *courseHandler) CreateCourseFeedback(c *gin.Context) {
 
 	feedback := &model.CourseFeedback{
 		CourseID: courseID,
-		UserID:   req.UserID,
 		Rating:   req.Rating,
 		Comment:  req.Comment,
 		Summary:  req.Summary,
@@ -334,18 +323,7 @@ func (h *courseHandler) CreateCourseFeedback(c *gin.Context) {
 		return
 	}
 
-	// Return response without including userID
-	c.JSON(http.StatusCreated, gin.H{
-		"message": "Feedback submitted successfully",
-		"data": gin.H{
-			"id":         feedback.ID,
-			"course_id":  feedback.CourseID,
-			"rating":     feedback.Rating,
-			"comment":    feedback.Comment,
-			"summary":    feedback.Summary,
-			"created_at": feedback.CreatedAt,
-		},
-	})
+	c.JSON(http.StatusCreated, gin.H{"message": "Feedback submitted successfully"})
 }
 
 func (h *courseHandler) GetCourseFeedbacks(c *gin.Context) {
