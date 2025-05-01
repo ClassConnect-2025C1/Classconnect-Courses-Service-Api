@@ -122,13 +122,6 @@ func (r *courseRepository) GetCourseMembers(courseID uint) ([]map[string]any, er
 	return members, nil
 }
 
-// Actualizar rol de un miembro en un curso
-func (r *courseRepository) UpdateMemberRole(courseID uint, userEmail string, role string) error {
-	return r.db.Model(&model.Enrollment{}).
-		Where("course_id = ? AND email = ?", courseID, userEmail).
-		Update("role", role).Error
-}
-
 func (r *courseRepository) CreateFeedback(feedback *model.CourseFeedback) error {
 	return DB.Create(feedback).Error
 }

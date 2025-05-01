@@ -243,32 +243,6 @@ func (h *courseHandler) GetCourseMembers(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": members})
 }
 
-func (h *courseHandler) UpdateMemberRole(c *gin.Context) {
-	courseID, ok := h.getCourseID(c)
-	if !ok {
-		return
-	}
-
-	userEmail := c.Param("user_email")
-	if userEmail == "" {
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User email is required")
-		return
-	}
-
-	var req updateRoleRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Validation Error", err.Error())
-		return
-	}
-
-	if err := h.repo.UpdateMemberRole(courseID, userEmail, req.Role); err != nil {
-		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error updating member role")
-		return
-	}
-
-	c.Status(http.StatusNoContent)
-}
-
 func (h *courseHandler) CreateCourseFeedback(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 
