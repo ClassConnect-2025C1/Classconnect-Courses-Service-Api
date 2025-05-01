@@ -96,7 +96,7 @@ func (h *courseHandler) CreateCourse(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Course created successfully"})
+	c.JSON(http.StatusCreated, gin.H{"message": "Course created successfully", "id": formatCourseResponse(course)["id"]})
 }
 
 func (h *courseHandler) GetAllCourses(c *gin.Context) {
