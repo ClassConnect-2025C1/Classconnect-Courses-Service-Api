@@ -88,13 +88,10 @@ func (r *courseRepository) IsUserEnrolled(courseID uint, userID string) (bool, e
 }
 
 // Inscribir a un usuario en un curso
-func (r *courseRepository) EnrollUser(courseID uint, userID string, email, name string) error {
+func (r *courseRepository) EnrollUser(courseID uint, userID string) error {
 	enrollment := model.Enrollment{
 		CourseID: courseID,
 		UserID:   userID,
-		Role:     "student", // Default role
-		Email:    email,     // Provided email
-		Name:     name,      // Provided name
 	}
 
 	return r.db.Create(&enrollment).Error
@@ -118,9 +115,7 @@ func (r *courseRepository) GetCourseMembers(courseID uint) ([]map[string]any, er
 	members := make([]map[string]any, 0, len(enrollments))
 	for _, e := range enrollments {
 		members = append(members, map[string]any{
-			"role":  e.Role,
-			"name":  e.Name,
-			"email": e.Email,
+			"user_id": e.UserID,
 		})
 	}
 

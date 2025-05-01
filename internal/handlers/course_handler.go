@@ -19,16 +19,6 @@ type updateRoleRequest struct {
 	Role string `json:"role" binding:"required"`
 }
 
-type enrollmentRequest struct {
-	UserID string `json:"user_id" binding:"required"`
-	Email  string `json:"email"`
-	Name   string `json:"name"`
-}
-
-type unenrollRequest struct {
-	UserID string `json:"user_id" binding:"required"`
-}
-
 func NewCourseHandler(repo repositories.CourseRepository) *courseHandler {
 	return &courseHandler{repo}
 }
@@ -200,13 +190,13 @@ func (h *courseHandler) EnrollUserInCourse(c *gin.Context) {
 		return
 	}
 
-	var req enrollmentRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Request", "Invalid enrollment data: "+err.Error())
+	userID := c.Param("user_id")
+	if userID == "" {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID must be provided")
 		return
 	}
 
-	if err := h.repo.EnrollUser(courseID, req.UserID, req.Email, req.Name); err != nil {
+	if err := h.repo.EnrollUser(courseID, userID); err != nil {
 		if errors.Is(err, utils.ErrUserAlreadyEnrolled) {
 			utils.NewErrorResponse(c, http.StatusConflict, "Conflict", "User is already enrolled in this course")
 		} else {
@@ -224,13 +214,13 @@ func (h *courseHandler) UnenrollUserFromCourse(c *gin.Context) {
 		return
 	}
 
-	var req unenrollRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Request", "Invalid unenrollment data: "+err.Error())
+	userID := c.Param("user_id")
+	if userID == "" {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID must be provided")
 		return
 	}
 
-	if err := h.repo.UnenrollUser(courseID, req.UserID); err != nil {
+	if err := h.repo.UnenrollUser(courseID, userID); err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error unenrolling user from course")
 		return
 	}

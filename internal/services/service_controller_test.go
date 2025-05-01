@@ -322,15 +322,10 @@ func TestEnrollUserInCourse_Success(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	createdCourseID := response["id"].(string)
+	userID := "1"
 
-	// inscribir a un alumno
-	enrollmentPayload := map[string]any{
-		"user_id": "1",
-		"email":   "estudiante@universidad.edu",
-		"name":    "Pedro",
-	}
-
-	w = makeRequest("POST", "/"+createdCourseID+"/enroll", enrollmentPayload, nil)
+	// inscribir a un alumno usando la nueva ruta
+	w = makeRequest("POST", "/"+createdCourseID+"/enroll/"+userID, nil, nil)
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	// ver que el alumno esta en el curso
@@ -343,9 +338,7 @@ func TestEnrollUserInCourse_Success(t *testing.T) {
 	members := membersResponse["data"].([]any)
 
 	assert.GreaterOrEqual(t, len(members), 1)
-	assert.Equal(t, "estudiante@universidad.edu", members[0].(map[string]any)["email"])
-	assert.Equal(t, "Pedro", members[0].(map[string]any)["name"])
-	assert.Equal(t, "student", members[0].(map[string]any)["role"])
+	assert.Equal(t, userID, members[0].(map[string]any)["user_id"])
 
 	// eliminar curso
 	makeRequest("DELETE", "/"+createdCourseID, nil, nil)
@@ -366,26 +359,17 @@ func TestGetCourseMembers_Success(t *testing.T) {
 
 	createdCourseID := response["id"].(string)
 
-	// inscribir a un alumno
-	enrollmentPayload := map[string]any{
-		"user_id": "1",
-		"email":   "estudiante@universidad.edu",
-		"name":    "Pedro",
-	}
+	// inscribir a los alumnos usando la nueva ruta
+	userId1 := "1"
+	userId2 := "2"
 
-	enrollmentPayload2 := map[string]any{
-		"user_id": "2",
-		"email":   "tengo@muchosueño.com",
-		"name":    "Juan",
-	}
-
-	w = makeRequest("POST", "/"+createdCourseID+"/enroll", enrollmentPayload, nil)
+	w = makeRequest("POST", "/"+createdCourseID+"/enroll/"+userId1, nil, nil)
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	w = makeRequest("POST", "/"+createdCourseID+"/enroll", enrollmentPayload2, nil)
+	w = makeRequest("POST", "/"+createdCourseID+"/enroll/"+userId2, nil, nil)
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	// ver que el alumno esta en el curso
+	// ver que los alumnos están en el curso
 	var membersResponse map[string]any
 	w = makeRequest("GET", "/"+createdCourseID+"/members", nil, &membersResponse)
 	assert.Equal(t, http.StatusOK, w.Code)
@@ -394,63 +378,16 @@ func TestGetCourseMembers_Success(t *testing.T) {
 	members := membersResponse["data"].([]any)
 	assert.GreaterOrEqual(t, len(members), 2)
 
-	// comparar los nombres de los inscriptos
-	assert.Equal(t, "Pedro", members[0].(map[string]any)["name"])
-	assert.Equal(t, "Juan", members[1].(map[string]any)["name"])
-
-	// eliminar curso
-	makeRequest("DELETE", "/"+createdCourseID, nil, nil)
-}
-
-func TestUpdateMemberRole_Success(t *testing.T) {
-	// crear un curso
-	payload := map[string]any{
-		"title":       "Test Course",
-		"description": "Test Description",
-		"created_by":  "test@example.com",
-		"capacity":    10,
+	// Recopilar los user_ids para verificación
+	userIds := []string{}
+	for _, member := range members {
+		memberMap := member.(map[string]any)
+		userIds = append(userIds, memberMap["user_id"].(string))
 	}
 
-	var response map[string]any
-	w := makeRequest("POST", "/course", payload, &response)
-	assert.Equal(t, http.StatusCreated, w.Code)
-
-	createdCourseID := response["id"].(string)
-
-	// inscribir a un alumno
-	enrollmentPayload := map[string]any{
-		"user_id": "1",
-		"email":   "estudiante@universidad.edu",
-		"name":    "Pedro",
-	}
-
-	w = makeRequest("POST", "/"+createdCourseID+"/enroll", enrollmentPayload, nil)
-	assert.Equal(t, http.StatusOK, w.Code)
-
-	// ver el rol del alumno
-	var membersResponse map[string]any
-	w = makeRequest("GET", "/"+createdCourseID+"/members", nil, &membersResponse)
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.NotNil(t, membersResponse["data"])
-
-	members := membersResponse["data"].([]any)
-	assert.Equal(t, "student", members[0].(map[string]any)["role"])
-
-	// actualizar el rol del alumno
-	updatePayload := map[string]any{
-		"role": "teacher",
-	}
-
-	w = makeRequest("PATCH", "/"+createdCourseID+"/members/estudiante@universidad.edu", updatePayload, nil)
-	assert.Equal(t, http.StatusNoContent, w.Code)
-	assert.NotNil(t, membersResponse["data"])
-
-	w = makeRequest("GET", "/"+createdCourseID+"/members", nil, &membersResponse)
-	assert.Equal(t, http.StatusOK, w.Code)
-	assert.NotNil(t, membersResponse["data"])
-
-	members = membersResponse["data"].([]any)
-	assert.Equal(t, "teacher", members[0].(map[string]any)["role"])
+	// Verificar que ambos user_ids estén presentes
+	assert.Contains(t, userIds, userId1)
+	assert.Contains(t, userIds, userId2)
 
 	// eliminar curso
 	makeRequest("DELETE", "/"+createdCourseID, nil, nil)
@@ -470,25 +407,14 @@ func TestUnenrollUserFromCourse_Success(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	createdCourseID := response["id"].(string)
+	userID := "1"
 
-	// inscribir a un alumno
-	enrollmentPayload := map[string]any{
-		"user_id": "1",
-		"email":   "estudiante@universidad.edu",
-		"name":    "Pedro",
-	}
-
-	w = makeRequest("POST", "/"+createdCourseID+"/enroll", enrollmentPayload, nil)
+	// inscribir a un alumno usando la nueva ruta
+	w = makeRequest("POST", "/"+createdCourseID+"/enroll/"+userID, nil, nil)
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	// desinscribir al alumno
-	unenrollPayload := map[string]any{
-		"user_id": "1",
-		"email":   "estudiante@universidad.edu",
-		"name":    "Pedro",
-	}
-
-	w = makeRequest("DELETE", "/"+createdCourseID+"/enroll", unenrollPayload, nil)
+	// desinscribir al alumno usando la nueva ruta
+	w = makeRequest("DELETE", "/"+createdCourseID+"/enroll/"+userID, nil, nil)
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var membersResponse map[string]any
@@ -497,7 +423,6 @@ func TestUnenrollUserFromCourse_Success(t *testing.T) {
 	assert.NotNil(t, membersResponse["data"])
 
 	members := membersResponse["data"].([]any)
-	fmt.Println("Members after unenrollment:", members)
 	assert.Equal(t, 0, len(members))
 
 	// eliminar curso

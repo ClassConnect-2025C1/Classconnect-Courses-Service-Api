@@ -19,11 +19,11 @@ type CourseRepository interface {
 
 	IsUserEnrolled(courseID uint, userID string) (bool, error)
 
-	EnrollUser(courseID uint, userID string, email, name string) error
+	EnrollUser(courseID uint, userID string) error
 
 	UnenrollUser(courseID uint, userID string) error
 
-	GetCourseMembers(courseID uint) ([]map[string]interface{}, error)
+	GetCourseMembers(courseID uint) ([]map[string]any, error)
 
 	UpdateMemberRole(courseID uint, userEmail string, role string) error
 

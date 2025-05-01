@@ -44,8 +44,8 @@ func SetupRoutes() http.Handler {
 		api.DELETE("/:course_id", courseHandler.DeleteCourse)
 
 		// Rutas de inscripción
-		api.POST("/:course_id/enroll", courseHandler.EnrollUserInCourse)
-		api.DELETE("/:course_id/enroll", courseHandler.UnenrollUserFromCourse)
+		api.POST("/:course_id/enroll/:user_id", courseHandler.EnrollUserInCourse)
+		api.DELETE("/:course_id/enroll/:user_id", courseHandler.UnenrollUserFromCourse)
 
 		// Rutas de miembros
 		api.GET("/:course_id/members", courseHandler.GetCourseMembers)
