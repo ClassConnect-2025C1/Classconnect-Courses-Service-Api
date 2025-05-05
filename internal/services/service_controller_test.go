@@ -429,7 +429,6 @@ func TestUnenrollUserFromCourse_Success(t *testing.T) {
 	makeRequest("DELETE", "/"+createdCourseID, nil, nil)
 }
 
-// DELETE COURSE TESTS
 func TestDeleteCourse_Success(t *testing.T) {
 	payload := map[string]any{
 		"title":       "Test Course",
