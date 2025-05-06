@@ -333,6 +333,8 @@ func (h *courseHandler) CreateAssignment(c *gin.Context) {
 		Title:       req.Title,
 		Description: req.Description,
 		Deadline:    req.Deadline,
+		TimeLimit:   req.TimeLimit,
+		Files:       req.Files,
 	}
 
 	if err := h.repo.CreateAssignment(assignment); err != nil {
@@ -373,6 +375,8 @@ func (h *courseHandler) UpdateAssignment(c *gin.Context) {
 		Title:       req.Title,
 		Description: req.Description,
 		Deadline:    req.Deadline,
+		TimeLimit:   req.TimeLimit,
+		Files:       req.Files,
 	}
 
 	if err := h.repo.UpdateAssignment(assignment); err != nil {

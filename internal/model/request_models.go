@@ -61,6 +61,8 @@ type CreateAssignmentRequest struct {
 	Title       string    `json:"title" binding:"required"`
 	Description string    `json:"description"`
 	Deadline    time.Time `json:"deadline" binding:"required"`
+	TimeLimit   int       `json:"time_limit"` // in minutes
+	Files       []File    `json:"files"`      // Provisory: a file struct has content as binary data
 }
 
 func (r *CreateAssignmentRequest) ToModel() *Assignment {
@@ -69,6 +71,8 @@ func (r *CreateAssignmentRequest) ToModel() *Assignment {
 		Title:       r.Title,
 		Description: r.Description,
 		Deadline:    r.Deadline,
+		TimeLimit:   r.TimeLimit,
+		Files:       r.Files,
 		CreatedAt:   time.Now(),
 	}
 }
@@ -77,10 +81,14 @@ type UpdateAssignmentRequest struct {
 	Title       string    `json:"title" binding:"required"`
 	Description string    `json:"description"`
 	Deadline    time.Time `json:"deadline" binding:"required"`
+	TimeLimit   int       `json:"time_limit"` // in minutes
+	Files       []File    `json:"files"`      // Provisory: a file struct has content as binary data
 }
 
 func (r *UpdateAssignmentRequest) ApplyTo(assignment *Assignment) {
 	assignment.Title = r.Title
 	assignment.Description = r.Description
 	assignment.Deadline = r.Deadline
+	assignment.TimeLimit = r.TimeLimit
+	assignment.Files = r.Files
 }
