@@ -149,3 +149,41 @@ func (r *courseRepository) GetAssignments(courseID uint) ([]model.Assignment, er
 	err := DB.Where("course_id = ?", courseID).Find(&assignments).Error
 	return assignments, err
 }
+
+// ApproveCourse approves a course for a user
+func (r *courseRepository) ApproveCourse(userID string, courseID uint, courseName string) error {
+	approval := model.CourseApproval{
+		UserID:     userID,
+		CourseID:   courseID,
+		CourseName: courseName,
+	}
+
+	// Check if the approval already exists
+	var count int64
+	r.db.Model(&model.CourseApproval{}).
+		Where("user_id = ? AND course_id = ?", userID, courseID).
+		Count(&count)
+
+	if count > 0 {
+		// Already approved, return without error
+		return nil
+	}
+
+	return r.db.Create(&approval).Error
+}
+
+// GetApprovedCourses gets all approved course names for a user
+func (r *courseRepository) GetApprovedCourses(userID string) ([]string, error) {
+	var approvals []model.CourseApproval
+	err := r.db.Where("user_id = ?", userID).Find(&approvals).Error
+	if err != nil {
+		return nil, err
+	}
+
+	courseNames := make([]string, 0, len(approvals))
+	for _, approval := range approvals {
+		courseNames = append(courseNames, approval.CourseName)
+	}
+
+	return courseNames, nil
+}

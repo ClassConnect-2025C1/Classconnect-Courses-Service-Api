@@ -307,20 +307,7 @@ func (h *courseHandler) GetCourseFeedbacks(c *gin.Context) {
 		return
 	}
 
-	// Filter out userIDs from response
-	responseData := make([]gin.H, 0, len(feedbackList))
-	for _, item := range feedbackList {
-		responseData = append(responseData, gin.H{
-			"id":         item.ID,
-			"course_id":  item.CourseID,
-			"rating":     item.Rating,
-			"comment":    item.Comment,
-			"summary":    item.Summary,
-			"created_at": item.CreatedAt,
-		})
-	}
-
-	c.JSON(http.StatusOK, gin.H{"data": responseData})
+	c.JSON(http.StatusOK, gin.H{"data": feedbackList})
 }
 
 func (h *courseHandler) CreateAssignment(c *gin.Context) {
@@ -441,4 +428,50 @@ func (h *courseHandler) GetAssignments(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": assignments})
+}
+
+// ApproveCourses approves a course for a user
+func (h *courseHandler) ApproveCourses(c *gin.Context) {
+	userID, ok := h.getUserID(c)
+	if !ok {
+		return
+	}
+
+	// Get course_id from URL parameter
+	courseIDStr := c.Param("course_id")
+	courseID, err := strconv.ParseUint(courseIDStr, 10, 32)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "Course ID must be a valid number")
+		return
+	}
+
+	// Get the course to extract its name
+	course, ok := h.getCourseByID(c, uint(courseID))
+	if !ok {
+		return
+	}
+
+	// Now use both the course ID and name
+	if err := h.repo.ApproveCourse(userID, uint(courseID), course.Title); err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error approving course")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Course approved successfully"})
+}
+
+// GetApprovedCourses gets all approved courses for a user
+func (h *courseHandler) GetApprovedCourses(c *gin.Context) {
+	userID, ok := h.getUserID(c)
+	if !ok {
+		return
+	}
+
+	approvedCourses, err := h.repo.GetApprovedCourses(userID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving approved courses")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": approvedCourses})
 }

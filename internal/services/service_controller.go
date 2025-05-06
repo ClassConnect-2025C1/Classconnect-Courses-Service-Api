@@ -38,6 +38,12 @@ func SetupRoutes() http.Handler {
 		api.GET("/available/:user_id", courseHandler.GetAvailableCourses)
 		api.GET("/enrolled/:user_id", courseHandler.GetEnrolledCourses)
 
+		// aprobar un usuario en un curso
+		api.GET("/approve/:user_id/:course_id", courseHandler.ApproveCourses)
+
+		// devolver los cursos que aprobo el usuario autenticado
+		api.GET("/approved/:user_id", courseHandler.GetApprovedCourses)
+
 		// Rutas específicas por ID de curso
 		api.GET("/:course_id", courseHandler.GetCourseByID)
 		api.PATCH("/:course_id", courseHandler.UpdateCourse)
