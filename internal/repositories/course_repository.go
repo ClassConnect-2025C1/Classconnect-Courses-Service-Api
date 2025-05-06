@@ -1,9 +1,11 @@
 package repositories
 
 import (
+	"strings"
 	"templateGo/internal/model"
 	"time"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -29,9 +31,65 @@ func (r *courseRepository) GetByID(id uint) (*model.Course, error) {
 
 // Obtener todos los cursos disponibles
 func (r *courseRepository) GetAll() ([]model.Course, error) {
-	var courses []model.Course
-	err := r.db.Where("deleted_at IS NULL").Find(&courses).Error
-	return courses, err
+	// Use a temporary struct to avoid the array parsing error
+	type TempCourse struct {
+		ID                  uint `gorm:"primarykey"`
+		CreatedAt           time.Time
+		UpdatedAt           time.Time
+		DeletedAt           gorm.DeletedAt `gorm:"index"`
+		Title               string
+		Description         string
+		CreatedBy           string
+		Capacity            int
+		StartDate           time.Time
+		EndDate             time.Time
+		EligibilityCriteria string // String type to safely read any format
+	}
+
+	var tempCourses []TempCourse
+	if err := r.db.Table("courses").Where("deleted_at IS NULL").Find(&tempCourses).Error; err != nil {
+		return nil, err
+	}
+
+	// Convert to the proper Course model
+	courses := make([]model.Course, len(tempCourses))
+	for i, tc := range tempCourses {
+		courses[i] = model.Course{
+			Model: gorm.Model{
+				ID:        tc.ID,
+				CreatedAt: tc.CreatedAt,
+				UpdatedAt: tc.UpdatedAt,
+				DeletedAt: tc.DeletedAt,
+			},
+			Title:       tc.Title,
+			Description: tc.Description,
+			CreatedBy:   tc.CreatedBy,
+			Capacity:    tc.Capacity,
+			StartDate:   tc.StartDate,
+			EndDate:     tc.EndDate,
+		}
+
+		// Parse eligibility_criteria based on its format
+		criteria := tc.EligibilityCriteria
+		if criteria != "" {
+			if strings.HasPrefix(criteria, "{") && strings.HasSuffix(criteria, "}") {
+				// Already in array format, parse it
+				criteria = criteria[1 : len(criteria)-1]
+				// Handle quotes if they exist
+				if strings.Contains(criteria, "\"") {
+					criteria = strings.ReplaceAll(criteria, "\"", "")
+				}
+				courses[i].EligibilityCriteria = pq.StringArray(strings.Split(criteria, ","))
+			} else {
+				// Single string, convert to array
+				courses[i].EligibilityCriteria = pq.StringArray([]string{criteria})
+			}
+		} else {
+			courses[i].EligibilityCriteria = pq.StringArray{}
+		}
+	}
+
+	return courses, nil
 }
 
 // Editar curso

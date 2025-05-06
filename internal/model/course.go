@@ -1,16 +1,20 @@
 package model
 
-import "time"
+import (
+	"time"
 
-// Course representa la estructura de un curso
+	"github.com/lib/pq"
+	"gorm.io/gorm"
+)
+
+// Course represents a course in the system
 type Course struct {
-	ID                  uint       `json:"id" gorm:"primaryKey"`
-	Title               string     `json:"title" binding:"required"`
-	Description         string     `json:"description"`
-	CreatedBy           string     `json:"created_by" binding:"required"`
-	Capacity            int        `json:"capacity" binding:"required,gte=1"`
-	StartDate           time.Time  `json:"start_date" binding:"required"`
-	EndDate             time.Time  `json:"end_date" binding:"required"`
-	EligibilityCriteria string     `json:"eligibility_criteria"`
-	DeletedAt           *time.Time `json:"deleted_at,omitempty"`
+	gorm.Model
+	Title               string         `json:"title"`
+	Description         string         `json:"description"`
+	CreatedBy           string         `json:"created_by"`
+	Capacity            int            `json:"capacity"`
+	StartDate           time.Time      `json:"start_date"`
+	EndDate             time.Time      `json:"end_date"`
+	EligibilityCriteria pq.StringArray `json:"eligibility_criteria" gorm:"type:text[]"`
 }
