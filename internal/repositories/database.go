@@ -48,10 +48,6 @@ func ConnectDB() error {
 	DB.Callback().Create().Before("gorm:create").Register("pq_array_handler", arrayHandlerCreate)
 	DB.Callback().Update().Before("gorm:update").Register("pq_array_handler", arrayHandlerUpdate)
 
-	// Explicitly register array types
-	DB.Callback().Create().Before("gorm:create").Register("array_to_string", arrayToStringCreate)
-	DB.Callback().Query().After("gorm:after_query").Register("string_to_array", stringToArrayQuery)
-
 	// Auto migrate model
 	if err := DB.AutoMigrate(&model.Course{}, &model.Enrollment{}, &model.CourseFeedback{}, &model.Assignment{}, &model.CourseApproval{}); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
@@ -115,12 +111,13 @@ func arrayHandlerCreate(db *gorm.DB) {
 func arrayHandlerUpdate(db *gorm.DB) {
 	// Similar to arrayHandlerCreate but for updates
 	// ...
-}
-
-func arrayToStringCreate(db *gorm.DB) {
-	// This is handled by lib/pq automatically
-}
-
-func stringToArrayQuery(db *gorm.DB) {
-	// lib/pq handles this automatically
+	if db.Statement.Schema != nil {
+		for _, field := range db.Statement.Schema.Fields {
+			if field.FieldType.Kind() == reflect.Slice && field.FieldType.Elem().Kind() == reflect.String {
+				if v, ok := db.Statement.ReflectValue.FieldByName(field.Name).Interface().([]string); ok {
+					db.Statement.SetColumn(field.DBName, pq.Array(v))
+				}
+			}
+		}
+	}
 }

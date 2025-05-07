@@ -8,7 +8,7 @@ type CreateCourseRequest struct {
 	Description         string   `json:"description"`
 	CreatedBy           string   `json:"created_by" binding:"required"`
 	Capacity            int      `json:"capacity" binding:"required,gte=1"`
-	EligibilityCriteria []string `json:"eligibility_criteria"` // Changed to a slice of strings
+	EligibilityCriteria []string `json:"eligibility_criteria"`
 }
 
 // ToModel converts API request to internal Course model
@@ -31,7 +31,7 @@ type UpdateCourseRequest struct {
 	Capacity            *int       `json:"capacity"`
 	StartDate           *time.Time `json:"start_date"`
 	EndDate             *time.Time `json:"end_date"`
-	EligibilityCriteria *[]string  `json:"eligibility_criteria"` // Changed to a pointer to slice of strings
+	EligibilityCriteria *[]string  `json:"eligibility_criteria"`
 }
 
 // ApplyTo applies the update request to an existing course
