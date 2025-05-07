@@ -19,6 +19,11 @@ type updateRoleRequest struct {
 	Role string `json:"role" binding:"required"`
 }
 
+// Add a struct for the request
+type toggleFavoriteRequest struct {
+	IsFavorite bool `json:"is_favorite"`
+}
+
 func NewCourseHandler(repo repositories.CourseRepository) *courseHandler {
 	return &courseHandler{repo}
 }
@@ -170,18 +175,27 @@ func (h *courseHandler) GetAvailableCourses(c *gin.Context) {
 }
 
 func (h *courseHandler) GetEnrolledCourses(c *gin.Context) {
-	userID, ok := h.getUserID(c)
-	if !ok {
+	userID := c.Param("user_id")
+	if userID == "" {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID must be provided")
 		return
 	}
 
-	courses, err := h.repo.GetEnrolledCourses(userID)
+	courses, favorites, err := h.repo.GetEnrolledCourses(userID)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving enrolled courses")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": formatCoursesResponse(courses)})
+	// Create a response that includes both course info and favorite status
+	response := make([]map[string]interface{}, len(courses))
+	for i, course := range courses {
+		courseMap := formatCourseResponse(&course)
+		courseMap["is_favorite"] = favorites[i]
+		response[i] = courseMap
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": response})
 }
 
 func (h *courseHandler) EnrollUserInCourse(c *gin.Context) {
@@ -478,4 +492,27 @@ func (h *courseHandler) GetApprovedCourses(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": approvedCourses})
+}
+
+// ToggleFavoriteStatus handles toggling a course's favorite status for a user
+func (h *courseHandler) ToggleFavoriteStatus(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+
+	userID := c.Param("user_id")
+	if userID == "" {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID must be provided")
+		return
+	}
+
+	if err := h.repo.ToggleFavoriteStatus(courseID, userID); err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error toggling favorite status: "+err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Course favorite status toggled successfully",
+	})
 }

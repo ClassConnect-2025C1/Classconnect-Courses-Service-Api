@@ -15,7 +15,7 @@ type CourseRepository interface {
 
 	GetAvailableCourses(userID string) ([]model.Course, error)
 
-	GetEnrolledCourses(userID string) ([]model.Course, error)
+	GetEnrolledCourses(userID string) ([]model.Course, []bool, error)
 
 	IsUserEnrolled(courseID uint, userID string) (bool, error)
 
@@ -40,4 +40,7 @@ type CourseRepository interface {
 	ApproveCourse(userID string, courseID uint, courseName string) error
 
 	GetApprovedCourses(userID string) ([]string, error)
+
+	// Toggle favorite status (flip current value)
+	ToggleFavoriteStatus(courseID uint, userID string) error
 }

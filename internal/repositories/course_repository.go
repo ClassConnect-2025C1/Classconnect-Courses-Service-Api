@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"fmt"
 	"strings"
 	"templateGo/internal/model"
 	"time"
@@ -112,27 +113,36 @@ func (r *courseRepository) GetAvailableCourses(userID string) ([]model.Course, e
 }
 
 // Obtener cursos en los que un usuario está inscrito
-func (r *courseRepository) GetEnrolledCourses(userID string) ([]model.Course, error) {
+func (r *courseRepository) GetEnrolledCourses(userID string) ([]model.Course, []bool, error) {
+	var enrollments []model.Enrollment
+	if err := r.db.Where("user_id = ?", userID).Find(&enrollments).Error; err != nil {
+		return nil, nil, err
+	}
+
+	courseIDs := make([]uint, 0, len(enrollments))
+	favoriteStatus := make(map[uint]bool)
+
+	for _, enrollment := range enrollments {
+		courseIDs = append(courseIDs, enrollment.CourseID)
+		favoriteStatus[enrollment.CourseID] = enrollment.Favorite
+	}
+
+	if len(courseIDs) == 0 {
+		return []model.Course{}, []bool{}, nil
+	}
+
 	var courses []model.Course
-
-	var enrolledCourseIDs []uint
-	err := r.db.Model(&model.Enrollment{}).
-		Select("course_id").
-		Where("user_id = ?", userID).
-		Find(&enrolledCourseIDs).Error
-
-	if err != nil {
-		return nil, err
+	if err := r.db.Where("id IN ?", courseIDs).Find(&courses).Error; err != nil {
+		return nil, nil, err
 	}
 
-	if len(enrolledCourseIDs) == 0 {
-		return courses, nil
+	// Create a slice of favorite status in the same order as courses
+	favorites := make([]bool, len(courses))
+	for i, course := range courses {
+		favorites[i] = favoriteStatus[course.ID]
 	}
 
-	err = r.db.Where("id IN ? AND deleted_at IS NULL", enrolledCourseIDs).
-		Find(&courses).Error
-
-	return courses, err
+	return courses, favorites, nil
 }
 
 // Verificar si un usuario ya está inscrito en un curso
@@ -244,4 +254,19 @@ func (r *courseRepository) GetApprovedCourses(userID string) ([]string, error) {
 	}
 
 	return courseNames, nil
+}
+
+// ToggleFavoriteStatus toggles the favorite status of a course for a user
+func (r *courseRepository) ToggleFavoriteStatus(courseID uint, userID string) error {
+	// Check if the user is enrolled in the course
+	var enrollment model.Enrollment
+	result := r.db.Where("user_id = ? AND course_id = ?", userID, courseID).First(&enrollment)
+
+	if result.Error != nil {
+		return fmt.Errorf("user is not enrolled in this course: %w", result.Error)
+	}
+
+	// Toggle favorite status (flip current value)
+	enrollment.Favorite = !enrollment.Favorite
+	return r.db.Save(&enrollment).Error
 }

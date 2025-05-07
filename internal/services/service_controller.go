@@ -65,6 +65,9 @@ func SetupRoutes() http.Handler {
 		api.PATCH("/:course_id/assignment/:assignment_id", courseHandler.UpdateAssignment)
 		api.DELETE("/:course_id/assignment/:assignment_id", courseHandler.DeleteAssignment)
 		api.GET("/:course_id/assignments", courseHandler.GetAssignments)
+
+		// Toggle favorite status (switches between favorite and not favorite)
+		api.PATCH("/:course_id/favorite/toggle/:user_id", courseHandler.ToggleFavoriteStatus)
 	}
 
 	return r
