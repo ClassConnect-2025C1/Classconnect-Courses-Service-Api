@@ -20,6 +20,9 @@ type File struct {
 	Name    string `gorm:"not null" json:"name"`
 	Content []byte `gorm:"not null" json:"content"`
 	Size    int64  `json:"size"`
+
+	// Associations
+	Assignment Assignment `gorm:"foreignKey:ID" json:"-"`
 }
 
 type Assignment struct {

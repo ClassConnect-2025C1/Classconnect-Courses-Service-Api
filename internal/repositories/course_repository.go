@@ -214,7 +214,7 @@ func (r *courseRepository) DeleteAssignment(assignmentID uint) error {
 
 func (r *courseRepository) GetAssignments(courseID uint) ([]model.Assignment, error) {
 	var assignments []model.Assignment
-	err := DB.Where("course_id = ?", courseID).Find(&assignments).Error
+	err := DB.Where("course_id = ?", courseID).Preload("Files").Find(&assignments).Error
 	return assignments, err
 }
 
