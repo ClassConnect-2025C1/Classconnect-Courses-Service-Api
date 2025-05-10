@@ -43,4 +43,16 @@ type CourseRepository interface {
 
 	// Toggle favorite status (flip current value)
 	ToggleFavoriteStatus(courseID uint, userID string) error
+
+	PutSubmission(submission *model.Submission) error
+
+	GetSubmissionByUserID(courseID, assignmentID uint, userID string) (*model.Submission, error)
+
+	GetSubmission(submissionID uint) (*model.Submission, error)
+
+	GetSubmissions(courseID, assignmentID uint) ([]model.Submission, error)
+
+	DeleteSubmission(submissionID uint) error
+
+	GetAssignmentByID(assignmentID uint) (*model.Assignment, error)
 }

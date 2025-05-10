@@ -92,3 +92,11 @@ func (r *UpdateAssignmentRequest) ApplyTo(assignment *Assignment) {
 	assignment.TimeLimit = r.TimeLimit
 	assignment.Files = r.Files
 }
+
+type CreateSubmissionRequest struct {
+	CourseID     uint             `json:"course_id" binding:"required"`
+	AssignmentID uint             `json:"assignment_id" binding:"required"`
+	UserID       string           `json:"user_id" binding:"required"`
+	Content      string           `json:"content" binding:"required"`
+	Files        []SubmissionFile `json:"files"`
+}

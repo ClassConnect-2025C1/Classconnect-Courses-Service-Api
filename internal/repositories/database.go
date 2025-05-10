@@ -49,7 +49,7 @@ func ConnectDB() error {
 	DB.Callback().Update().Before("gorm:update").Register("pq_array_handler", arrayHandlerUpdate)
 
 	// Auto migrate model
-	if err := DB.AutoMigrate(&model.Course{}, &model.Enrollment{}, &model.CourseFeedback{}, &model.Assignment{}, &model.CourseApproval{}); err != nil {
+	if err := DB.AutoMigrate(&model.Course{}, &model.Enrollment{}, &model.CourseFeedback{}, &model.Assignment{}, &model.CourseApproval{}, &model.Submission{}); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 

@@ -270,3 +270,80 @@ func (r *courseRepository) ToggleFavoriteStatus(courseID uint, userID string) er
 	enrollment.Favorite = !enrollment.Favorite
 	return r.db.Save(&enrollment).Error
 }
+
+func (r *courseRepository) PutSubmission(submission *model.Submission) error {
+	// Check if the submission already exists
+	var existingSubmission model.Submission
+	result := DB.Where("course_id = ? AND assignment_id = ? AND user_id = ?",
+		submission.CourseID, submission.AssignmentID, submission.UserID).First(&existingSubmission)
+
+	if result.Error == nil {
+		// Submission exists, update it
+		submission.ID = existingSubmission.ID // Preserve the original ID
+		// If files are provided, clear existing associations first
+		if len(submission.Files) > 0 {
+			// Clear the files association to remove old files
+			if err := DB.Model(&existingSubmission).Association("Files").Clear(); err != nil {
+				return err
+			}
+		}
+		return DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(submission).Error
+	} else if result.Error == gorm.ErrRecordNotFound {
+		// Submission doesn't exist, create it
+		return DB.Create(submission).Error
+	}
+
+	return result.Error
+}
+
+func (r *courseRepository) GetSubmissionByUserID(courseID, assignmentID uint, userID string) (*model.Submission, error) {
+	var submission model.Submission
+	err := DB.Where("course_id = ? AND assignment_id = ? AND user_id = ?", courseID, assignmentID, userID).Preload("Files").First(&submission).Error
+	if err != nil {
+		return nil, err
+	}
+	return &submission, nil
+}
+
+func (r *courseRepository) GetSubmission(submissionID uint) (*model.Submission, error) {
+	var submission model.Submission
+	err := DB.Where("id = ?", submissionID).First(&submission).Error
+	if err != nil {
+		return nil, err
+	}
+	return &submission, nil
+}
+
+func (r *courseRepository) GetSubmissions(courseID, assignmentID uint) ([]model.Submission, error) {
+	var submissions []model.Submission
+	err := DB.Where("course_id = ? AND assignment_id = ?", courseID, assignmentID).Preload("Files").Find(&submissions).Error
+	if err != nil {
+		return nil, err
+	}
+	return submissions, nil
+}
+
+func (r *courseRepository) DeleteSubmission(submissionID uint) error {
+	// First, find the submission
+	var submission model.Submission
+	if err := r.db.Where("id = ?",
+		submissionID).First(&submission).Error; err != nil {
+		return err
+	}
+
+	// Clear association with files (this removes entries from the junction table)
+	if err := r.db.Model(&submission).Association("Files").Clear(); err != nil {
+		return err
+	}
+
+	return r.db.Delete(&submission).Error
+}
+
+func (r *courseRepository) GetAssignmentByID(assignmentID uint) (*model.Assignment, error) {
+	var assignment model.Assignment
+	err := DB.Where("id = ?", assignmentID).Preload("Files").First(&assignment).Error
+	if err != nil {
+		return nil, err
+	}
+	return &assignment, nil
+}

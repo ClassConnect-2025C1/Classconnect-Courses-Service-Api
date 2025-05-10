@@ -66,6 +66,15 @@ func SetupRoutes() http.Handler {
 		api.DELETE("/:course_id/assignment/:assignment_id", courseHandler.DeleteAssignment)
 		api.GET("/:course_id/assignments", courseHandler.GetAssignments)
 
+		// Rutas de submissions
+		api.PUT("/:course_id/assignment/:assignment_id/submission", courseHandler.PutSubmission)
+		api.DELETE("/:course_id/assignment/:assignment_id/submission/:user_id", courseHandler.DeleteSubmissionByUserID)
+		// Get submission of a specific user
+		api.GET("/:course_id/assignment/:assignment_id/submission/:user_id", courseHandler.GetSubmissionByUserID)
+
+		// Get all submissions
+		api.GET("/:course_id/assignment/:assignment_id/submissions", courseHandler.GetSubmissions)
+
 		// Toggle favorite status (switches between favorite and not favorite)
 		api.PATCH("/:course_id/favorite/toggle/:user_id", courseHandler.ToggleFavoriteStatus)
 	}

@@ -37,6 +37,15 @@ func (h *courseHandler) getCourseID(c *gin.Context) (uint, bool) {
 	return uint(id), true
 }
 
+func (h *courseHandler) getAssignmentID(c *gin.Context) (uint, bool) {
+	id, err := strconv.Atoi(c.Param("assignment_id"))
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "Assignment ID must be a number")
+		return 0, false
+	}
+	return uint(id), true
+}
+
 func (h *courseHandler) getUserID(c *gin.Context) (string, bool) {
 	id := c.Param("user_id")
 	if id == "" {
@@ -53,6 +62,24 @@ func (h *courseHandler) getCourseByID(c *gin.Context, courseID uint) (*model.Cou
 		return nil, false
 	}
 	return course, true
+}
+
+func (h *courseHandler) getAssignmentByID(c *gin.Context, assignmentID uint) (*model.Assignment, bool) {
+	assignment, err := h.repo.GetAssignmentByID(assignmentID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Assignment not found")
+		return nil, false
+	}
+	return assignment, true
+}
+
+func (h *courseHandler) getSubmissionByID(c *gin.Context, submissionID uint) (*model.Submission, bool) {
+	submission, err := h.repo.GetSubmission(submissionID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Submission not found")
+		return nil, false
+	}
+	return submission, true
 }
 
 // formatCoursesResponse formats multiple courses for API response
@@ -515,4 +542,120 @@ func (h *courseHandler) ToggleFavoriteStatus(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Course favorite status toggled successfully",
 	})
+}
+
+func (h *courseHandler) PutSubmission(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+	assignmentID, ok := h.getAssignmentID(c)
+	if !ok {
+		return
+	}
+	// Check if course exists
+	_, ok = h.getCourseByID(c, courseID)
+	if !ok {
+		return
+	}
+	var req model.CreateSubmissionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Validation Error", err.Error())
+		return
+	}
+	submission := &model.Submission{
+		CourseID:     courseID,
+		AssignmentID: assignmentID,
+		UserID:       req.UserID,
+		Content:      req.Content,
+		Files:        req.Files,
+	}
+
+	if err := h.repo.PutSubmission(submission); err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error creating submission")
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Submission created/updated successfully"})
+}
+
+func (h *courseHandler) DeleteSubmissionByUserID(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+	assignmentID, ok := h.getAssignmentID(c)
+	if !ok {
+		return
+	}
+	userID, ok := h.getUserID(c)
+	if !ok {
+		return
+	}
+	// Check if course exists
+	_, ok = h.getCourseByID(c, courseID)
+	if !ok {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Course not found")
+		return
+	}
+	// Check if assignment exists
+	assignment, ok := h.getAssignmentByID(c, assignmentID)
+	if !ok {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Assignment not found")
+		return
+	}
+	// Check if assignment belongs to the course
+	if assignment.CourseID != courseID {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "Assignment does not belong to this course")
+		return
+	}
+	// First get the submission of the user to check if it exists
+	submission, err := h.repo.GetSubmissionByUserID(courseID, assignmentID, userID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Submission not found")
+		return
+	}
+	if err := h.repo.DeleteSubmission(submission.ID); err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error deleting submission")
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Submission deleted successfully"})
+}
+
+func (h *courseHandler) GetSubmissionByUserID(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+	assignmentID, ok := h.getAssignmentID(c)
+	if !ok {
+		return
+	}
+	userID, ok := h.getUserID(c)
+	if !ok {
+		return
+	}
+	submission, err := h.repo.GetSubmissionByUserID(courseID, assignmentID, userID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Submission not found")
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": submission})
+}
+
+func (h *courseHandler) GetSubmissions(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+	assignmentID, ok := h.getAssignmentID(c)
+	if !ok {
+		return
+	}
+	submissions, err := h.repo.GetSubmissions(courseID, assignmentID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving submissions")
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": submissions})
 }
