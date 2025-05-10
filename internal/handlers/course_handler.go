@@ -562,6 +562,10 @@ func (h *courseHandler) PutSubmission(c *gin.Context) {
 	if !ok {
 		return
 	}
+	userID, ok := h.getUserID(c)
+	if !ok {
+		return
+	}
 	// Check if course exists
 	_, ok = h.getCourseByID(c, courseID)
 	if !ok {
@@ -575,7 +579,7 @@ func (h *courseHandler) PutSubmission(c *gin.Context) {
 	submission := &model.Submission{
 		CourseID:     courseID,
 		AssignmentID: assignmentID,
-		UserID:       req.UserID,
+		UserID:       userID,
 		Content:      req.Content,
 		Files:        req.Files,
 	}

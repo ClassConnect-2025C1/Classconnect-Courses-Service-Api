@@ -67,7 +67,7 @@ func SetupRoutes() http.Handler {
 		api.GET("/:course_id/assignments", courseHandler.GetAssignments)
 
 		// Rutas de submissions
-		api.PUT("/:course_id/assignment/:assignment_id/submission", courseHandler.PutSubmission)
+		api.PUT("/:course_id/assignment/:assignment_id/submission/:user_id", courseHandler.PutSubmission)
 		api.DELETE("/:course_id/assignment/:assignment_id/submission/:user_id", courseHandler.DeleteSubmissionByUserID)
 		// Get submission of a specific user
 		api.GET("/:course_id/assignment/:assignment_id/submission/:user_id", courseHandler.GetSubmissionByUserID)
