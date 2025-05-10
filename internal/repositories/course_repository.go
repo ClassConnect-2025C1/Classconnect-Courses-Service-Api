@@ -347,3 +347,10 @@ func (r *courseRepository) GetAssignmentByID(assignmentID uint) (*model.Assignme
 	}
 	return &assignment, nil
 }
+
+func (r *courseRepository) GradeSubmission(submissionID uint, grade uint, feedback string) error {
+	return DB.Model(&model.Submission{}).Where("id = ?", submissionID).Updates(model.Submission{
+		Grade:    grade,
+		Feedback: feedback,
+	}).Error
+}

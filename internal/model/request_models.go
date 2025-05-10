@@ -100,3 +100,8 @@ type CreateSubmissionRequest struct {
 	Content      string           `json:"content" binding:"required"`
 	Files        []SubmissionFile `json:"files"`
 }
+
+type GradeSubmissionRequest struct {
+	Grade    uint   `json:"grade" binding:"required,gte=0,lte=100"`
+	Feedback string `json:"feedback"`
+}

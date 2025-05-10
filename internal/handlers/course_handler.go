@@ -46,6 +46,15 @@ func (h *courseHandler) getAssignmentID(c *gin.Context) (uint, bool) {
 	return uint(id), true
 }
 
+func (h *courseHandler) getSubmissionID(c *gin.Context) (uint, bool) {
+	id, err := strconv.Atoi(c.Param("submission_id"))
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "Submission ID must be a number")
+		return 0, false
+	}
+	return uint(id), true
+}
+
 func (h *courseHandler) getUserID(c *gin.Context) (string, bool) {
 	id := c.Param("user_id")
 	if id == "" {
@@ -658,4 +667,30 @@ func (h *courseHandler) GetSubmissions(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"data": submissions})
+}
+
+func (h *courseHandler) GradeSubmission(c *gin.Context) {
+	submissionID, ok := h.getSubmissionID(c)
+	if !ok {
+		return
+	}
+	submission, err := h.repo.GetSubmission(submissionID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Submission not found")
+		return
+	}
+	var req model.GradeSubmissionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Validation Error", err.Error())
+		return
+	}
+	submission.Grade = req.Grade
+	submission.Feedback = req.Feedback
+
+	if err := h.repo.PutSubmission(submission); err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error grading submission")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Submission graded successfully"})
 }

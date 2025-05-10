@@ -74,6 +74,8 @@ func SetupRoutes() http.Handler {
 
 		// Get all submissions
 		api.GET("/:course_id/assignment/:assignment_id/submissions", courseHandler.GetSubmissions)
+		// Grade and give feedback on a submission
+		api.PATCH("/:course_id/assignment/:assignment_id/submission/:submission_id", courseHandler.GradeSubmission)
 
 		// Toggle favorite status (switches between favorite and not favorite)
 		api.PATCH("/:course_id/favorite/toggle/:user_id", courseHandler.ToggleFavoriteStatus)
