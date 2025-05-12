@@ -221,6 +221,9 @@ func (r *courseRepository) DeleteAssignment(assignmentID uint) error {
 func (r *courseRepository) GetAssignmentsPreviews(courseID uint, userID string) ([]model.AssignmentPreview, error) {
 	var assignments []model.Assignment
 	err := DB.Where("course_id = ?", courseID).Preload("Files").Find(&assignments).Error
+	if err != nil {
+		return nil, err
+	}
 	previews := make([]model.AssignmentPreview, len(assignments))
 	course := model.Course{}
 	err = DB.Where("id = ?", courseID).First(&course).Error
