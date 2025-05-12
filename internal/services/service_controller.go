@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"templateGo/internal/handlers"
+	middleware "templateGo/internal/middlewares"
 	"templateGo/internal/repositories"
 
 	"github.com/gin-gonic/gin"
@@ -27,30 +28,30 @@ func SetupRoutes() http.Handler {
 	courseHandler := handlers.NewCourseHandler(courseRepo)
 
 	api := r.Group("/")
-
+	api.Use(middleware.AuthMiddleware())
 	{
 		api.POST("/course", courseHandler.CreateCourse)
 		api.GET("/courses", courseHandler.GetAllCourses)
 
 		// Actualmente solo devuelve todos los cursos, deberia devolver los cursos
 		// disponibles para el usuario autenticado en base a los criterios de elegibilidad
-		api.GET("/available/:user_id", courseHandler.GetAvailableCourses)
-		api.GET("/enrolled/:user_id", courseHandler.GetEnrolledCourses)
+		api.GET("/available", courseHandler.GetAvailableCourses)
+		api.GET("/enrolled", courseHandler.GetEnrolledCourses)
 
 		// aprobar un usuario en un curso
 		api.GET("/approve/:user_id/:course_id", courseHandler.ApproveCourses)
 
 		// devolver los cursos que aprobo el usuario autenticado
-		api.GET("/approved/:user_id", courseHandler.GetApprovedCourses)
+		api.GET("/approved", courseHandler.GetApprovedCourses)
 
 		// Rutas específicas por ID de curso
 		api.GET("/:course_id", courseHandler.GetCourseByID)
 		api.PATCH("/:course_id", courseHandler.UpdateCourse)
 		api.DELETE("/:course_id", courseHandler.DeleteCourse)
 
-		// Rutas de inscripción
-		api.POST("/:course_id/enroll/:user_id", courseHandler.EnrollUserInCourse)
-		api.DELETE("/:course_id/enroll/:user_id", courseHandler.UnenrollUserFromCourse)
+		// Rutas de inscripción para usuario actual
+		api.POST("/:course_id/enroll", courseHandler.EnrollUserInCourse)
+		api.DELETE("/:course_id/enroll", courseHandler.UnenrollUserFromCourse)
 
 		// Rutas de miembros
 		api.GET("/:course_id/members", courseHandler.GetCourseMembers)
@@ -66,8 +67,11 @@ func SetupRoutes() http.Handler {
 		api.GET("/:course_id/assignments", courseHandler.GetAssignments)
 
 		// Rutas de submissions
-		api.PUT("/:course_id/assignment/:assignment_id/submission/:user_id", courseHandler.PutSubmission)
-		api.DELETE("/:course_id/assignment/:assignment_id/submission/:user_id", courseHandler.DeleteSubmissionByUserID)
+		// Put/Delete submission of the current user
+		api.PUT("/:course_id/assignment/:assignment_id/submission", courseHandler.PutSubmissionOfCurrentUser)
+		api.DELETE("/:course_id/assignment/:assignment_id/submission", courseHandler.DeleteSubmissionOfCurrentUser)
+		// Get submission of the current user
+		api.GET("/:course_id/assignment/:assignment_id/submission", courseHandler.GetSubmissionOfCurrentUser)
 		// Get submission of a specific user
 		api.GET("/:course_id/assignment/:assignment_id/submission/:user_id", courseHandler.GetSubmissionByUserID)
 
@@ -76,8 +80,8 @@ func SetupRoutes() http.Handler {
 		// Grade and give feedback on a submission
 		api.PATCH("/:course_id/assignment/:assignment_id/submission/:submission_id", courseHandler.GradeSubmission)
 
-		// Toggle favorite status (switches between favorite and not favorite)
-		api.PATCH("/:course_id/favorite/toggle/:user_id", courseHandler.ToggleFavoriteStatus)
+		// Toggle favorite status (switches between favorite and not favorite) of the current user
+		api.PATCH("/:course_id/favorite/toggle", courseHandler.ToggleFavoriteStatus)
 	}
 
 	return r

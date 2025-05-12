@@ -64,6 +64,20 @@ func (h *courseHandler) getUserID(c *gin.Context) (string, bool) {
 	return id, true
 }
 
+func (h *courseHandler) getUserIDFromToken(c *gin.Context) (string, bool) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "User ID not found in token")
+		return "", false
+	}
+	id, ok := userID.(string)
+	if !ok {
+		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "Invalid User ID format")
+		return "", false
+	}
+	return id, true
+}
+
 func (h *courseHandler) getCourseByID(c *gin.Context, courseID uint) (*model.Course, bool) {
 	course, err := h.repo.GetByID(courseID)
 	if err != nil {
@@ -196,7 +210,7 @@ func (h *courseHandler) DeleteCourse(c *gin.Context) {
 }
 
 func (h *courseHandler) GetAvailableCourses(c *gin.Context) {
-	userID, ok := h.getUserID(c)
+	userID, ok := h.getUserIDFromToken(c)
 	if !ok {
 		return
 	}
@@ -211,9 +225,8 @@ func (h *courseHandler) GetAvailableCourses(c *gin.Context) {
 }
 
 func (h *courseHandler) GetEnrolledCourses(c *gin.Context) {
-	userID := c.Param("user_id")
-	if userID == "" {
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID must be provided")
+	userID, ok := h.getUserIDFromToken(c)
+	if !ok {
 		return
 	}
 
@@ -240,9 +253,8 @@ func (h *courseHandler) EnrollUserInCourse(c *gin.Context) {
 		return
 	}
 
-	userID := c.Param("user_id")
-	if userID == "" {
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID must be provided")
+	userID, ok := h.getUserIDFromToken(c)
+	if !ok {
 		return
 	}
 
@@ -264,9 +276,8 @@ func (h *courseHandler) UnenrollUserFromCourse(c *gin.Context) {
 		return
 	}
 
-	userID := c.Param("user_id")
-	if userID == "" {
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID must be provided")
+	userID, ok := h.getUserIDFromToken(c)
+	if !ok {
 		return
 	}
 
@@ -312,8 +323,13 @@ func (h *courseHandler) CreateCourseFeedback(c *gin.Context) {
 		return
 	}
 
+	userID, ok := h.getUserIDFromToken(c)
+	if !ok {
+		return
+	}
+
 	// Check if user is enrolled in the course
-	isEnrolled, err := h.repo.IsUserEnrolled(courseID, req.UserID)
+	isEnrolled, err := h.repo.IsUserEnrolled(courseID, userID)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error checking enrollment status")
 		return
@@ -486,7 +502,7 @@ func (h *courseHandler) GetAssignments(c *gin.Context) {
 
 // ApproveCourses approves a course for a user
 func (h *courseHandler) ApproveCourses(c *gin.Context) {
-	userID, ok := h.getUserID(c)
+	userID, ok := h.getUserIDFromToken(c)
 	if !ok {
 		return
 	}
@@ -516,7 +532,7 @@ func (h *courseHandler) ApproveCourses(c *gin.Context) {
 
 // GetApprovedCourses gets all approved courses for a user
 func (h *courseHandler) GetApprovedCourses(c *gin.Context) {
-	userID, ok := h.getUserID(c)
+	userID, ok := h.getUserIDFromToken(c)
 	if !ok {
 		return
 	}
@@ -537,9 +553,8 @@ func (h *courseHandler) ToggleFavoriteStatus(c *gin.Context) {
 		return
 	}
 
-	userID := c.Param("user_id")
-	if userID == "" {
-		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID must be provided")
+	userID, ok := h.getUserIDFromToken(c)
+	if !ok {
 		return
 	}
 
@@ -553,7 +568,7 @@ func (h *courseHandler) ToggleFavoriteStatus(c *gin.Context) {
 	})
 }
 
-func (h *courseHandler) PutSubmission(c *gin.Context) {
+func (h *courseHandler) PutSubmissionOfCurrentUser(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
@@ -562,7 +577,7 @@ func (h *courseHandler) PutSubmission(c *gin.Context) {
 	if !ok {
 		return
 	}
-	userID, ok := h.getUserID(c)
+	userID, ok := h.getUserIDFromToken(c)
 	if !ok {
 		return
 	}
@@ -592,7 +607,7 @@ func (h *courseHandler) PutSubmission(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Submission created/updated successfully"})
 }
 
-func (h *courseHandler) DeleteSubmissionByUserID(c *gin.Context) {
+func (h *courseHandler) DeleteSubmissionOfCurrentUser(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
@@ -601,7 +616,7 @@ func (h *courseHandler) DeleteSubmissionByUserID(c *gin.Context) {
 	if !ok {
 		return
 	}
-	userID, ok := h.getUserID(c)
+	userID, ok := h.getUserIDFromToken(c)
 	if !ok {
 		return
 	}
@@ -633,6 +648,27 @@ func (h *courseHandler) DeleteSubmissionByUserID(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Submission deleted successfully"})
+}
+
+func (h *courseHandler) GetSubmissionOfCurrentUser(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+	assignmentID, ok := h.getAssignmentID(c)
+	if !ok {
+		return
+	}
+	userID, ok := h.getUserIDFromToken(c)
+	if !ok {
+		return
+	}
+	submission, err := h.repo.GetSubmissionByUserID(courseID, assignmentID, userID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Submission not found")
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": submission})
 }
 
 func (h *courseHandler) GetSubmissionByUserID(c *gin.Context) {
