@@ -14,6 +14,7 @@ import (
 	sql "templateGo/internal/repositories"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
@@ -52,7 +53,7 @@ func TestMain(m *testing.M) {
 }
 
 // Helper function to make API requests and parse responses
-func makeRequest(method, url string, body any, target any) *httptest.ResponseRecorder {
+func makeRequest(method, url string, body any, target any, user_id string, user_email string) *httptest.ResponseRecorder {
 	var reqBody []byte
 	var err error
 
@@ -66,9 +67,13 @@ func makeRequest(method, url string, body any, target any) *httptest.ResponseRec
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest(method, url, bytes.NewBuffer(reqBody))
 	req.Header.Set("Content-Type", "application/json")
+
+	token := generateTestToken(user_id, user_email)
+	req.Header.Set("Authorization", "Bearer "+token)
+
 	router.ServeHTTP(w, req)
 
-	if target != nil && w.Code == http.StatusOK || w.Code == http.StatusCreated {
+	if target != nil && (w.Code == http.StatusOK || w.Code == http.StatusCreated) {
 		err = json.Unmarshal(w.Body.Bytes(), target)
 		if err != nil {
 			panic(err)
@@ -76,6 +81,23 @@ func makeRequest(method, url string, body any, target any) *httptest.ResponseRec
 	}
 
 	return w
+}
+
+func generateTestToken(user_id string, user_email string) string {
+	token := jwt.New(jwt.SigningMethodHS256)
+
+	claims := token.Claims.(jwt.MapClaims)
+	claims["user_id"] = user_id
+	claims["email"] = user_email
+
+	secret_key := os.Getenv("JWT_SECRET_KEY")
+	if secret_key == "" {
+		secret_key = "supersecret"
+	}
+
+	tokenString, _ := token.SignedString([]byte(secret_key))
+
+	return tokenString
 }
 
 func TestHealthcheck(t *testing.T) {
@@ -125,14 +147,14 @@ func TestCreateCourse_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	w := makeRequest("POST", "/course", payload, &response)
+	w := makeRequest("POST", "/course", payload, &response, "", "")
 
 	assert.Equal(t, http.StatusCreated, w.Code)
 	assert.NotNil(t, response["id"])
 	courseID := response["id"].(string)
 
 	// delete course
-	makeRequest("DELETE", "/"+courseID, nil, nil)
+	makeRequest("DELETE", "/"+courseID, nil, nil, "", "")
 }
 
 func TestCreateCourse_MissingTitle(t *testing.T) {
@@ -142,7 +164,7 @@ func TestCreateCourse_MissingTitle(t *testing.T) {
 		"capacity":    30,
 	}
 
-	w := makeRequest("POST", "/course", payload, nil)
+	w := makeRequest("POST", "/course", payload, nil, "", "")
 
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 	assert.Contains(t, w.Body.String(), "Validation Error")
@@ -158,7 +180,7 @@ func TestGetAllCourses(t *testing.T) {
 	}
 
 	var response map[string]any
-	makeRequest("POST", "/course", payload, &response)
+	makeRequest("POST", "/course", payload, &response, "", "")
 
 	payload2 := map[string]any{
 		"title":       "Test Course",
@@ -168,11 +190,11 @@ func TestGetAllCourses(t *testing.T) {
 	}
 
 	var response2 map[string]any
-	makeRequest("POST", "/course", payload2, &response2)
+	makeRequest("POST", "/course", payload2, &response2, "", "")
 
 	// La bdd deberia tener 2 cursos
 	var response3 map[string]any
-	w := makeRequest("GET", "/courses", nil, &response3)
+	w := makeRequest("GET", "/courses", nil, &response3, "", "")
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.NotNil(t, response3["data"])
 	courses := response3["data"].([]any)
@@ -181,8 +203,8 @@ func TestGetAllCourses(t *testing.T) {
 	// delete courses
 	courseID := response["id"].(string)
 	courseID2 := response2["id"].(string)
-	makeRequest("DELETE", "/"+courseID, nil, nil)
-	makeRequest("DELETE", "/"+courseID2, nil, nil)
+	makeRequest("DELETE", "/"+courseID, nil, nil, "", "")
+	makeRequest("DELETE", "/"+courseID2, nil, nil, "", "")
 }
 
 func TestCreatedCourseExist(t *testing.T) {
@@ -195,12 +217,12 @@ func TestCreatedCourseExist(t *testing.T) {
 	}
 
 	var response map[string]any
-	makeRequest("POST", "/course", payload, &response)
+	makeRequest("POST", "/course", payload, &response, "", "")
 
 	createdCourseID := response["id"].(string)
 
 	// Get all courses
-	w := makeRequest("GET", "/courses", nil, &response)
+	w := makeRequest("GET", "/courses", nil, &response, "", "")
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.NotNil(t, response["data"])
 	courses := response["data"].([]any)
@@ -215,7 +237,7 @@ func TestCreatedCourseExist(t *testing.T) {
 		}
 	}
 	// delete course
-	makeRequest("DELETE", "/"+createdCourseID, nil, nil)
+	makeRequest("DELETE", "/"+createdCourseID, nil, nil, "", "")
 	assert.True(t, found, "Created course should be in the list of all courses")
 }
 
@@ -229,13 +251,13 @@ func TestGetCourseById_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	makeRequest("POST", "/course", payload, &response)
+	makeRequest("POST", "/course", payload, &response, "", "")
 
 	createdCourseID := response["id"].(string)
 
 	// Get the course by ID\
 	var response2 map[string]any
-	w := makeRequest("GET", "/"+createdCourseID, nil, &response2)
+	w := makeRequest("GET", "/"+createdCourseID, nil, &response2, "", "")
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.NotNil(t, response2)
 	assert.Equal(t, createdCourseID, response2["id"])
@@ -243,11 +265,11 @@ func TestGetCourseById_Success(t *testing.T) {
 	assert.Equal(t, "Test Description", response2["description"])
 
 	// delete course
-	makeRequest("DELETE", "/"+createdCourseID, nil, nil)
+	makeRequest("DELETE", "/"+createdCourseID, nil, nil, "", "")
 }
 
 func TestGetCourseById_NotFound(t *testing.T) {
-	w := makeRequest("GET", "/999999", nil, nil)
+	w := makeRequest("GET", "/999999", nil, nil, "", "")
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
@@ -261,7 +283,7 @@ func TestUpdateCourse_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	makeRequest("POST", "/course", payload, &response)
+	makeRequest("POST", "/course", payload, &response, "", "")
 
 	createdCourseID := response["id"].(string)
 
@@ -271,11 +293,11 @@ func TestUpdateCourse_Success(t *testing.T) {
 		"description": "Updated Description",
 	}
 
-	w := makeRequest("PATCH", "/"+createdCourseID, updatePayload, nil)
+	w := makeRequest("PATCH", "/"+createdCourseID, updatePayload, nil, "", "")
 	assert.Equal(t, http.StatusNoContent, w.Code)
 
 	var updatedResponse map[string]any
-	w = makeRequest("GET", "/"+createdCourseID, nil, &updatedResponse)
+	w = makeRequest("GET", "/"+createdCourseID, nil, &updatedResponse, "", "")
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.NotNil(t, updatedResponse)
 	assert.Equal(t, "Updated Course", updatedResponse["title"])
@@ -283,7 +305,7 @@ func TestUpdateCourse_Success(t *testing.T) {
 	assert.Equal(t, createdCourseID, updatedResponse["id"])
 
 	// // delete course
-	makeRequest("DELETE", "/"+createdCourseID, nil, nil)
+	makeRequest("DELETE", "/"+createdCourseID, nil, nil, "", "")
 }
 
 func TestUpdateCourse_NotFound(t *testing.T) {
@@ -291,20 +313,20 @@ func TestUpdateCourse_NotFound(t *testing.T) {
 		"title": "This Will Fail",
 	}
 
-	w := makeRequest("PATCH", "/999999", payload, nil)
+	w := makeRequest("PATCH", "/999999", payload, nil, "", "")
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
 func TestGetAvailableCourses_Success(t *testing.T) {
 	var response map[string]any
-	w := makeRequest("GET", "/courses", nil, &response)
+	w := makeRequest("GET", "/courses", nil, &response, "", "")
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.NotNil(t, response["data"])
 }
 
 func TestGetAvailableCourses_InvalidUserId(t *testing.T) {
-	w := makeRequest("GET", "/available?user_id=invalid", nil, nil)
+	w := makeRequest("GET", "/available", nil, nil, "invalid", "")
 	assert.Equal(t, http.StatusBadRequest, w.Code)
 }
 
@@ -318,19 +340,19 @@ func TestEnrollUserInCourse_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	w := makeRequest("POST", "/course", payload, &response)
+	w := makeRequest("POST", "/course", payload, &response, "", "")
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	createdCourseID := response["id"].(string)
 	userID := "1"
 
 	// inscribir a un alumno usando la nueva ruta
-	w = makeRequest("POST", "/"+createdCourseID+"/enroll/"+userID, nil, nil)
+	w = makeRequest("POST", "/"+createdCourseID+"/enroll", nil, nil, userID, "")
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	// ver que el alumno esta en el curso
 	var membersResponse map[string]any
-	w = makeRequest("GET", "/"+createdCourseID+"/members", nil, &membersResponse)
+	w = makeRequest("GET", "/"+createdCourseID+"/members", nil, &membersResponse, "", "")
 
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.NotNil(t, membersResponse["data"])
@@ -341,7 +363,7 @@ func TestEnrollUserInCourse_Success(t *testing.T) {
 	assert.Equal(t, userID, members[0].(map[string]any)["user_id"])
 
 	// eliminar curso
-	makeRequest("DELETE", "/"+createdCourseID, nil, nil)
+	makeRequest("DELETE", "/"+createdCourseID, nil, nil, "", "")
 }
 
 func TestGetCourseMembers_Success(t *testing.T) {
@@ -354,7 +376,7 @@ func TestGetCourseMembers_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	w := makeRequest("POST", "/course", payload, &response)
+	w := makeRequest("POST", "/course", payload, &response, "", "")
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	createdCourseID := response["id"].(string)
@@ -363,15 +385,15 @@ func TestGetCourseMembers_Success(t *testing.T) {
 	userId1 := "1"
 	userId2 := "2"
 
-	w = makeRequest("POST", "/"+createdCourseID+"/enroll/"+userId1, nil, nil)
+	w = makeRequest("POST", "/"+createdCourseID+"/enroll", nil, nil, userId1, "")
 	assert.Equal(t, http.StatusOK, w.Code)
 
-	w = makeRequest("POST", "/"+createdCourseID+"/enroll/"+userId2, nil, nil)
+	w = makeRequest("POST", "/"+createdCourseID+"/enroll", nil, nil, userId2, "")
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	// ver que los alumnos están en el curso
 	var membersResponse map[string]any
-	w = makeRequest("GET", "/"+createdCourseID+"/members", nil, &membersResponse)
+	w = makeRequest("GET", "/"+createdCourseID+"/members", nil, &membersResponse, "", "")
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	assert.NotNil(t, membersResponse["data"])
@@ -390,7 +412,7 @@ func TestGetCourseMembers_Success(t *testing.T) {
 	assert.Contains(t, userIds, userId2)
 
 	// eliminar curso
-	makeRequest("DELETE", "/"+createdCourseID, nil, nil)
+	makeRequest("DELETE", "/"+createdCourseID, nil, nil, "", "")
 }
 
 func TestUnenrollUserFromCourse_Success(t *testing.T) {
@@ -403,22 +425,22 @@ func TestUnenrollUserFromCourse_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	w := makeRequest("POST", "/course", payload, &response)
+	w := makeRequest("POST", "/course", payload, &response, "", "")
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	createdCourseID := response["id"].(string)
 	userID := "1"
 
 	// inscribir a un alumno usando la nueva ruta
-	w = makeRequest("POST", "/"+createdCourseID+"/enroll/"+userID, nil, nil)
+	w = makeRequest("POST", "/"+createdCourseID+"/enroll", nil, nil, userID, "")
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	// desinscribir al alumno usando la nueva ruta
-	w = makeRequest("DELETE", "/"+createdCourseID+"/enroll/"+userID, nil, nil)
+	w = makeRequest("DELETE", "/"+createdCourseID+"/enroll", nil, nil, userID, "")
 	assert.Equal(t, http.StatusOK, w.Code)
 
 	var membersResponse map[string]any
-	w = makeRequest("GET", "/"+createdCourseID+"/members", nil, &membersResponse)
+	w = makeRequest("GET", "/"+createdCourseID+"/members", nil, &membersResponse, "", "")
 	assert.Equal(t, http.StatusOK, w.Code)
 	assert.NotNil(t, membersResponse["data"])
 
@@ -426,7 +448,7 @@ func TestUnenrollUserFromCourse_Success(t *testing.T) {
 	assert.Equal(t, 0, len(members))
 
 	// eliminar curso
-	makeRequest("DELETE", "/"+createdCourseID, nil, nil)
+	makeRequest("DELETE", "/"+createdCourseID, nil, nil, "", "")
 }
 
 func TestDeleteCourse_Success(t *testing.T) {
@@ -438,23 +460,23 @@ func TestDeleteCourse_Success(t *testing.T) {
 	}
 
 	var response map[string]any
-	w := makeRequest("POST", "/course", payload, &response)
+	w := makeRequest("POST", "/course", payload, &response, "", "")
 	assert.Equal(t, http.StatusCreated, w.Code)
 
 	createdCourseID := response["id"].(string)
 
 	assert.NotEmpty(t, createdCourseID)
 
-	w = makeRequest("DELETE", "/"+createdCourseID, nil, nil)
+	w = makeRequest("DELETE", "/"+createdCourseID, nil, nil, "", "")
 	assert.Equal(t, http.StatusNoContent, w.Code)
 
 	// Verify course was deleted
 	var deletedResponse map[string]any
-	w = makeRequest("GET", "/"+createdCourseID, nil, &deletedResponse)
+	w = makeRequest("GET", "/"+createdCourseID, nil, &deletedResponse, "", "")
 	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
 func TestDeleteCourse_NotFound(t *testing.T) {
-	w := makeRequest("DELETE", "/999999", nil, nil)
+	w := makeRequest("DELETE", "/999999", nil, nil, "", "")
 	assert.Equal(t, http.StatusNoContent, w.Code)
 }
