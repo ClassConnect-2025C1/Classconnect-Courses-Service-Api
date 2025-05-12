@@ -35,7 +35,7 @@ type CourseRepository interface {
 
 	DeleteAssignment(assignmentID uint) error
 
-	GetAssignments(courseID uint) ([]model.Assignment, error)
+	GetAssignmentsPreviews(courseID uint) ([]model.AssignmentPreview, error)
 
 	ApproveCourse(userID string, courseID uint, courseName string) error
 

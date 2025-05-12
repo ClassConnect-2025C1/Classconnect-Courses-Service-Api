@@ -218,6 +218,23 @@ func (r *courseRepository) DeleteAssignment(assignmentID uint) error {
 	return DB.Delete(&model.Assignment{}, assignmentID).Error
 }
 
+func (r *courseRepository) GetAssignmentsPreviews(courseID uint) ([]model.AssignmentPreview, error) {
+	var assignments []model.Assignment
+	err := DB.Where("course_id = ?", courseID).Preload("Files").Find(&assignments).Error
+	previews := make([]model.AssignmentPreview, len(assignments))
+	for i, assignment := range assignments {
+		previews[i] = model.AssignmentPreview{
+			ID:        assignment.ID,
+			Title:     assignment.Title,
+			Deadline:  assignment.Deadline,
+			TimeLimit: assignment.TimeLimit,
+			CreatedAt: assignment.CreatedAt,
+			DeletedAt: assignment.DeletedAt,
+		}
+	}
+	return previews, err
+}
+
 func (r *courseRepository) GetAssignments(courseID uint) ([]model.Assignment, error) {
 	var assignments []model.Assignment
 	err := DB.Where("course_id = ?", courseID).Preload("Files").Find(&assignments).Error

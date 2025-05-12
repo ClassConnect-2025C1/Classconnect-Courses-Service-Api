@@ -57,24 +57,11 @@ func (r *UpdateCourseRequest) ApplyTo(course *Course) {
 }
 
 type CreateAssignmentRequest struct {
-	CourseID    uint      `json:"course_id" binding:"required"`
 	Title       string    `json:"title" binding:"required"`
 	Description string    `json:"description"`
 	Deadline    time.Time `json:"deadline" binding:"required"`
 	TimeLimit   int       `json:"time_limit"` // in minutes
 	Files       []File    `json:"files"`      // Provisory: a file struct has content as binary data
-}
-
-func (r *CreateAssignmentRequest) ToModel() *Assignment {
-	return &Assignment{
-		CourseID:    r.CourseID,
-		Title:       r.Title,
-		Description: r.Description,
-		Deadline:    r.Deadline,
-		TimeLimit:   r.TimeLimit,
-		Files:       r.Files,
-		CreatedAt:   time.Now(),
-	}
 }
 
 type UpdateAssignmentRequest struct {

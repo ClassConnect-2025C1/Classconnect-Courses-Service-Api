@@ -36,3 +36,12 @@ type Assignment struct {
 	// Associations
 	Course Course `gorm:"foreignKey:CourseID" json:"-"`
 }
+
+type AssignmentPreview struct {
+	ID        uint           `gorm:"primarykey" json:"id"`
+	Title     string         `gorm:"not null" json:"title"`
+	Deadline  time.Time      `json:"deadline"`
+	TimeLimit int            `json:"time_limit"` // in minutes
+	CreatedAt time.Time      `json:"created_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+}

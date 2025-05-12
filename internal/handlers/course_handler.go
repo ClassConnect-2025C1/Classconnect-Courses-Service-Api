@@ -479,7 +479,7 @@ func (h *courseHandler) DeleteAssignment(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func (h *courseHandler) GetAssignments(c *gin.Context) {
+func (h *courseHandler) GetAssignmentsPreviews(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
@@ -491,7 +491,7 @@ func (h *courseHandler) GetAssignments(c *gin.Context) {
 		return
 	}
 
-	assignments, err := h.repo.GetAssignments(courseID)
+	assignments, err := h.repo.GetAssignmentsPreviews(courseID)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving assignments")
 		return
