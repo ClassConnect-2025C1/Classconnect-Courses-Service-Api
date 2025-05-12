@@ -27,9 +27,8 @@ func SetupRoutes() http.Handler {
 	courseHandler := handlers.NewCourseHandler(courseRepo)
 
 	api := r.Group("/")
-	// api.Use(middleware.AuthMiddleware()) // Middleware for authentication if necessary
+
 	{
-		// Rutas según especificación OpenAPI
 		api.POST("/course", courseHandler.CreateCourse)
 		api.GET("/courses", courseHandler.GetAllCourses)
 

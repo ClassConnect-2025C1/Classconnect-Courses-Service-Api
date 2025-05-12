@@ -6,6 +6,8 @@ import (
 	"templateGo/internal/model"
 	"time"
 
+	"templateGo/internal/utils"
+
 	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
@@ -160,6 +162,10 @@ func (r *courseRepository) EnrollUser(courseID uint, userID string) error {
 	enrollment := model.Enrollment{
 		CourseID: courseID,
 		UserID:   userID,
+	}
+
+	if err := r.db.Where("course_id = ? AND user_id = ?", courseID, userID).First(&enrollment).Error; err == nil {
+		return utils.ErrUserAlreadyEnrolled
 	}
 
 	return r.db.Create(&enrollment).Error
