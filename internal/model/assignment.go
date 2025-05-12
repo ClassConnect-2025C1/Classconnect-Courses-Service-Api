@@ -44,4 +44,12 @@ type AssignmentPreview struct {
 	TimeLimit int            `json:"time_limit"` // in minutes
 	CreatedAt time.Time      `json:"created_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+	Status    string         `json:"status"` // "pending", "submitted", "started"
+}
+
+type AssignmentSession struct {
+	ID           uint      `gorm:"primarykey" json:"id"`
+	UserID       string    `gorm:"not null" json:"user_id"`
+	AssignmentID uint      `gorm:"not null" json:"assignment_id"`
+	StartedAt    time.Time `gorm:"not null" json:"started_at"`
 }

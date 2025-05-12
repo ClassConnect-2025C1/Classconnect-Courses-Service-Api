@@ -491,13 +491,67 @@ func (h *courseHandler) GetAssignmentsPreviews(c *gin.Context) {
 		return
 	}
 
-	assignments, err := h.repo.GetAssignmentsPreviews(courseID)
+	userID, ok := h.getUserIDFromToken(c)
+	if !ok {
+		return
+	}
+
+	assignments, err := h.repo.GetAssignmentsPreviews(courseID, userID)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving assignments")
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": assignments})
+}
+
+func (h *courseHandler) GetAssignmentByID(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+
+	assignmentID, err := strconv.Atoi(c.Param("assignment_id"))
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "Assignment ID must be a number")
+		return
+	}
+
+	// Check if course exists
+	course, ok := h.getCourseByID(c, courseID)
+	if !ok {
+		return
+	}
+
+	// Get current user ID
+	userID, ok := h.getUserIDFromToken(c)
+	if !ok {
+		return
+	}
+
+	assignment, ok := h.getAssignmentByID(c, uint(assignmentID))
+	if !ok {
+		return
+	}
+
+	// If the user is the teacher, just return the assignment
+	if course.CreatedBy == userID {
+		c.JSON(http.StatusOK, gin.H{"data": assignment})
+		return
+	}
+
+	session, err := h.repo.GetOrCreateAssignmentSession(userID, uint(assignmentID))
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error tracking assignment session")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data": assignment,
+		"session": gin.H{
+			"started_at": session.StartedAt,
+		},
+	})
 }
 
 // ApproveCourses approves a course for a user

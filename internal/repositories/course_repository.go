@@ -218,11 +218,41 @@ func (r *courseRepository) DeleteAssignment(assignmentID uint) error {
 	return DB.Delete(&model.Assignment{}, assignmentID).Error
 }
 
-func (r *courseRepository) GetAssignmentsPreviews(courseID uint) ([]model.AssignmentPreview, error) {
+func (r *courseRepository) GetAssignmentsPreviews(courseID uint, userID string) ([]model.AssignmentPreview, error) {
 	var assignments []model.Assignment
 	err := DB.Where("course_id = ?", courseID).Preload("Files").Find(&assignments).Error
 	previews := make([]model.AssignmentPreview, len(assignments))
+	course := model.Course{}
+	err = DB.Where("id = ?", courseID).First(&course).Error
 	for i, assignment := range assignments {
+		// Get status: if there exists a submission of user for this assignment, then it is submitted
+		// if it's not submitted but a session exists, then it is started
+		// if there is no session, then it is pending
+		// status is none if the userID is of the course creator
+		var status string
+		if course.CreatedBy == userID {
+			status = "none"
+		} else {
+			var submissionCount int64
+			DB.Model(&model.Submission{}).
+				Where("course_id = ? AND assignment_id = ? AND user_id = ?", courseID, assignment.ID, userID).
+				Count(&submissionCount)
+
+			if submissionCount > 0 {
+				status = "submitted"
+			} else {
+				var sessionCount int64
+				DB.Model(&model.AssignmentSession{}).
+					Where("assignment_id = ? AND user_id = ?", assignment.ID, userID).
+					Count(&sessionCount)
+
+				if sessionCount > 0 {
+					status = "started"
+				} else {
+					status = "pending"
+				}
+			}
+		}
 		previews[i] = model.AssignmentPreview{
 			ID:        assignment.ID,
 			Title:     assignment.Title,
@@ -230,6 +260,7 @@ func (r *courseRepository) GetAssignmentsPreviews(courseID uint) ([]model.Assign
 			TimeLimit: assignment.TimeLimit,
 			CreatedAt: assignment.CreatedAt,
 			DeletedAt: assignment.DeletedAt,
+			Status:    status,
 		}
 	}
 	return previews, err
@@ -239,6 +270,18 @@ func (r *courseRepository) GetAssignments(courseID uint) ([]model.Assignment, er
 	var assignments []model.Assignment
 	err := DB.Where("course_id = ?", courseID).Preload("Files").Find(&assignments).Error
 	return assignments, err
+}
+
+func (r *courseRepository) GetOrCreateAssignmentSession(userID string, assignmentID uint) (*model.AssignmentSession, error) {
+	var session model.AssignmentSession
+	err := DB.Where("user_id = ? AND assignment_id = ?", userID, assignmentID).First(&session).Error
+	if err != nil && err == gorm.ErrRecordNotFound {
+		session.UserID = userID
+		session.AssignmentID = assignmentID
+		session.StartedAt = time.Now()
+		err = DB.Create(&session).Error
+	}
+	return &session, err
 }
 
 // ApproveCourse approves a course for a user
