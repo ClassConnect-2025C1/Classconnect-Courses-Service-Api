@@ -556,7 +556,7 @@ func (h *courseHandler) GetAssignmentByID(c *gin.Context) {
 
 // ApproveCourses approves a course for a user
 func (h *courseHandler) ApproveCourses(c *gin.Context) {
-	userID, ok := h.getUserIDFromToken(c)
+	userID, ok := h.getUserID(c)
 	if !ok {
 		return
 	}
