@@ -65,19 +65,11 @@ type CreateAssignmentRequest struct {
 }
 
 type UpdateAssignmentRequest struct {
-	Title       string    `json:"title" binding:"required"`
+	Title       string    `json:"title"`
 	Description string    `json:"description"`
-	Deadline    time.Time `json:"deadline" binding:"required"`
+	Deadline    time.Time `json:"deadline"`
 	TimeLimit   int       `json:"time_limit"` // in minutes
 	Files       []File    `json:"files"`      // Provisory: a file struct has content as binary data
-}
-
-func (r *UpdateAssignmentRequest) ApplyTo(assignment *Assignment) {
-	assignment.Title = r.Title
-	assignment.Description = r.Description
-	assignment.Deadline = r.Deadline
-	assignment.TimeLimit = r.TimeLimit
-	assignment.Files = r.Files
 }
 
 type CreateSubmissionRequest struct {
