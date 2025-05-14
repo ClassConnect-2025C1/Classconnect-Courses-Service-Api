@@ -60,6 +60,9 @@ func SetupRoutes() http.Handler {
 		api.POST("/:course_id/feedback", courseHandler.CreateCourseFeedback)
 		api.GET("/:course_id/feedbacks", courseHandler.GetCourseFeedbacks)
 
+		// Add the new AI feedback analysis endpoint
+		api.GET("/:course_id/ai-feedback-analysis", courseHandler.GetAIFeedbackAnalysis)
+
 		// Rutas relacionadas a tareas(assignment)
 		api.POST("/:course_id/assignment", courseHandler.CreateAssignment)
 		api.PATCH("/:course_id/assignment/:assignment_id", courseHandler.UpdateAssignment)
