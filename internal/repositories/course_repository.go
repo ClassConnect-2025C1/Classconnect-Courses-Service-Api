@@ -211,7 +211,27 @@ func (r *courseRepository) CreateAssignment(assignment *model.Assignment) error 
 }
 
 func (r *courseRepository) UpdateAssignment(assignment *model.Assignment) error {
-	return DB.Save(assignment).Error
+	var existingAssignment model.Assignment
+	if err := DB.First(&existingAssignment, assignment.ID).Error; err != nil {
+		return err
+	}
+	// Start a transaction for atomicity
+	tx := DB.Begin()
+
+	// Clear existing file associations
+	if err := tx.Model(&existingAssignment).Association("Files").Clear(); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	assignment.CreatedAt = existingAssignment.CreatedAt // Preserve created time
+
+	if err := tx.Session(&gorm.Session{FullSaveAssociations: true}).Save(assignment).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }
 
 func (r *courseRepository) DeleteAssignment(assignmentID uint) error {
