@@ -13,8 +13,17 @@ var (
 	textTemplate = `Felicitaciones %s!.
 Tu inscripción al curso %s fue exitosa.`
 
-	htmlTemplate = `<p>Felicitaciones %s!<br>
-Tu inscripción al curso %s fue exitosa.</p>`
+	htmlTemplate = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Inscripción exitosa</title>
+</head>
+<body>
+  <p>Felicitaciones %s!<br>
+  Tu inscripción al curso %s fue exitosa.</p>
+</body>
+</html>`
 )
 
 type CurseEnrollNotification struct {
@@ -24,7 +33,6 @@ type CurseEnrollNotification struct {
 	HTML          string `json:"html"`
 }
 
-// Usamos una interfaz que puede ser implementada por http.Client
 type HttpDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
