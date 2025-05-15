@@ -10,6 +10,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"templateGo/internal/externals"
 	"templateGo/internal/model"
 	"templateGo/internal/repositories"
 	"templateGo/internal/utils"
@@ -18,7 +19,8 @@ import (
 )
 
 type courseHandler struct {
-	repo repositories.CourseRepository
+	repo         repositories.CourseRepository
+	notification *externals.NotificationClient
 }
 
 type updateRoleRequest struct {
@@ -30,8 +32,8 @@ type toggleFavoriteRequest struct {
 	IsFavorite bool `json:"is_favorite"`
 }
 
-func NewCourseHandler(repo repositories.CourseRepository) *courseHandler {
-	return &courseHandler{repo}
+func NewCourseHandler(repo repositories.CourseRepository, noti *externals.NotificationClient) *courseHandler {
+	return &courseHandler{repo: repo, notification: noti}
 }
 
 func (h *courseHandler) getCourseID(c *gin.Context) (uint, bool) {
@@ -272,7 +274,8 @@ func (h *courseHandler) EnrollUserInCourse(c *gin.Context) {
 		}
 		return
 	}
-
+	course, ok := h.getCourseByID(c, courseID)
+	h.notification.SendNotificationEmail(userID, course.Title)
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully enrolled"})
 }
 
