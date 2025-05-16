@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"templateGo/internal/model"
@@ -848,7 +847,8 @@ func (h *courseHandler) GetAIFeedbackAnalysis(c *gin.Context) {
 func formatFeedbackForAnalysis(courseTitle string, feedbacks []model.CourseFeedback) string {
 	var builder strings.Builder
 
-	builder.WriteString(fmt.Sprintf("Please analyze the following feedback for the course '%s' and provide a summary of common themes, strengths, and areas for improvement, make it short:\n\n", courseTitle))
+	// builder.WriteString(fmt.Sprintf("Please analyze the following feedback for the course '%s' and provide a summary of common themes, strengths, and areas for improvement, make it short:\n\n", courseTitle))
+	builder.WriteString(fmt.Sprintf("Please analyze the following feedback for the course '%s' and provide a summary of common themes, strengths, and areas for improvement, make it short, the rating is from 1 to 5, and I dont want any type of formatting in the text:", courseTitle))
 
 	for i, feedback := range feedbacks {
 		builder.WriteString(fmt.Sprintf("Feedback %d:\n", i+1))
@@ -868,7 +868,8 @@ func formatFeedbackForAnalysis(courseTitle string, feedbacks []model.CourseFeedb
 // callGeminiAPI calls the Google Gemini API to get an analysis of the feedback
 func callGeminiAPI(feedbackText string) (string, error) {
 	// Get API key from environment
-	apiKey := os.Getenv("GEMINI_API_KEY")
+	// apiKey := os.Getenv("GEMINI_API_KEY")
+	apiKey := "AIzaSyCGf5mrU_9zlsOg538SsjJSeq1yIyyLXDc"
 
 	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s", apiKey)
 
