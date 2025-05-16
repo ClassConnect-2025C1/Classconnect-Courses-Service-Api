@@ -27,6 +27,8 @@ func SetupRoutes() http.Handler {
 	// Create a new course handler
 	courseRepo := repositories.NewCourseRepository()
 	externalNotificatio := externals.NewNotificationClient(nil)
+	// assingments
+	// userHandlers
 	courseHandler := handlers.NewCourseHandler(courseRepo, externalNotificatio)
 
 	api := r.Group("/")
