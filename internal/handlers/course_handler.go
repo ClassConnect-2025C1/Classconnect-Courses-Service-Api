@@ -143,13 +143,7 @@ func (h *courseHandler) CreateCourse(c *gin.Context) {
 		return
 	}
 
-	userID, ok := h.getUserIDFromToken(c)
-
-	if !ok {
-		return
-	}
-
-	course := request.ToModel(userID)
+	course := request.ToModel()
 	if err := h.repo.Create(course); err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error creating course")
 		return
