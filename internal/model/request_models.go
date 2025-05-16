@@ -4,19 +4,19 @@ import "time"
 
 // CreateCourseRequest represents the input for creating a course
 type CreateCourseRequest struct {
-	Title               string   `json:"title" binding:"required"`
-	Description         string   `json:"description"`
-	CreatedBy           string   `json:"created_by" binding:"required"`
+	Title       string `json:"title" binding:"required"`
+	Description string `json:"description"`
+	// CreatedBy           string   `json:"created_by" binding:"required"`
 	Capacity            int      `json:"capacity" binding:"required,gte=1"`
 	EligibilityCriteria []string `json:"eligibility_criteria"`
 }
 
 // ToModel converts API request to internal Course model
-func (r *CreateCourseRequest) ToModel() *Course {
+func (r *CreateCourseRequest) ToModel(userID string) *Course {
 	return &Course{
 		Title:               r.Title,
 		Description:         r.Description,
-		CreatedBy:           r.CreatedBy,
+		CreatedBy:           userID,
 		Capacity:            r.Capacity,
 		StartDate:           time.Now(),
 		EndDate:             time.Now().AddDate(0, 4, 0), // 4 months by default
