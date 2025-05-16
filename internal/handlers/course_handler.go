@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"templateGo/internal/externals"
@@ -249,7 +250,7 @@ func (h *courseHandler) GetEnrolledCourses(c *gin.Context) {
 	}
 
 	// Create a response that includes both course info and favorite status
-	response := make([]map[string]interface{}, len(courses))
+	response := make([]map[string]any, len(courses))
 	for i, course := range courses {
 		courseMap := formatCourseResponse(&course)
 		courseMap["is_favorite"] = favorites[i]
@@ -278,7 +279,11 @@ func (h *courseHandler) EnrollUserInCourse(c *gin.Context) {
 		}
 		return
 	}
+
 	course, ok := h.getCourseByID(c, courseID)
+	if !ok {
+		return
+	}
 	h.notification.SendNotificationEmail(userID, course.Title)
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully enrolled"})
 }
@@ -590,6 +595,10 @@ func (h *courseHandler) ApproveCourses(c *gin.Context) {
 
 	// Now use both the course ID and name
 	if err := h.repo.ApproveCourse(userID, uint(courseID), course.Title); err != nil {
+		if strings.Contains(err.Error(), "User already approved") {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "User already approved"})
+			return
+		}
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error approving course")
 		return
 	}
@@ -871,8 +880,8 @@ func formatFeedbackForAnalysis(courseTitle string, feedbacks []model.CourseFeedb
 // callGeminiAPI calls the Google Gemini API to get an analysis of the feedback
 func callGeminiAPI(feedbackText string) (string, error) {
 	// Get API key from environment
-	// apiKey := os.Getenv("GEMINI_API_KEY")
-	apiKey := "AIzaSyCGf5mrU_9zlsOg538SsjJSeq1yIyyLXDc"
+	apiKey := os.Getenv("GEMINI_API_KEY")
+	// apiKey := "AIzaSyCGf5mrU_9zlsOg538SsjJSeq1yIyyLXDc"
 
 	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s", apiKey)
 
