@@ -23,15 +23,6 @@ type courseHandler struct {
 	notification *externals.NotificationClient
 }
 
-type updateRoleRequest struct {
-	Role string `json:"role" binding:"required"`
-}
-
-// Add a struct for the request
-type toggleFavoriteRequest struct {
-	IsFavorite bool `json:"is_favorite"`
-}
-
 func NewCourseHandler(repo repositories.CourseRepository, noti *externals.NotificationClient) *courseHandler {
 	return &courseHandler{repo: repo, notification: noti}
 }
