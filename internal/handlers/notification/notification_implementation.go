@@ -9,40 +9,7 @@ import (
 	"os"
 )
 
-var (
-	textTemplate = `Felicitaciones %s!.
-Tu inscripción al curso %s fue exitosa.`
-
-	htmlTemplate = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>Inscripción exitosa</title>
-</head>
-<body>
-  <p>Felicitaciones %s!<br>
-  Tu inscripción al curso %s fue exitosa.</p>
-</body>
-</html>`
-)
-
-type CurseEnrollNotification struct {
-	ReceiverEmail string `json:"receiver_email"`
-	Subject       string `json:"subject"`
-	Text          string `json:"text"`
-	HTML          string `json:"html"`
-}
-
-type HttpDoer interface {
-	Do(req *http.Request) (*http.Response, error)
-}
-
-type NotificationClient struct {
-	Client                 HttpDoer
-	NotificationServiceURL string
-	UsersServiceURL        string
-}
-
+// NewNotificationClient creates a new notification client
 func NewNotificationClient(client HttpDoer) *NotificationClient {
 	notificationURL := os.Getenv("URL_NOTIFICATION")
 	usersServiceURL := os.Getenv("URL_USERS")
@@ -62,6 +29,7 @@ func NewNotificationClient(client HttpDoer) *NotificationClient {
 	}
 }
 
+// SendNotificationEmail sends an enrollment notification email to a user
 func (sender *NotificationClient) SendNotificationEmail(userId, courseName string) {
 	userEmail, userName := sender.getUserEmailFromService(userId)
 	if userEmail == "" {
@@ -102,6 +70,7 @@ func (sender *NotificationClient) SendNotificationEmail(userId, courseName strin
 	}
 }
 
+// getUserEmailFromService retrieves a user's email and name from the users service
 func (sender *NotificationClient) getUserEmailFromService(userId string) (string, string) {
 	url := sender.UsersServiceURL + "/users/profile/" + userId
 
