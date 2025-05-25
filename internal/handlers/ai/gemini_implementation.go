@@ -37,9 +37,22 @@ func (g *GeminiAnalyzer) AnalyzeFeedback(courseTitle string, feedbacks []model.C
 
 // formatFeedbackForAnalysis formats the feedback data into text format for Gemini
 func formatFeedbackForAnalysis(courseTitle string, feedbacks []model.CourseFeedback) string {
-	var builder strings.Builder
+	// Calculate the average rating
+	// Calculate the average rating
+	var totalRating int
 
-	builder.WriteString(fmt.Sprintf("Please analyze the following feedback for the course '%s' and provide a summary of common themes, strengths, and areas for improvement, make it short, the rating is from 1 to 5, and I dont want any type of formatting in the text:", courseTitle))
+	for _, feedback := range feedbacks {
+		totalRating += feedback.Rating
+	}
+
+	averageRating := fmt.Sprintf("%.2f", float64(totalRating)/float64(len(feedbacks)))
+
+	var builder strings.Builder
+	builder.WriteString(fmt.Sprintf(
+		"You are analyzing course feedbacks for '%s'. Your task is to provide a short and clear summary of the most common themes mentioned by students. First tell the average rating which is '%s', then identify key strengths and areas where the course can improve, considering the ratings are on a scale from 1 to 5. Output strictly plain text. Do not use lists, bullet points, bold text, markdown, or any kind of formatting. Keep it as a simple paragraph.",
+		courseTitle,
+		averageRating,
+	))
 
 	for i, feedback := range feedbacks {
 		builder.WriteString(fmt.Sprintf("Feedback %d:\n", i+1))
