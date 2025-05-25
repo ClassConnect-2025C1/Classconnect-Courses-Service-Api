@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"reflect"
-	"templateGo/internal/model"
 	"time"
 
 	"github.com/lib/pq"
@@ -14,11 +13,16 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// DB instance
-var DB *gorm.DB
+// PostgresManager implements the DatabaseManager interface
+type PostgresManager struct{}
+
+// NewDatabaseManager creates a new database manager
+func NewDatabaseManager() DatabaseManager {
+	return &PostgresManager{}
+}
 
 // ConnectDB establishes connection to the database
-func ConnectDB() error {
+func (pm *PostgresManager) ConnectDB() error {
 	var err error
 
 	// Get database connection details from environment variables
@@ -48,8 +52,8 @@ func ConnectDB() error {
 	DB.Callback().Create().Before("gorm:create").Register("pq_array_handler", arrayHandlerCreate)
 	DB.Callback().Update().Before("gorm:update").Register("pq_array_handler", arrayHandlerUpdate)
 
-	// Auto migrate model
-	if err := DB.AutoMigrate(&model.Course{}, &model.Enrollment{}, &model.CourseFeedback{}, &model.Assignment{}, &model.CourseApproval{}, &model.Submission{}, &model.AssignmentSession{}); err != nil {
+	// Auto migrate models
+	if err := DB.AutoMigrate(ModelsToMigrate...); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
@@ -68,17 +72,8 @@ func ConnectDB() error {
 	return nil
 }
 
-// Helper function to get environment variables with default values
-func getEnv(key, defaultValue string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return defaultValue
-	}
-	return value
-}
-
 // CloseDB closes the database connection
-func CloseDB() error {
+func (pm *PostgresManager) CloseDB() error {
 	if DB != nil {
 		sqlDB, err := DB.DB()
 		if err != nil {
@@ -96,6 +91,16 @@ func CloseDB() error {
 	return nil
 }
 
+// Helper function to get environment variables with default values
+func getEnv(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
+
+// arrayHandlerCreate handles array fields during record creation
 func arrayHandlerCreate(db *gorm.DB) {
 	if db.Statement.Schema != nil {
 		for _, field := range db.Statement.Schema.Fields {
@@ -108,9 +113,8 @@ func arrayHandlerCreate(db *gorm.DB) {
 	}
 }
 
+// arrayHandlerUpdate handles array fields during record updates
 func arrayHandlerUpdate(db *gorm.DB) {
-	// Similar to arrayHandlerCreate but for updates
-	// ...
 	if db.Statement.Schema != nil {
 		for _, field := range db.Statement.Schema.Fields {
 			if field.FieldType.Kind() == reflect.Slice && field.FieldType.Elem().Kind() == reflect.String {

@@ -5,13 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
 
-	sql "templateGo/internal/repositories"
+	"templateGo/internal/repositories"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -36,9 +37,9 @@ func TestMain(m *testing.M) {
 	}
 
 	// Connect to test database
-	if err := sql.ConnectDB(); err != nil {
-		fmt.Printf("Error connecting to database: %v\n", err)
-		os.Exit(1)
+	dbManager := repositories.NewDatabaseManager()
+	if err := dbManager.ConnectDB(); err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
 	// Set up router
@@ -48,7 +49,7 @@ func TestMain(m *testing.M) {
 	exitCode := m.Run()
 
 	// Clean up
-	sql.CloseDB()
+	defer dbManager.CloseDB()
 	os.Exit(exitCode)
 }
 

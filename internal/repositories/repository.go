@@ -41,7 +41,6 @@ type CourseRepository interface {
 
 	GetApprovedCourses(userID string) ([]string, error)
 
-	// Toggle favorite status (flip current value)
 	ToggleFavoriteStatus(courseID uint, userID string) error
 
 	PutSubmission(submission *model.Submission) error

@@ -267,7 +267,7 @@ func (r *courseRepository) ApproveCourse(userID string, courseID uint, courseNam
 		Count(&count)
 
 	if count > 0 {
-		return fmt.Errorf("User already approved")
+		return fmt.Errorf("user already approved")
 	}
 
 	return r.db.Create(&approval).Error

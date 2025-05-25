@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	"templateGo/config"
-	sql "templateGo/internal/repositories"
+	"templateGo/internal/repositories"
 	controller "templateGo/internal/services"
 
 	"github.com/rs/cors" // Importa la librería CORS
@@ -17,10 +17,11 @@ func main() {
 	config.LoadEnv()
 
 	// Connect to database
-	if err := sql.ConnectDB(); err != nil {
+	dbManager := repositories.NewDatabaseManager()
+	if err := dbManager.ConnectDB(); err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
-	defer sql.CloseDB()
+	defer dbManager.CloseDB()
 
 	// Setup routes
 	mux := controller.SetupRoutes()
