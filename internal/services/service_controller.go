@@ -23,7 +23,7 @@ func SetupRoutes() http.Handler {
 		fmt.Println("Response: healthcheck running wild")
 	})
 
-	// Create a new course handler with
+	// Create handlers
 	courseRepo := repositories.NewCourseRepository()
 	notificationClient := notification.NewNotificationClient(nil)
 	aiAnalyzer := ai.NewGeminiAnalyzer()
@@ -32,62 +32,110 @@ func SetupRoutes() http.Handler {
 	api := r.Group("/")
 	api.Use(middleware.AuthMiddleware())
 	{
+		// =============================================
+		// Course Management (CRUD operations)
+		// =============================================
+
+		// Create a new course
 		api.POST("/course", courseHandler.CreateCourse)
+
+		// Get all available courses
 		api.GET("/courses", courseHandler.GetAllCourses)
 
-		// Actualmente solo devuelve todos los cursos, deberia devolver los cursos
-		// disponibles para el usuario autenticado en base a los criterios de elegibilidad
-		api.GET("/available", courseHandler.GetAvailableCourses)
-
-		// aprobar un usuario en un curso
-		api.POST("/approve/:user_id/:course_id", courseHandler.ApproveCourses)
-
-		// devolver los cursos que aprobo el usuario autenticado
-		api.GET("/approved", courseHandler.GetApprovedCourses)
-
-		// Rutas específicas por ID de curso
+		// Get details for a specific course
 		api.GET("/:course_id", courseHandler.GetCourseByID)
+
+		// Update course information
 		api.PATCH("/:course_id", courseHandler.UpdateCourse)
+
+		// Delete a course
 		api.DELETE("/:course_id", courseHandler.DeleteCourse)
 
-		// Rutas de inscripción para usuario actual
-		api.POST("/:course_id/enroll", courseHandler.EnrollUserInCourse)
-		api.DELETE("/:course_id/enroll", courseHandler.UnenrollUserFromCourse)
-		api.GET("/enrolled", courseHandler.GetEnrolledCourses)
-
-		// Rutas de miembros
+		// Get list of course members
 		api.GET("/:course_id/members", courseHandler.GetCourseMembers)
 
-		// Rutas de feedback de cursos
+		// Get available courses that a user can enroll in
+		api.GET("/available", courseHandler.GetAvailableCourses) // TODO: implement getAvailableCourses for a specific user
+
+		// Mark/unmark a course as favorite
+		api.PATCH("/:course_id/favorite/toggle", courseHandler.ToggleFavoriteStatus)
+
+		// =============================================
+		// Enrollment Management
+		// =============================================
+
+		// Enroll current user in a course
+		api.POST("/:course_id/enroll", courseHandler.EnrollUserInCourse)
+
+		// Unenroll current user from a course
+		api.DELETE("/:course_id/enroll", courseHandler.UnenrollUserFromCourse)
+
+		// Get courses the current user is enrolled in
+		api.GET("/enrolled", courseHandler.GetEnrolledCourses)
+
+		// =============================================
+		// Course Approval System
+		// =============================================
+
+		// Approve a user for a specific course
+		api.POST("/approve/:user_id/:course_id", courseHandler.ApproveCourses)
+
+		// Get approved courses for the current user
+		api.GET("/approved", courseHandler.GetApprovedCourses)
+
+		// =============================================
+		// Feedback & Ratings
+		// =============================================
+
+		// Submit feedback for a course
 		api.POST("/:course_id/feedback", courseHandler.CreateCourseFeedback)
+
+		// Get all feedback for a course
 		api.GET("/:course_id/feedbacks", courseHandler.GetCourseFeedbacks)
 
-		// Add the new AI feedback analysis endpoint
+		// Get AI-generated analysis of course feedback
 		api.GET("/:course_id/ai-feedback-analysis", courseHandler.GetAIFeedbackAnalysis)
 
-		// Rutas relacionadas a tareas(assignment)
+		// =============================================
+		// Assignment Management
+		// =============================================
+
+		// Create a new assignment for a course
 		api.POST("/:course_id/assignment", courseHandler.CreateAssignment)
-		api.PATCH("/:course_id/assignment/:assignment_id", courseHandler.UpdateAssignment)
-		api.DELETE("/:course_id/assignment/:assignment_id", courseHandler.DeleteAssignment)
+
+		// Get preview of all assignments in a course
 		api.GET("/:course_id/assignments", courseHandler.GetAssignmentsPreviews)
+
+		// Get details of a specific assignment
 		api.GET("/:course_id/assignment/:assignment_id", courseHandler.GetAssignmentByID)
 
-		// Rutas de submissions
-		// Put/Delete submission of the current user
+		// Update an existing assignment
+		api.PATCH("/:course_id/assignment/:assignment_id", courseHandler.UpdateAssignment)
+
+		// Delete an assignment
+		api.DELETE("/:course_id/assignment/:assignment_id", courseHandler.DeleteAssignment)
+
+		// =============================================
+		// Submission Management
+		// =============================================
+
+		// Submit or update current user's assignment submission
 		api.PUT("/:course_id/assignment/:assignment_id/submission", courseHandler.PutSubmissionOfCurrentUser)
-		api.DELETE("/:course_id/assignment/:assignment_id/submission", courseHandler.DeleteSubmissionOfCurrentUser)
-		// Get submission of the current user
+
+		// Get current user's submission for an assignment
 		api.GET("/:course_id/assignment/:assignment_id/submission", courseHandler.GetSubmissionOfCurrentUser)
-		// Get submission of a specific user
+
+		// Get a specific user's submission
 		api.GET("/:course_id/assignment/:assignment_id/submission/:user_id", courseHandler.GetSubmissionByUserID)
 
-		// Get all submissions
+		// Get all submissions for an assignment
 		api.GET("/:course_id/assignment/:assignment_id/submissions", courseHandler.GetSubmissions)
-		// Grade and give feedback on a submission
+
+		// Grade and provide feedback on a submission
 		api.PATCH("/:course_id/assignment/:assignment_id/submission/:submission_id", courseHandler.GradeSubmission)
 
-		// Toggle favorite status (switches between favorite and not favorite) of the current user
-		api.PATCH("/:course_id/favorite/toggle", courseHandler.ToggleFavoriteStatus)
+		// Delete current user's submission
+		api.DELETE("/:course_id/assignment/:assignment_id/submission", courseHandler.DeleteSubmissionOfCurrentUser)
 	}
 
 	return r
