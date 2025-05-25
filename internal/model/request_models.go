@@ -9,6 +9,7 @@ type CreateCourseRequest struct {
 	CreatedBy           string   `json:"created_by" binding:"required"`
 	Capacity            int      `json:"capacity" binding:"required,gte=1"`
 	EligibilityCriteria []string `json:"eligibility_criteria"`
+	TeachingAssistants  []string `json:"teaching_assistants"`
 }
 
 // ToModel converts API request to internal Course model
@@ -21,6 +22,7 @@ func (r *CreateCourseRequest) ToModel() *Course {
 		StartDate:           time.Now(),
 		EndDate:             time.Now().AddDate(0, 4, 0), // 4 months by default
 		EligibilityCriteria: r.EligibilityCriteria,
+		TeachingAssistants:  r.TeachingAssistants,
 	}
 }
 
@@ -32,6 +34,7 @@ type UpdateCourseRequest struct {
 	StartDate           *time.Time `json:"start_date"`
 	EndDate             *time.Time `json:"end_date"`
 	EligibilityCriteria *[]string  `json:"eligibility_criteria"`
+	TeachingAssistants  *[]string  `json:"teaching_assistants"`
 }
 
 // ApplyTo applies the update request to an existing course
@@ -53,6 +56,9 @@ func (r *UpdateCourseRequest) ApplyTo(course *Course) {
 	}
 	if r.EligibilityCriteria != nil {
 		course.EligibilityCriteria = *r.EligibilityCriteria
+	}
+	if r.TeachingAssistants != nil {
+		course.TeachingAssistants = *r.TeachingAssistants // Apply TA updates
 	}
 }
 

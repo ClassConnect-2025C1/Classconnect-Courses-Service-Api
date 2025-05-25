@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"templateGo/internal/externals"
 	"templateGo/internal/handlers"
+	"templateGo/internal/handlers/ai"
 	middleware "templateGo/internal/middlewares"
 	"templateGo/internal/repositories"
 
@@ -15,8 +16,6 @@ import (
 func SetupRoutes() http.Handler {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	// r.Use(gin.Logger())
-	// r.Use(gin.Recovery())
 
 	// Health check endpoint
 	r.GET("/", func(c *gin.Context) {
@@ -24,12 +23,11 @@ func SetupRoutes() http.Handler {
 		fmt.Println("Response: healthcheck running wild")
 	})
 
-	// Create a new course handler
+	// Create a new course handler with
 	courseRepo := repositories.NewCourseRepository()
-	externalNotificatio := externals.NewNotificationClient(nil)
-	// assingments
-	// userHandlers
-	courseHandler := handlers.NewCourseHandler(courseRepo, externalNotificatio)
+	externalNotification := externals.NewNotificationClient(nil)
+	aiAnalyzer := ai.NewGeminiAnalyzer()
+	courseHandler := handlers.NewCourseHandler(courseRepo, externalNotification, aiAnalyzer)
 
 	api := r.Group("/")
 	api.Use(middleware.AuthMiddleware())
@@ -40,7 +38,6 @@ func SetupRoutes() http.Handler {
 		// Actualmente solo devuelve todos los cursos, deberia devolver los cursos
 		// disponibles para el usuario autenticado en base a los criterios de elegibilidad
 		api.GET("/available", courseHandler.GetAvailableCourses)
-		api.GET("/enrolled", courseHandler.GetEnrolledCourses)
 
 		// aprobar un usuario en un curso
 		api.POST("/approve/:user_id/:course_id", courseHandler.ApproveCourses)
@@ -56,6 +53,7 @@ func SetupRoutes() http.Handler {
 		// Rutas de inscripción para usuario actual
 		api.POST("/:course_id/enroll", courseHandler.EnrollUserInCourse)
 		api.DELETE("/:course_id/enroll", courseHandler.UnenrollUserFromCourse)
+		api.GET("/enrolled", courseHandler.GetEnrolledCourses)
 
 		// Rutas de miembros
 		api.GET("/:course_id/members", courseHandler.GetCourseMembers)

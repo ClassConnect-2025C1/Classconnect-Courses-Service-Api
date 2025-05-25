@@ -1,16 +1,13 @@
 package handlers
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"templateGo/internal/externals"
+	"templateGo/internal/handlers/ai"
 	"templateGo/internal/model"
 	"templateGo/internal/repositories"
 	"templateGo/internal/utils"
@@ -18,13 +15,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Update the struct to include the AI analyzer
 type courseHandler struct {
 	repo         repositories.CourseRepository
 	notification *externals.NotificationClient
+	aiAnalyzer   ai.FeedbackAnalyzer
 }
 
-func NewCourseHandler(repo repositories.CourseRepository, noti *externals.NotificationClient) *courseHandler {
-	return &courseHandler{repo: repo, notification: noti}
+func NewCourseHandler(repo repositories.CourseRepository, noti *externals.NotificationClient, analyzer ai.FeedbackAnalyzer) *courseHandler {
+	return &courseHandler{
+		repo:         repo,
+		notification: noti,
+		aiAnalyzer:   analyzer,
+	}
 }
 
 func (h *courseHandler) getCourseID(c *gin.Context) (uint, bool) {
@@ -123,16 +126,20 @@ func formatCourseResponse(course *model.Course) gin.H {
 		"startDate":           course.StartDate.Format("2006-01-02"),
 		"endDate":             course.EndDate.Format("2006-01-02"),
 		"eligibilityCriteria": course.EligibilityCriteria,
+		"teachingAssistants":  course.TeachingAssistants,
 	}
 }
 
 // Handler methods
 func (h *courseHandler) CreateCourse(c *gin.Context) {
 	var request model.CreateCourseRequest
+
 	if err := c.ShouldBindJSON(&request); err != nil {
 		utils.NewErrorResponse(c, http.StatusBadRequest, "Validation Error", err.Error())
 		return
 	}
+
+	fmt.Println("Creating course with request:", request)
 
 	course := request.ToModel()
 	if err := h.repo.Create(course); err != nil {
@@ -824,11 +831,8 @@ func (h *courseHandler) GetAIFeedbackAnalysis(c *gin.Context) {
 		return
 	}
 
-	// Format the feedback for the Gemini API
-	feedbackText := formatFeedbackForAnalysis(course.Title, feedbacks)
-
-	// Call Gemini API
-	analysis, err := callGeminiAPI(feedbackText)
+	// Use the AI analyzer to analyze the feedback
+	analysis, err := h.aiAnalyzer.AnalyzeFeedback(course.Title, feedbacks)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "AI Analysis Error", err.Error())
 		return
@@ -838,105 +842,4 @@ func (h *courseHandler) GetAIFeedbackAnalysis(c *gin.Context) {
 		"data":           analysis,
 		"feedback_count": len(feedbacks),
 	})
-}
-
-// formatFeedbackForAnalysis formats the feedback data into text format for Gemini
-func formatFeedbackForAnalysis(courseTitle string, feedbacks []model.CourseFeedback) string {
-	var builder strings.Builder
-
-	// builder.WriteString(fmt.Sprintf("Please analyze the following feedback for the course '%s' and provide a summary of common themes, strengths, and areas for improvement, make it short:\n\n", courseTitle))
-	builder.WriteString(fmt.Sprintf("Please analyze the following feedback for the course '%s' and provide a summary of common themes, strengths, and areas for improvement, make it short, the rating is from 1 to 5, and I dont want any type of formatting in the text:", courseTitle))
-
-	for i, feedback := range feedbacks {
-		builder.WriteString(fmt.Sprintf("Feedback %d:\n", i+1))
-		builder.WriteString(fmt.Sprintf("Rating: %d/100\n", feedback.Rating))
-		if feedback.Summary != "" {
-			builder.WriteString(fmt.Sprintf("Summary: %s\n", feedback.Summary))
-		}
-		if feedback.Comment != "" {
-			builder.WriteString(fmt.Sprintf("Comment: %s\n", feedback.Comment))
-		}
-		builder.WriteString("\n")
-	}
-
-	return builder.String()
-}
-
-// callGeminiAPI calls the Google Gemini API to get an analysis of the feedback
-func callGeminiAPI(feedbackText string) (string, error) {
-	// Get API key from environment
-	apiKey := os.Getenv("GEMINI_API_KEY")
-	// apiKey := "AIzaSyCGf5mrU_9zlsOg538SsjJSeq1yIyyLXDc"
-
-	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=%s", apiKey)
-
-	requestBody := map[string]any{
-		"contents": []map[string]any{
-			{
-				"parts": []map[string]any{
-					{
-						"text": feedbackText,
-					},
-				},
-			},
-		},
-	}
-
-	jsonData, err := json.Marshal(requestBody)
-	if err != nil {
-		return "", fmt.Errorf("error marshaling request body: %w", err)
-	}
-
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return "", fmt.Errorf("error creating request: %w", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("error calling Gemini API: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("error reading response body: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("gemini API returned non-OK status: %d, body: %s", resp.StatusCode, string(body))
-	}
-
-	var responseData map[string]interface{}
-	if err := json.Unmarshal(body, &responseData); err != nil {
-		return "", fmt.Errorf("error unmarshaling response body: %w", err)
-	}
-
-	// Extract the generated text from the response
-	candidates, ok := responseData["candidates"].([]any)
-	if !ok || len(candidates) == 0 {
-		return "", fmt.Errorf("unexpected response format from Gemini API")
-	}
-
-	candidate := candidates[0].(map[string]any)
-	content, ok := candidate["content"].(map[string]any)
-	if !ok {
-		return "", fmt.Errorf("unexpected response format from Gemini API")
-	}
-
-	parts, ok := content["parts"].([]any)
-	if !ok || len(parts) == 0 {
-		return "", fmt.Errorf("unexpected response format from Gemini API")
-	}
-
-	part := parts[0].(map[string]any)
-	text, ok := part["text"].(string)
-	if !ok {
-		return "", fmt.Errorf("unexpected response format from Gemini API")
-	}
-
-	return text, nil
 }

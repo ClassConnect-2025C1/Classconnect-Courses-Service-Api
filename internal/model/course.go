@@ -17,4 +17,5 @@ type Course struct {
 	StartDate           time.Time      `json:"start_date"`
 	EndDate             time.Time      `json:"end_date"`
 	EligibilityCriteria pq.StringArray `json:"eligibility_criteria" gorm:"type:text[]"`
+	TeachingAssistants  pq.StringArray `json:"teaching_assistants" gorm:"type:text[]"` // List of TA user IDs
 }

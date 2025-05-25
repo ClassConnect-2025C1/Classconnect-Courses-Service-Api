@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 )
 
 var (
@@ -44,8 +43,12 @@ type NotificationClient struct {
 }
 
 func NewNotificationClient(client HttpDoer) *NotificationClient {
-	notificationURL := os.Getenv("URL_NOTIFICATION")
-	usersServiceURL := os.Getenv("URL_USERS")
+	// notificationURL := os.Getenv("URL_NOTIFICATION")
+	// usersServiceURL := os.Getenv("URL_USERS")
+
+	notificationURL := "http://localhost:8080"
+	usersServiceURL := "http://localhost:8081"
+
 	if notificationURL == "" || usersServiceURL == "" {
 		log.Fatalf("Algunas variables de entorno no están configuradas correctamente.")
 	}
