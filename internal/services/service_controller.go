@@ -3,9 +3,9 @@ package services
 import (
 	"fmt"
 	"net/http"
-	"templateGo/internal/externals"
 	"templateGo/internal/handlers"
 	"templateGo/internal/handlers/ai"
+	"templateGo/internal/handlers/notification"
 	middleware "templateGo/internal/middlewares"
 	"templateGo/internal/repositories"
 
@@ -25,9 +25,9 @@ func SetupRoutes() http.Handler {
 
 	// Create a new course handler with
 	courseRepo := repositories.NewCourseRepository()
-	externalNotification := externals.NewNotificationClient(nil)
+	notificationClient := notification.NewNotificationClient(nil)
 	aiAnalyzer := ai.NewGeminiAnalyzer()
-	courseHandler := handlers.NewCourseHandler(courseRepo, externalNotification, aiAnalyzer)
+	courseHandler := handlers.NewCourseHandler(courseRepo, notificationClient, aiAnalyzer)
 
 	api := r.Group("/")
 	api.Use(middleware.AuthMiddleware())

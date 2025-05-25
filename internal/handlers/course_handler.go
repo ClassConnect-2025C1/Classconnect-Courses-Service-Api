@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	"templateGo/internal/externals"
 	"templateGo/internal/handlers/ai"
+	"templateGo/internal/handlers/notification"
 	"templateGo/internal/model"
 	"templateGo/internal/repositories"
 	"templateGo/internal/utils"
@@ -18,11 +18,11 @@ import (
 // Update the struct to include the AI analyzer
 type courseHandler struct {
 	repo         repositories.CourseRepository
-	notification *externals.NotificationClient
+	notification *notification.NotificationClient
 	aiAnalyzer   ai.FeedbackAnalyzer
 }
 
-func NewCourseHandler(repo repositories.CourseRepository, noti *externals.NotificationClient, analyzer ai.FeedbackAnalyzer) *courseHandler {
+func NewCourseHandler(repo repositories.CourseRepository, noti *notification.NotificationClient, analyzer ai.FeedbackAnalyzer) *courseHandler {
 	return &courseHandler{
 		repo:         repo,
 		notification: noti,

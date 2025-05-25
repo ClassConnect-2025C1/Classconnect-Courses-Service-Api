@@ -1,4 +1,4 @@
-package externals
+package notification
 
 import (
 	"bytes"
