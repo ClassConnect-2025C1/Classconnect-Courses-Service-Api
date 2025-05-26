@@ -1,0 +1,112 @@
+package course
+
+import (
+	"net/http"
+	"strconv"
+	"templateGo/internal/model"
+	"templateGo/internal/utils"
+
+	"github.com/gin-gonic/gin"
+)
+
+// Parameter extraction helpers
+func (h *courseHandlerImpl) getCourseID(c *gin.Context) (uint, bool) {
+	id, err := strconv.Atoi(c.Param("course_id"))
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "Course ID must be a number")
+		return 0, false
+	}
+	return uint(id), true
+}
+
+func (h *courseHandlerImpl) getAssignmentID(c *gin.Context) (uint, bool) {
+	id, err := strconv.Atoi(c.Param("assignment_id"))
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "Assignment ID must be a number")
+		return 0, false
+	}
+	return uint(id), true
+}
+
+func (h *courseHandlerImpl) getSubmissionID(c *gin.Context) (uint, bool) {
+	id, err := strconv.Atoi(c.Param("submission_id"))
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "Submission ID must be a number")
+		return 0, false
+	}
+	return uint(id), true
+}
+
+func (h *courseHandlerImpl) getUserID(c *gin.Context) (string, bool) {
+	id := c.Param("user_id")
+	if id == "" {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "User ID must be provided")
+		return "", false
+	}
+	return id, true
+}
+
+func (h *courseHandlerImpl) getUserIDFromToken(c *gin.Context) (string, bool) {
+	userID, exists := c.Get("user_id")
+	if !exists {
+		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "User ID not found in token")
+		return "", false
+	}
+	id, ok := userID.(string)
+	if !ok {
+		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "Invalid User ID format")
+		return "", false
+	}
+	return id, true
+}
+
+// Entity retrieval helpers
+func (h *courseHandlerImpl) getCourseByID(c *gin.Context, courseID uint) (*model.Course, bool) {
+	course, err := h.repo.GetByID(courseID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Course not found")
+		return nil, false
+	}
+	return course, true
+}
+
+func (h *courseHandlerImpl) getAssignmentByID(c *gin.Context, assignmentID uint) (*model.Assignment, bool) {
+	assignment, err := h.repo.GetAssignmentByID(assignmentID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Assignment not found")
+		return nil, false
+	}
+	return assignment, true
+}
+
+func (h *courseHandlerImpl) getSubmissionByID(c *gin.Context, submissionID uint) (*model.Submission, bool) {
+	submission, err := h.repo.GetSubmission(submissionID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Submission not found")
+		return nil, false
+	}
+	return submission, true
+}
+
+// Response formatting helpers
+func formatCoursesResponse(courses []model.Course) []gin.H {
+	response := make([]gin.H, 0, len(courses))
+	for _, course := range courses {
+		response = append(response, formatCourseResponse(&course))
+	}
+	return response
+}
+
+func formatCourseResponse(course *model.Course) gin.H {
+	return gin.H{
+		"id":                  strconv.FormatUint(uint64(course.ID), 10),
+		"title":               course.Title,
+		"description":         course.Description,
+		"createdBy":           course.CreatedBy,
+		"capacity":            course.Capacity,
+		"startDate":           course.StartDate.Format("2006-01-02"),
+		"endDate":             course.EndDate.Format("2006-01-02"),
+		"eligibilityCriteria": course.EligibilityCriteria,
+		"teachingAssistants":  course.TeachingAssistants,
+	}
+}
