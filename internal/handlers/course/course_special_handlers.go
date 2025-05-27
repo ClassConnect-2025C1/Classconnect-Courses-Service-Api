@@ -36,6 +36,12 @@ func (h *courseHandlerImpl) ApproveCourses(c *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "User already approved"})
 			return
 		}
+
+		if strings.Contains(err.Error(), "user is not enrolled in this course") {
+			c.JSON(http.StatusForbidden, gin.H{"error": "User is not enrolled in this course"})
+			return
+		}
+
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error approving course")
 		return
 	}

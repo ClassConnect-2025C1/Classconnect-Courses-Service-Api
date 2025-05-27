@@ -263,6 +263,16 @@ func (r *courseRepository) ApproveCourse(userID string, courseID uint, courseNam
 		CourseName: courseName,
 	}
 
+	// check if the user is enrolled in the course
+	var enrollment model.Enrollment
+	result := r.db.Where("user_id = ? AND course_id = ?", userID, courseID).First(&enrollment)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return fmt.Errorf("user is not enrolled in this course: %w", result.Error)
+		}
+		return fmt.Errorf("error checking enrollment: %w", result.Error)
+	}
+
 	// Check if the approval already exists
 	var count int64
 	r.db.Model(&model.CourseApproval{}).
