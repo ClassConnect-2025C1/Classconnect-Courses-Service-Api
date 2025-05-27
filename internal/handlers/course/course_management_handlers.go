@@ -100,18 +100,57 @@ func (h *courseHandlerImpl) DeleteCourse(c *gin.Context) {
 
 }
 
-// GetAvailableCourses returns courses available for enrollment
+// GetAvailableCourses returns courses the user can enroll in based on eligibility criteria
 func (h *courseHandlerImpl) GetAvailableCourses(c *gin.Context) {
 	userID, ok := h.getUserIDFromToken(c)
 	if !ok {
 		return
 	}
 
-	courses, err := h.repo.GetAvailableCourses(userID)
+	// Get all courses the user is not enrolled in
+	availableCourses, err := h.repo.GetAvailableCourses(userID)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving available courses")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"data": formatCoursesResponse(courses)})
+	// Get the user's approved courses/subjects
+	approvedSubjects, err := h.repo.GetApprovedCourses(userID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving user's approved subjects")
+		return
+	}
+
+	// Filter courses based on eligibility criteria
+	var eligibleCourses []model.Course
+	for _, course := range availableCourses {
+		if meetsEligibilityCriteria(course, approvedSubjects) {
+			eligibleCourses = append(eligibleCourses, course)
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": formatCoursesResponse(eligibleCourses)})
+}
+
+// meetsEligibilityCriteria checks if a user with the given approved subjects meets a course's requirements
+func meetsEligibilityCriteria(course model.Course, approvedSubjects []string) bool {
+	// If there are no eligibility criteria, anyone can enroll
+	if len(course.EligibilityCriteria) == 0 {
+		return true
+	}
+
+	// Create a map for O(1) lookups of approved subjects
+	approvedMap := make(map[string]bool)
+	for _, subject := range approvedSubjects {
+		approvedMap[subject] = true
+	}
+
+	// Check if all eligibility criteria are met
+	for _, requirement := range course.EligibilityCriteria {
+		if !approvedMap[requirement] {
+			return false // User doesn't meet this requirement
+		}
+	}
+
+	return true // All requirements are met
 }

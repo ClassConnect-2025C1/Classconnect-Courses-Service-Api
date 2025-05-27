@@ -53,10 +53,13 @@ func (r *courseRepository) Delete(id uint) error {
 // Obtener cursos disponibles para un usuario (a implementar según criterios de elegibilidad)
 func (r *courseRepository) GetAvailableCourses(userID string) ([]model.Course, error) {
 	var courses []model.Course
-	// Aquí implementarías la lógica para obtener cursos disponibles según el usuario
-	// Por ahora, simplemente retornamos todos los cursos no eliminados
-	err := r.db.Where("deleted_at IS NULL").Find(&courses).Error
-	return courses, err
+	// devolver todos los cursos en los que el alumno no esta inscripto
+	if err := r.db.Where("id NOT IN (SELECT course_id FROM enrollments WHERE user_id = ?)", userID).
+		Where("deleted_at IS NULL").Find(&courses).Error; err != nil {
+		return nil, err
+	}
+
+	return courses, nil
 }
 
 // Obtener cursos en los que un usuario está inscrito
