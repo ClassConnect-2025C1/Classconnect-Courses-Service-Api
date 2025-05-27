@@ -56,4 +56,7 @@ type CourseRepository interface {
 	GetAssignmentByID(assignmentID uint) (*model.Assignment, error)
 
 	GetOrCreateAssignmentSession(userID string, assignmentID uint) (*model.AssignmentSession, error)
+
+	// GetApprovedUsersForCourse retrieves all users approved for a specific course
+	GetApprovedUsersForCourse(courseID uint) ([]string, error)
 }

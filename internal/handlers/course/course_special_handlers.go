@@ -80,3 +80,24 @@ func (h *courseHandlerImpl) ToggleFavoriteStatus(c *gin.Context) {
 		"message": "Course favorite status toggled successfully",
 	})
 }
+
+// GetApprovedUsersForCourse returns all users approved for a specific course
+func (h *courseHandlerImpl) GetApprovedUsersForCourse(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+
+	// Verify the course exists
+	if _, ok := h.getCourseByID(c, courseID); !ok {
+		return
+	}
+
+	approvedUsers, err := h.repo.GetApprovedUsersForCourse(courseID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving approved users")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": approvedUsers})
+}

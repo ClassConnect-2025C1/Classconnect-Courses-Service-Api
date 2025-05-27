@@ -390,3 +390,19 @@ func (r *courseRepository) GradeSubmission(submissionID uint, grade uint, feedba
 		Feedback: feedback,
 	}).Error
 }
+
+// GetApprovedUsersForCourse retrieves all users approved for a specific course
+func (r *courseRepository) GetApprovedUsersForCourse(courseID uint) ([]string, error) {
+	var approvals []model.CourseApproval
+	err := r.db.Where("course_id = ?", courseID).Find(&approvals).Error
+	if err != nil {
+		return nil, err
+	}
+
+	userIDs := make([]string, 0, len(approvals))
+	for _, approval := range approvals {
+		userIDs = append(userIDs, approval.UserID)
+	}
+
+	return userIDs, nil
+}

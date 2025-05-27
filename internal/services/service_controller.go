@@ -83,6 +83,9 @@ func SetupRoutes() http.Handler {
 		// Get approved courses for the current user
 		api.GET("/approved", courseHandler.GetApprovedCourses)
 
+		// Get approved users for a specific course
+		api.GET("/:course_id/approved-users", courseHandler.GetApprovedUsersForCourse)
+
 		// =============================================
 		// Feedback & Ratings
 		// =============================================

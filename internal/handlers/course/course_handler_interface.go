@@ -43,6 +43,7 @@ type CourseHandler interface {
 	// Course Approval
 	ApproveCourses(c *gin.Context)
 	GetApprovedCourses(c *gin.Context)
+	GetApprovedUsersForCourse(c *gin.Context) // New method
 
 	// Course Favorites
 	ToggleFavoriteStatus(c *gin.Context)
