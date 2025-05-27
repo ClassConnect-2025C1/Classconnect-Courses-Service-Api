@@ -6,15 +6,17 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 )
 
 // NewNotificationClient creates a new notification client
 func NewNotificationClient(client HttpDoer) *NotificationClient {
-	// notificationURL := os.Getenv("URL_NOTIFICATION")
-	// usersServiceURL := os.Getenv("URL_USERS")
+	notificationURL := os.Getenv("URL_NOTIFICATION")
+	usersServiceURL := os.Getenv("URL_USERS")
 
-	notificationURL := "localhost:8080" // os.Getenv("URL_NOTIFICATION")
-	usersServiceURL := "localhost:8081" // os.Getenv("URL_USERS")
+	// Necesito estos para correlo en local
+	// notificationURL := "localhost:8080"
+	// usersServiceURL := "localhost:8081"
 
 	if notificationURL == "" || usersServiceURL == "" {
 		log.Fatalf("Algunas variables de entorno no están configuradas correctamente.")
