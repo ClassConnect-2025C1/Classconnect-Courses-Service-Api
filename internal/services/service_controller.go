@@ -55,7 +55,7 @@ func SetupRoutes() http.Handler {
 		api.GET("/:course_id/members", courseHandler.GetCourseMembers)
 
 		// Get available courses that a user can enroll in
-		api.GET("/available", courseHandler.GetAvailableCourses) // TODO: implement getAvailableCourses for a specific user
+		api.GET("/available", courseHandler.GetAvailableCourses)
 
 		// Mark/unmark a course as favorite
 		api.PATCH("/:course_id/favorite/toggle", courseHandler.ToggleFavoriteStatus)
@@ -87,7 +87,7 @@ func SetupRoutes() http.Handler {
 		api.GET("/:course_id/approved-users", courseHandler.GetApprovedUsersForCourse)
 
 		// =============================================
-		// Feedback & Ratings
+		// Course Feedback & Ratings
 		// =============================================
 
 		// Submit feedback for a course
@@ -98,6 +98,16 @@ func SetupRoutes() http.Handler {
 
 		// Get AI-generated analysis of course feedback
 		api.GET("/:course_id/ai-feedback-analysis", courseHandler.GetAIFeedbackAnalysis)
+
+		// =============================================
+		// User Feedback & Ratings
+		// =============================================
+
+		// Add feedback for a user in a course
+		api.POST("/:course_id/user/:user_id/feedback", courseHandler.CreateUserFeedback)
+
+		// Get all feedback for a user
+		api.GET("/user/:user_id/feedbacks", courseHandler.GetUserFeedbacks)
 
 		// =============================================
 		// Assignment Management

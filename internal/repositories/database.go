@@ -32,4 +32,5 @@ var ModelsToMigrate = []any{
 	&model.CourseApproval{},
 	&model.Submission{},
 	&model.AssignmentSession{},
+	&model.UserFeedback{}, // Add the new model
 }

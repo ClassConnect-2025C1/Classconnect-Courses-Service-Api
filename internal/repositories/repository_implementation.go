@@ -416,3 +416,20 @@ func (r *courseRepository) GetApprovedUsersForCourse(courseID uint) ([]string, e
 
 	return userIDs, nil
 }
+
+// CreateUserFeedback adds feedback for a user in a course
+func (r *courseRepository) CreateUserFeedback(feedback *model.UserFeedback) error {
+	return r.db.Create(feedback).Error
+}
+
+// GetUserFeedbacks retrieves all feedback for a specific user
+func (r *courseRepository) GetUserFeedbacks(userID string) ([]model.UserFeedback, error) {
+	var feedbacks []model.UserFeedback
+
+	// Simplify the query first to debug the issue
+	err := r.db.Where("student_id = ?", userID).
+		Order("created_at desc").
+		Find(&feedbacks).Error
+
+	return feedbacks, err
+}

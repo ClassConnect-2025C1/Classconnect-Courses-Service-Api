@@ -59,4 +59,10 @@ type CourseRepository interface {
 
 	// GetApprovedUsersForCourse retrieves all users approved for a specific course
 	GetApprovedUsersForCourse(courseID uint) ([]string, error)
+
+	// CreateUserFeedback adds feedback for a user in a course
+	CreateUserFeedback(feedback *model.UserFeedback) error
+
+	// GetUserFeedbacks retrieves all feedback for a specific user
+	GetUserFeedbacks(userID string) ([]model.UserFeedback, error)
 }
