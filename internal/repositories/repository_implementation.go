@@ -452,6 +452,17 @@ func (r *courseRepository) CreateModule(module *model.Module) error {
 
 // CreateResource creates a new resource in a specific module
 func (r *courseRepository) CreateResource(resource *model.Resource) error {
+	var lastResource model.Resource
+	err := r.db.Where("module_id = ?", resource.ModuleID).
+		Order("\"order\" DESC").First(&lastResource).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return fmt.Errorf("error retrieving last resource: %w", err)
+	}
+	if err == gorm.ErrRecordNotFound {
+		resource.Order = 0
+	} else {
+		resource.Order = lastResource.Order + 1
+	}
 	return r.db.Create(resource).Error
 }
 
@@ -463,4 +474,24 @@ func (r *courseRepository) GetModuleByID(moduleID uint) (*model.Module, error) {
 		return nil, err
 	}
 	return &module, nil
+}
+
+// GetModulesByCourseID retrieves all modules for a specific course
+func (r *courseRepository) GetModulesByCourseID(courseID uint) ([]model.Module, error) {
+	var modules []model.Module
+	err := r.db.Where("course_id = ?", courseID).Order("\"order\" ASC").Find(&modules).Error
+	if err != nil {
+		return nil, err
+	}
+	return modules, nil
+}
+
+// GetResourcesByModuleID retrieves all resources for a specific module
+func (r *courseRepository) GetResourcesByModuleID(moduleID uint) ([]model.Resource, error) {
+	var resources []model.Resource
+	err := r.db.Where("module_id = ?", moduleID).Find(&resources).Error
+	if err != nil {
+		return nil, err
+	}
+	return resources, nil
 }

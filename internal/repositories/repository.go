@@ -73,4 +73,8 @@ type CourseRepository interface {
 	CreateResource(resource *model.Resource) error
 
 	GetModuleByID(moduleID uint) (*model.Module, error)
+
+	GetModulesByCourseID(courseID uint) ([]model.Module, error)
+
+	GetResourcesByModuleID(moduleID uint) ([]model.Resource, error)
 }

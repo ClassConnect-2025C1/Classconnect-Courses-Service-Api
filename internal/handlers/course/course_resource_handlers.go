@@ -153,3 +153,38 @@ func (h *courseHandlerImpl) postResource(fileHeader *multipart.FileHeader, cours
 	}
 	return response.ResourceID, response.Link, nil
 }
+
+// getResources retrieves all resources from a course as modules with their resources
+func (h *courseHandlerImpl) GetResources(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+	_, ok = h.getCourseByID(c, courseID)
+	if !ok {
+		return
+	}
+	modules, err := h.repo.GetModulesByCourseID(courseID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve modules", "Error retrieving modules: "+err.Error())
+		return
+	}
+
+	resources := make([]gin.H, 0, len(modules))
+	for _, module := range modules {
+		moduleResources, err := h.repo.GetResourcesByModuleID(module.ID)
+		if err != nil {
+			utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve resources", "Error retrieving resources: "+err.Error())
+			return
+		}
+		resources = append(resources, gin.H{
+			"module_id":   module.ID,
+			"module_name": module.Name,
+			"resources":   moduleResources,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"modules": resources,
+	})
+}
