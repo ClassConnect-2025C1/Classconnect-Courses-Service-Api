@@ -56,7 +56,7 @@ type CourseHandler interface {
 	CreateModule(c *gin.Context)
 	CreateResource(c *gin.Context)
 	GetResources(c *gin.Context)
-	// PatchResources(c *gin.Context)
+	PatchResources(c *gin.Context)
 	DeleteResource(c *gin.Context)
 	DeleteModule(c *gin.Context)
 }

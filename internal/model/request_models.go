@@ -89,3 +89,18 @@ type GradeSubmissionRequest struct {
 	Grade    uint   `json:"grade" binding:"required,gte=0,lte=100"`
 	Feedback string `json:"feedback"`
 }
+
+type ResourceOrderUpdateRequest struct {
+	ID string `json:"id" binding:"required"`
+	// Order is determined by the position in the array
+}
+
+type ModuleOrderUpdateRequest struct {
+	ModuleID  uint                         `json:"module_id" binding:"required"`
+	Resources []ResourceOrderUpdateRequest `json:"resources"` // Can be empty
+	// Order is determined by the position in the array
+}
+
+type CourseOrderUpdateRequest struct {
+	Modules []ModuleOrderUpdateRequest `json:"modules" binding:"required"`
+}

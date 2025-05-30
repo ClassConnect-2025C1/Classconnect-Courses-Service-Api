@@ -163,8 +163,8 @@ func SetupRoutes() http.Handler {
 		// // Get all resources(modules) from a course
 		api.GET("/:course_id/resources", courseHandler.GetResources)
 
-		// // Patch order of modules and resources inside a course
-		// api.PATCH("/:course_id/resources", courseHandler.PatchResources)
+		// Patch order of modules and resources inside a course
+		api.PATCH("/:course_id/resources", courseHandler.PatchResources)
 
 		// Delete a resource in a specific module
 		api.DELETE("/:course_id/resource/module/:module_id/:resource_id", courseHandler.DeleteResource)

@@ -106,6 +106,15 @@ func (h *courseHandlerImpl) getModuleByID(c *gin.Context, moduleID uint) (*model
 	return module, true
 }
 
+func (h *courseHandlerImpl) getResourceByID(c *gin.Context, resourceID string) (*model.Resource, bool) {
+	resource, err := h.repo.GetResourceByID(resourceID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Resource not found")
+		return nil, false
+	}
+	return resource, true
+}
+
 // Response formatting helpers
 func formatCoursesResponse(courses []model.Course) []gin.H {
 	response := make([]gin.H, 0, len(courses))

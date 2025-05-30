@@ -476,6 +476,16 @@ func (r *courseRepository) GetModuleByID(moduleID uint) (*model.Module, error) {
 	return &module, nil
 }
 
+// GetResourceByID retrieves a resource by its ID
+func (r *courseRepository) GetResourceByID(resourceID string) (*model.Resource, error) {
+	var resource model.Resource
+	err := r.db.Where("id = ?", resourceID).First(&resource).Error
+	if err != nil {
+		return nil, err
+	}
+	return &resource, nil
+}
+
 // GetModulesByCourseID retrieves all modules for a specific course
 func (r *courseRepository) GetModulesByCourseID(courseID uint) ([]model.Module, error) {
 	var modules []model.Module
@@ -516,4 +526,24 @@ func (r *courseRepository) DeleteModule(moduleID uint) error {
 		return fmt.Errorf("error deleting resources for module: %w", err)
 	}
 	return r.db.Delete(&module).Error
+}
+
+func (r *courseRepository) UpdateModuleOrder(moduleID uint, order int) error {
+	var module model.Module
+	if err := r.db.Where("id = ?", moduleID).First(&module).Error; err != nil {
+		return fmt.Errorf("error retrieving module: %w", err)
+	}
+
+	module.Order = order
+	return r.db.Save(&module).Error
+}
+
+func (r *courseRepository) UpdateResourceOrder(resourceID string, order int) error {
+	var resource model.Resource
+	if err := r.db.Where("id = ?", resourceID).First(&resource).Error; err != nil {
+		return fmt.Errorf("error retrieving resource: %w", err)
+	}
+
+	resource.Order = order
+	return r.db.Save(&resource).Error
 }

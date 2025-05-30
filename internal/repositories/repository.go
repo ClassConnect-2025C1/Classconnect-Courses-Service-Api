@@ -74,6 +74,8 @@ type CourseRepository interface {
 
 	GetModuleByID(moduleID uint) (*model.Module, error)
 
+	GetResourceByID(resourceID string) (*model.Resource, error)
+
 	GetModulesByCourseID(courseID uint) ([]model.Module, error)
 
 	GetResourcesByModuleID(moduleID uint) ([]model.Resource, error)
@@ -81,4 +83,8 @@ type CourseRepository interface {
 	DeleteResource(resourceID string) error
 
 	DeleteModule(moduleID uint) error
+
+	UpdateModuleOrder(moduleID uint, newOrder int) error
+
+	UpdateResourceOrder(resourceID string, newOrder int) error
 }

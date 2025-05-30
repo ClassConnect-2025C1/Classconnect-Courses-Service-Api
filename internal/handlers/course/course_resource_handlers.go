@@ -180,6 +180,7 @@ func (h *courseHandlerImpl) GetResources(c *gin.Context) {
 		}
 		resources = append(resources, gin.H{
 			"module_id":   module.ID,
+			"order":       module.Order,
 			"module_name": module.Name,
 			"resources":   moduleResources,
 		})
@@ -219,4 +220,75 @@ func (h *courseHandlerImpl) DeleteModule(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Module deleted successfully"})
+}
+
+// PatchResources updates the order of resources in a module
+func (h *courseHandlerImpl) PatchResources(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		// getCourseID already sends an error response if needed
+		return
+	}
+
+	// Ensure the course itself exists
+	_, ok = h.getCourseByID(c, courseID)
+	if !ok {
+		// getCourseByID already sends an error response if needed
+		return
+	}
+
+	var req model.CourseOrderUpdateRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid request payload", "Error binding JSON: "+err.Error())
+		return
+	}
+
+	for moduleIndex, moduleUpdate := range req.Modules {
+		module, moduleOk := h.getModuleByID(c, moduleUpdate.ModuleID)
+		if !moduleOk {
+			// Not handling rollback
+			return
+		}
+		if module.CourseID != courseID {
+			utils.NewErrorResponse(c, http.StatusForbidden, "Module does not belong to this course",
+				fmt.Sprintf("Module ID %d is not part of course ID %d", moduleUpdate.ModuleID, courseID))
+			// Not handling rollback
+			return
+		}
+
+		if err := h.repo.UpdateModuleOrder(moduleUpdate.ModuleID, moduleIndex); err != nil {
+			utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to update module order",
+				fmt.Sprintf("Error updating order for module ID %d: %s", moduleUpdate.ModuleID, err.Error()))
+			// Not handling rollback
+			return
+		}
+
+		for resourceIndex, resourceUpdate := range moduleUpdate.Resources {
+			resource, err := h.repo.GetResourceByID(resourceUpdate.ID)
+			if err != nil {
+				utils.NewErrorResponse(c, http.StatusNotFound, "Resource not found",
+					fmt.Sprintf("Error finding resource ID %s: %s", resourceUpdate.ID, err.Error()))
+				// Not handling rollback
+				return
+			}
+			if resource.ModuleID != moduleUpdate.ModuleID {
+				utils.NewErrorResponse(c, http.StatusForbidden, "Resource does not belong to this module",
+					fmt.Sprintf("Resource ID %s is not part of module ID %d", resourceUpdate.ID, moduleUpdate.ModuleID))
+				// Not handling rollback
+				return
+			}
+
+			if err := h.repo.UpdateResourceOrder(resourceUpdate.ID, resourceIndex); err != nil {
+				utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to update resource order",
+					fmt.Sprintf("Error updating order for resource ID %s: %s", resourceUpdate.ID, err.Error()))
+				// Not handling rollback
+				return
+			}
+		}
+	}
+
+	// If using transactions, this is where you would commit.
+	// See defer block above for commit/rollback logic.
+
+	c.JSON(http.StatusOK, gin.H{"message": "Modules and resources order updated successfully"})
 }
