@@ -433,3 +433,34 @@ func (r *courseRepository) GetUserFeedbacks(userID string) ([]model.UserFeedback
 
 	return feedbacks, err
 }
+
+// CreateModule creates a new module for a course
+func (r *courseRepository) CreateModule(module *model.Module) error {
+	var lastModule model.Module
+	err := r.db.Where("course_id = ?", module.CourseID).
+		Order("\"order\" DESC").First(&lastModule).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return fmt.Errorf("error retrieving last module: %w", err)
+	}
+	if err == gorm.ErrRecordNotFound {
+		module.Order = 0
+	} else {
+		module.Order = lastModule.Order + 1
+	}
+	return r.db.Create(module).Error
+}
+
+// CreateResource creates a new resource in a specific module
+func (r *courseRepository) CreateResource(resource *model.Resource) error {
+	return r.db.Create(resource).Error
+}
+
+// GetModuleByID retrieves a module by its ID
+func (r *courseRepository) GetModuleByID(moduleID uint) (*model.Module, error) {
+	var module model.Module
+	err := r.db.Where("id = ?", moduleID).First(&module).Error
+	if err != nil {
+		return nil, err
+	}
+	return &module, nil
+}

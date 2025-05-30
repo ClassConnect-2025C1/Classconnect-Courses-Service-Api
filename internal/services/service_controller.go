@@ -149,6 +149,28 @@ func SetupRoutes() http.Handler {
 
 		// Delete current user's submission
 		api.DELETE("/:course_id/assignment/:assignment_id/submission", courseHandler.DeleteSubmissionOfCurrentUser)
+
+		// =============================================
+		// Resources Management
+		// =============================================
+
+		// Create a module for resources in a course
+		api.POST("/:course_id/resource/module", courseHandler.CreateModule)
+
+		// Create a resource in a specific module
+		api.POST("/:course_id/resource/module/:module_id", courseHandler.CreateResource)
+
+		// // Get all resources(modules) from a course
+		// api.GET("/:course_id/resources", courseHandler.GetResources)
+
+		// // Patch order of modules and resources inside a course
+		// api.PATCH("/:course_id/resources", courseHandler.PatchResources)
+
+		// // Delete a resource in a specific module
+		// api.DELETE("/:course_id/resource/module/:module_id/:resource_id", courseHandler.DeleteResource)
+
+		// // Delete a module and all its resources
+		// api.DELETE("/:course_id/resource/module/:module_id", courseHandler.DeleteModule)
 	}
 
 	return r

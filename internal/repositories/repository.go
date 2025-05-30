@@ -65,4 +65,12 @@ type CourseRepository interface {
 
 	// GetUserFeedbacks retrieves all feedback for a specific user
 	GetUserFeedbacks(userID string) ([]model.UserFeedback, error)
+
+	// CreateModule creates a new module for a course
+	CreateModule(module *model.Module) error
+
+	// CreateResource creates a new resource for a module
+	CreateResource(resource *model.Resource) error
+
+	GetModuleByID(moduleID uint) (*model.Module, error)
 }
