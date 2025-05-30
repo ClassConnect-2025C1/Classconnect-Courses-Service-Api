@@ -77,4 +77,8 @@ type CourseRepository interface {
 	GetModulesByCourseID(courseID uint) ([]model.Module, error)
 
 	GetResourcesByModuleID(moduleID uint) ([]model.Resource, error)
+
+	DeleteResource(resourceID string) error
+
+	DeleteModule(moduleID uint) error
 }

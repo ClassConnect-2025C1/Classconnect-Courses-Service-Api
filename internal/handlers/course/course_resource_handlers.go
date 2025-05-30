@@ -189,3 +189,34 @@ func (h *courseHandlerImpl) GetResources(c *gin.Context) {
 		"modules": resources,
 	})
 }
+
+func (h *courseHandlerImpl) DeleteResource(c *gin.Context) {
+	resourceID := c.Param("resource_id")
+	if resourceID == "" {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Validation Error", "Resource ID is required")
+		return
+	}
+
+	if err := h.repo.DeleteResource(resourceID); err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to delete resource", "Error deleting resource: "+err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Resource deleted successfully"})
+}
+
+func (h *courseHandlerImpl) DeleteModule(c *gin.Context) {
+	moduleID, ok := h.getModuleID(c)
+	if !ok {
+		return
+	}
+	_, ok = h.getModuleByID(c, moduleID)
+	if !ok {
+		return
+	}
+
+	if err := h.repo.DeleteModule(moduleID); err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to delete module", "Error deleting module: "+err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Module deleted successfully"})
+}

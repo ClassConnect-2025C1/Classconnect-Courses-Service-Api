@@ -495,3 +495,25 @@ func (r *courseRepository) GetResourcesByModuleID(moduleID uint) ([]model.Resour
 	}
 	return resources, nil
 }
+
+// DeleteResource deletes a resource by its ID
+func (r *courseRepository) DeleteResource(resourceID string) error {
+	var resource model.Resource
+	if err := r.db.Where("id = ?", resourceID).First(&resource).Error; err != nil {
+		return fmt.Errorf("error retrieving resource: %w", err)
+	}
+
+	return r.db.Delete(&resource).Error
+}
+
+// DeleteModule deletes a module and all its resources
+func (r *courseRepository) DeleteModule(moduleID uint) error {
+	var module model.Module
+	if err := r.db.Where("id = ?", moduleID).First(&module).Error; err != nil {
+		return fmt.Errorf("error retrieving module: %w", err)
+	}
+	if err := r.db.Where("module_id = ?", moduleID).Delete(&model.Resource{}).Error; err != nil {
+		return fmt.Errorf("error deleting resources for module: %w", err)
+	}
+	return r.db.Delete(&module).Error
+}
