@@ -71,6 +71,7 @@ func (h *courseHandlerImpl) CreateResource(c *gin.Context) {
 			utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to upload file", "Error uploading file: "+err.Error())
 			return
 		}
+		resourceType = "file"
 	} else {
 		resourceId = uuid.New().String()
 		url = link
