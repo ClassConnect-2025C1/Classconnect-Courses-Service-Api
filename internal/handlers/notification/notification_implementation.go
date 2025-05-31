@@ -14,7 +14,7 @@ func NewNotificationClient(client HttpDoer) *NotificationClient {
 	notificationURL := os.Getenv("URL_NOTIFICATION")
 	usersServiceURL := os.Getenv("URL_USERS")
 
-	// Necesito estos para correlo en local
+	// // Necesito estos para correlo en local
 	// notificationURL := "localhost:8080"
 	// usersServiceURL := "localhost:8081"
 

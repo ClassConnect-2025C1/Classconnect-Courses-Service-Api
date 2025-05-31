@@ -79,6 +79,7 @@ func (h *courseHandlerImpl) getAssignmentByID(c *gin.Context, assignmentID uint)
 	return assignment, true
 }
 
+// TODO: que hcemos con esto?
 func (h *courseHandlerImpl) getSubmissionByID(c *gin.Context, submissionID uint) (*model.Submission, bool) {
 	submission, err := h.repo.GetSubmission(submissionID)
 	if err != nil {

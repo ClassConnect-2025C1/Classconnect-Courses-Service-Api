@@ -5,8 +5,6 @@ import (
 	"templateGo/internal/model"
 	"templateGo/internal/utils"
 
-	"slices"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,12 +16,6 @@ func (h *courseHandlerImpl) CreateUserFeedback(c *gin.Context) {
 	}
 
 	studentID, ok := h.getUserID(c)
-	if !ok {
-		return
-	}
-
-	// Get instructor ID from token
-	instructorID, ok := h.getUserIDFromToken(c)
 	if !ok {
 		return
 	}
@@ -46,12 +38,6 @@ func (h *courseHandlerImpl) CreateUserFeedback(c *gin.Context) {
 		return
 	}
 
-	// Verify the instructor is the course creator or a teaching assistant
-	if instructorID != course.CreatedBy && !contains(course.TeachingAssistants, instructorID) {
-		utils.NewErrorResponse(c, http.StatusForbidden, "Forbidden", "Only instructors or TAs can provide feedback")
-		return
-	}
-
 	// Parse request body
 	var request struct {
 		Comment string `json:"comment" binding:"required"`
@@ -64,11 +50,11 @@ func (h *courseHandlerImpl) CreateUserFeedback(c *gin.Context) {
 	}
 
 	feedback := &model.UserFeedback{
-		CourseID:     courseID,
-		StudentID:    studentID,
-		InstructorID: instructorID,
-		Comment:      request.Comment,
-		Rating:       request.Rating,
+		CourseID:    courseID,
+		StudentID:   studentID,
+		CourseTitle: course.Title,
+		Comment:     request.Comment,
+		Rating:      request.Rating,
 	}
 
 	if err := h.repo.CreateUserFeedback(feedback); err != nil {
@@ -96,22 +82,17 @@ func (h *courseHandlerImpl) GetUserFeedbacks(c *gin.Context) {
 	response := make([]gin.H, 0, len(feedbacks))
 	for _, feedback := range feedbacks {
 		response = append(response, gin.H{
-			"id":            feedback.ID,
-			"course_id":     feedback.CourseID,
-			"student_id":    feedback.StudentID,
-			"instructor_id": feedback.InstructorID,
-			"comment":       feedback.Comment,
-			"rating":        feedback.Rating,
-			"created_at":    feedback.CreatedAt,
+			"id":           feedback.ID,
+			"course_id":    feedback.CourseID,
+			"student_id":   feedback.StudentID,
+			"course_title": feedback.CourseTitle,
+			"comment":      feedback.Comment,
+			"rating":       feedback.Rating,
+			"created_at":   feedback.CreatedAt,
 		})
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"data": response,
 	})
-}
-
-// Helper function to check if a string is in a slice
-func contains(slice []string, str string) bool {
-	return slices.Contains(slice, str)
 }
