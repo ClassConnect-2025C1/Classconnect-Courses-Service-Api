@@ -37,6 +37,15 @@ func (h *courseHandlerImpl) getSubmissionID(c *gin.Context) (uint, bool) {
 	return uint(id), true
 }
 
+func (h *courseHandlerImpl) getModuleID(c *gin.Context) (uint, bool) {
+	id, err := strconv.Atoi(c.Param("module_id"))
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Invalid Parameter", "Module ID must be a number")
+		return 0, false
+	}
+	return uint(id), true
+}
+
 func (h *courseHandlerImpl) getUserID(c *gin.Context) (string, bool) {
 	id := c.Param("user_id")
 	if id == "" {
@@ -87,6 +96,24 @@ func (h *courseHandlerImpl) getSubmissionByID(c *gin.Context, submissionID uint)
 		return nil, false
 	}
 	return submission, true
+}
+
+func (h *courseHandlerImpl) getModuleByID(c *gin.Context, moduleID uint) (*model.Module, bool) {
+	module, err := h.repo.GetModuleByID(moduleID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Module not found")
+		return nil, false
+	}
+	return module, true
+}
+
+func (h *courseHandlerImpl) getResourceByID(c *gin.Context, resourceID string) (*model.Resource, bool) {
+	resource, err := h.repo.GetResourceByID(resourceID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Resource not found")
+		return nil, false
+	}
+	return resource, true
 }
 
 // Response formatting helpers

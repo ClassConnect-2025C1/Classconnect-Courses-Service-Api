@@ -65,4 +65,26 @@ type CourseRepository interface {
 
 	// GetUserFeedbacks retrieves all feedback for a specific user
 	GetUserFeedbacks(userID string) ([]model.UserFeedback, error)
+
+	// CreateModule creates a new module for a course
+	CreateModule(module *model.Module) error
+
+	// CreateResource creates a new resource for a module
+	CreateResource(resource *model.Resource) error
+
+	GetModuleByID(moduleID uint) (*model.Module, error)
+
+	GetResourceByID(resourceID string) (*model.Resource, error)
+
+	GetModulesByCourseID(courseID uint) ([]model.Module, error)
+
+	GetResourcesByModuleID(moduleID uint) ([]model.Resource, error)
+
+	DeleteResource(resourceID string) error
+
+	DeleteModule(moduleID uint) error
+
+	UpdateModuleOrder(moduleID uint, newOrder int) error
+
+	UpdateResourceOrder(resourceID string, newOrder int) error
 }
