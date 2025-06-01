@@ -138,14 +138,14 @@ func SetupRoutes() http.Handler {
 		// Get current user's submission for an assignment
 		api.GET("/:course_id/assignment/:assignment_id/submission", courseHandler.GetSubmissionOfCurrentUser)
 
-		// Get a specific user's submission
-		api.GET("/:course_id/assignment/:assignment_id/submission/:user_id", courseHandler.GetSubmissionByUserID)
-
 		// Get all submissions for an assignment
 		api.GET("/:course_id/assignment/:assignment_id/submissions", courseHandler.GetSubmissions)
 
 		// Grade and provide feedback on a submission
 		api.PATCH("/:course_id/assignment/:assignment_id/submission/:submission_id", courseHandler.GradeSubmission)
+
+		// Get AI generated grade and feedback for a submission
+		api.GET("/:course_id/assignment/:assignment_id/submission/:submission_id/ai-grade", courseHandler.GetAIGeneratedGradeAndFeedback)
 
 		// Delete current user's submission
 		api.DELETE("/:course_id/assignment/:assignment_id/submission", courseHandler.DeleteSubmissionOfCurrentUser)

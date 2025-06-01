@@ -1,6 +1,7 @@
 package course
 
 import (
+	"log"
 	"net/http"
 	"templateGo/internal/model"
 	"templateGo/internal/utils"
@@ -181,4 +182,41 @@ func (h *courseHandlerImpl) GradeSubmission(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Submission graded successfully"})
+}
+
+// GetAIGeneratedGrade retrieves AI-generated grade for a submission
+func (h *courseHandlerImpl) GetAIGeneratedGradeAndFeedback(c *gin.Context) {
+	submissionID, ok := h.getSubmissionID(c)
+	if !ok {
+		return
+	}
+	submission, err := h.repo.GetSubmission(submissionID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Submission not found")
+		return
+	}
+	assignmentID, ok := h.getAssignmentID(c)
+	if !ok {
+		return
+	}
+	// Check if assignment exists
+	assignment, ok := h.getAssignmentByID(c, assignmentID)
+	if !ok {
+		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Assignment not found")
+		return
+	}
+	// Simulate AI-generated grade retrieval
+	aiGrade, aiFeedback, err := h.aiAnalyzer.GenerateGradeAndFeedback(assignment.Description, submission.Files)
+	if err != nil {
+		// print it to the console for debugging
+		log.Printf("Error generating AI grade/feedback: %v", err)
+
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error generating AI grade/feedback")
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"data": gin.H{
+		"grade":    aiGrade,
+		"feedback": aiFeedback,
+	}})
 }

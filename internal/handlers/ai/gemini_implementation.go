@@ -2,12 +2,17 @@ package ai
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"strconv"
 	"strings"
 	"templateGo/internal/model"
+
+	"google.golang.org/genai"
 )
 
 // GeminiAnalyzer implements FeedbackAnalyzer using Google's Gemini API
@@ -24,6 +29,76 @@ func NewGeminiAnalyzer() *GeminiAnalyzer {
 	return &GeminiAnalyzer{
 		APIKey: apiKey,
 	}
+}
+
+// GenerateGradeAndFeedback generates a grade and feedback for a submission using the Gemini API
+func (g *GeminiAnalyzer) GenerateGradeAndFeedback(submissionDescription string, submissionFiles []model.SubmissionFile) (int, string, error) {
+	ctx := context.Background()
+	client, err := genai.NewClient(
+		ctx, &genai.ClientConfig{
+			APIKey:  g.APIKey,
+			Backend: genai.BackendGeminiAPI,
+		})
+
+	if err != nil {
+		return 0, "", fmt.Errorf("error creating Gemini client: %w", err)
+	}
+
+	// Format the submission content and files for the Gemini API
+	submissionText := "You are analyzing a student's submission for the following assignment:\n\n" + submissionDescription + "\n\nYour task is to provide a grade and feedback based on the content of the given submission files. The grade should be a number between 0 and 100, and the feedback should be a short paragraph explaining the grade and any suggestions for improvement.\n\n Answer strictly in plain text, in the following format:\n\n<grade>\n<feedback>\n\n"
+
+	parts := []*genai.Part{}
+
+	for _, file := range submissionFiles {
+		if !strings.HasSuffix(file.Name, ".pdf") {
+			return 0, "", fmt.Errorf("AI generated grade/feedback is only available for pdf files")
+		}
+		parts = append(parts,
+			&genai.Part{
+				InlineData: &genai.Blob{
+					MIMEType: "application/pdf",
+					Data:     file.Content,
+				},
+			},
+		)
+	}
+
+	parts = append(parts, genai.NewPartFromText(submissionText))
+
+	log.Println("Parts to be sent to Gemini API:", parts)
+
+	contents := []*genai.Content{
+		genai.NewContentFromParts(parts, genai.RoleUser),
+	}
+
+	result, err := client.Models.GenerateContent(
+		ctx,
+		"gemini-2.0-flash",
+		contents,
+		nil,
+	)
+	if err != nil {
+		return 0, "", fmt.Errorf("error generating content with Gemini API: %w", err)
+	}
+
+	// Extrat the grade and feedback from the result
+	text := result.Text()
+
+	grade_and_feedback := strings.SplitN(text, "\n", 2)
+	if len(grade_and_feedback) < 2 {
+		return 0, "", fmt.Errorf("unexpected response format from Gemini API: %s", text)
+	}
+	gradeText := strings.TrimSpace(grade_and_feedback[0])
+	feedback := strings.TrimSpace(grade_and_feedback[1])
+	grade, err := strconv.Atoi(gradeText)
+	if err != nil {
+		return 0, "", fmt.Errorf("error parsing grade from Gemini API response: %w", err)
+	}
+	if grade < 0 || grade > 100 {
+		return 0, "", fmt.Errorf("grade out of range: %d", grade)
+	}
+	// Return the grade and feedback
+	return grade, feedback, nil
 }
 
 // AnalyzeFeedback analyzes course feedback using the Gemini API

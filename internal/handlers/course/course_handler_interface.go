@@ -43,6 +43,7 @@ type CourseHandler interface {
 	GetSubmissionByUserID(c *gin.Context)
 	GetSubmissions(c *gin.Context)
 	GradeSubmission(c *gin.Context)
+	GetAIGeneratedGradeAndFeedback(c *gin.Context)
 
 	// Course Approval
 	ApproveCourses(c *gin.Context)

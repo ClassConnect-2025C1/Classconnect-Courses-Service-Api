@@ -353,7 +353,7 @@ func (r *courseRepository) GetSubmissionByUserID(courseID, assignmentID uint, us
 
 func (r *courseRepository) GetSubmission(submissionID uint) (*model.Submission, error) {
 	var submission model.Submission
-	err := DB.Where("id = ?", submissionID).First(&submission).Error
+	err := DB.Where("id = ?", submissionID).Preload("Files").First(&submission).Error
 	if err != nil {
 		return nil, err
 	}
