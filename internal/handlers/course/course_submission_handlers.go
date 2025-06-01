@@ -145,6 +145,10 @@ func (h *courseHandlerImpl) GetSubmissions(c *gin.Context) {
 	if !ok {
 		return
 	}
+	if !h.isCourseCreatorOrAssistant(c, courseID) {
+		utils.NewErrorResponse(c, http.StatusForbidden, "Forbidden", "You do not have permission to access this resource")
+		return
+	}
 	assignmentID, ok := h.getAssignmentID(c)
 	if !ok {
 		return
