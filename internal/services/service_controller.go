@@ -171,6 +171,16 @@ func SetupRoutes() http.Handler {
 
 		// Delete a module and all its resources
 		api.DELETE("/:course_id/resource/module/:module_id", courseHandler.DeleteModule)
+
+		// =============================================
+		// Statistics
+		// =============================================
+
+		// Get statistics for all courses of the teacher
+		api.GET("/statistics", courseHandler.GetCoursesStatistics)
+
+		// Get statistics for a user
+		api.GET("/statistics/course/:course_id/user/:user_id", courseHandler.GetUserStatisticsForCourse)
 	}
 
 	return r

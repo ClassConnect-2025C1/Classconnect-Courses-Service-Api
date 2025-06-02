@@ -547,3 +547,25 @@ func (r *courseRepository) UpdateResourceOrder(resourceID string, order int) err
 	resource.Order = order
 	return r.db.Save(&resource).Error
 }
+
+func (r *courseRepository) GetCoursesForTeacher(userEmail string) ([]model.Course, error) {
+	var courses []model.Course
+	err := r.db.Table("courses").
+		Where("created_by = ? OR ? = ANY(teaching_assistants)", userEmail, userEmail).
+		Find(&courses).Error
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving courses for teacher: %w", err)
+	}
+	return courses, nil
+}
+
+func (r *courseRepository) GetStudentsCount(courseID uint) (int, error) {
+	var count int64
+	err := r.db.Model(&model.Enrollment{}).
+		Where("course_id = ?", courseID).
+		Count(&count).Error
+	if err != nil {
+		return 0, fmt.Errorf("error counting students for course %d: %w", courseID, err)
+	}
+	return int(count), nil
+}

@@ -87,4 +87,8 @@ type CourseRepository interface {
 	UpdateModuleOrder(moduleID uint, newOrder int) error
 
 	UpdateResourceOrder(resourceID string, newOrder int) error
+
+	GetStudentsCount(courseID uint) (int, error)
+
+	GetCoursesForTeacher(userEmail string) ([]model.Course, error)
 }

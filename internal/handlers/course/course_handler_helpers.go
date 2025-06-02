@@ -70,17 +70,17 @@ func (h *courseHandlerImpl) getUserIDFromToken(c *gin.Context) (string, bool) {
 }
 
 func (h *courseHandlerImpl) getUserEmailFromToken(c *gin.Context) (string, bool) {
-	userID, exists := c.Get("user_email")
+	user_email, exists := c.Get("user_email")
 	if !exists {
 		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "User Email not found in token")
 		return "", false
 	}
-	id, ok := userID.(string)
+	email, ok := user_email.(string)
 	if !ok {
 		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "Invalid User Email format")
 		return "", false
 	}
-	return id, true
+	return email, true
 }
 
 // Entity retrieval helpers

@@ -60,4 +60,8 @@ type CourseHandler interface {
 	PatchResources(c *gin.Context)
 	DeleteResource(c *gin.Context)
 	DeleteModule(c *gin.Context)
+
+	// Statistics
+	GetCoursesStatistics(c *gin.Context)
+	GetUserStatisticsForCourse(c *gin.Context)
 }
