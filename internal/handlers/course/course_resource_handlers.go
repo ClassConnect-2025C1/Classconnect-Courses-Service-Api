@@ -164,7 +164,7 @@ func (h *courseHandlerImpl) PatchModule(c *gin.Context) {
 	if !ok {
 		return
 	}
-	module, ok := h.getModuleByID(c, moduleID)
+	_, ok = h.getModuleByID(c, moduleID)
 	if !ok {
 		return
 	}
@@ -175,8 +175,7 @@ func (h *courseHandlerImpl) PatchModule(c *gin.Context) {
 		return
 	}
 
-	module.Name = name
-	if err := h.repo.UpdateModule(module); err != nil {
+	if err := h.repo.UpdateModule(moduleID, name); err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to update module", "Error updating module: "+err.Error())
 		return
 	}

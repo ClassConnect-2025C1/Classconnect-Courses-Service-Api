@@ -80,7 +80,7 @@ type CourseRepository interface {
 
 	GetResourcesByModuleID(moduleID uint) ([]model.Resource, error)
 
-	UpdateModule(module *model.Module) error
+	UpdateModule(moduleID uint, newName string) error
 
 	DeleteResource(resourceID string) error
 
