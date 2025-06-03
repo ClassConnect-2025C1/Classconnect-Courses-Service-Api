@@ -506,6 +506,31 @@ func (r *courseRepository) GetResourcesByModuleID(moduleID uint) ([]model.Resour
 	return resources, nil
 }
 
+// UpdateModule updates an existing module
+func (r *courseRepository) UpdateModule(module *model.Module) error {
+	var existingModule model.Module
+	if err := r.db.First(&existingModule, module.ID).Error; err != nil {
+		return fmt.Errorf("error retrieving module: %w", err)
+	}
+
+	// Start a transaction for atomicity
+	tx := r.db.Begin()
+
+	// Clear existing resource associations if any
+	if err := tx.Model(&existingModule).Association("Resources").Clear(); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error clearing resources: %w", err)
+	}
+
+	module.Order = existingModule.Order // Preserve the order
+	if err := tx.Save(module).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error saving module: %w", err)
+	}
+
+	return tx.Commit().Error
+}
+
 // DeleteResource deletes a resource by its ID
 func (r *courseRepository) DeleteResource(resourceID string) error {
 	var resource model.Resource

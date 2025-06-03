@@ -155,6 +155,31 @@ func (h *courseHandlerImpl) postResource(fileHeader *multipart.FileHeader, cours
 	return response.ResourceID, response.Link, nil
 }
 
+// PatchModule updates the name of a module
+func (h *courseHandlerImpl) PatchModule(c *gin.Context) {
+	moduleID, ok := h.getModuleID(c)
+	if !ok {
+		return
+	}
+	module, ok := h.getModuleByID(c, moduleID)
+	if !ok {
+		return
+	}
+
+	name := c.PostForm("name")
+	if name == "" {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Validation Error", "Module name is required")
+		return
+	}
+
+	module.Name = name
+	if err := h.repo.UpdateModule(module); err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to update module", "Error updating module: "+err.Error())
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Module updated successfully"})
+}
+
 // getResources retrieves all resources from a course as modules with their resources
 func (h *courseHandlerImpl) GetResources(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)

@@ -160,7 +160,10 @@ func SetupRoutes() http.Handler {
 		// Create a resource in a specific module
 		api.POST("/:course_id/resource/module/:module_id", courseHandler.CreateResource)
 
-		// // Get all resources(modules) from a course
+		// Patch a module name
+		api.PATCH("/:course_id/resource/module/:module_id", courseHandler.PatchModule)
+
+		// Get all resources(modules) from a course
 		api.GET("/:course_id/resources", courseHandler.GetResources)
 
 		// Patch order of modules and resources inside a course
