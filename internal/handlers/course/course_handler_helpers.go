@@ -69,6 +69,20 @@ func (h *courseHandlerImpl) getUserIDFromToken(c *gin.Context) (string, bool) {
 	return id, true
 }
 
+func (h *courseHandlerImpl) getUserEmailFromToken(c *gin.Context) (string, bool) {
+	user_email, exists := c.Get("user_email")
+	if !exists {
+		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "User Email not found in token")
+		return "", false
+	}
+	email, ok := user_email.(string)
+	if !ok {
+		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "Invalid User Email format")
+		return "", false
+	}
+	return email, true
+}
+
 // Entity retrieval helpers
 func (h *courseHandlerImpl) getCourseByID(c *gin.Context, courseID uint) (*model.Course, bool) {
 	course, err := h.repo.GetByID(courseID)
@@ -137,4 +151,25 @@ func formatCourseResponse(course *model.Course) gin.H {
 		"eligibilityCriteria": course.EligibilityCriteria,
 		"teachingAssistants":  course.TeachingAssistants,
 	}
+}
+
+func contains(slice []string, str string) bool {
+	for _, v := range slice {
+		if v == str {
+			return true
+		}
+	}
+	return false
+}
+
+func (h *courseHandlerImpl) isCourseCreatorOrAssistant(c *gin.Context, courseId uint) bool {
+	userEmail, ok := h.getUserEmailFromToken(c)
+	if !ok {
+		return false
+	}
+	course, ok := h.getCourseByID(c, courseId)
+	if !ok {
+		return false
+	}
+	return course.CreatedBy == userEmail || contains(course.TeachingAssistants, userEmail)
 }

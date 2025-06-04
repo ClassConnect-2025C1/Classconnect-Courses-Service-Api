@@ -353,7 +353,7 @@ func (r *courseRepository) GetSubmissionByUserID(courseID, assignmentID uint, us
 
 func (r *courseRepository) GetSubmission(submissionID uint) (*model.Submission, error) {
 	var submission model.Submission
-	err := DB.Where("id = ?", submissionID).First(&submission).Error
+	err := DB.Where("id = ?", submissionID).Preload("Files").First(&submission).Error
 	if err != nil {
 		return nil, err
 	}
@@ -506,6 +506,18 @@ func (r *courseRepository) GetResourcesByModuleID(moduleID uint) ([]model.Resour
 	return resources, nil
 }
 
+// UpdateModule updates an existing module's name
+func (r *courseRepository) UpdateModule(moduleID uint, newName string) error {
+	result := r.db.Model(&model.Module{}).Where("id = ?", moduleID).Update("name", newName)
+	if result.Error != nil {
+		return fmt.Errorf("error updating module name: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("module with ID %d not found or name unchanged", moduleID)
+	}
+	return nil
+}
+
 // DeleteResource deletes a resource by its ID
 func (r *courseRepository) DeleteResource(resourceID string) error {
 	var resource model.Resource
@@ -546,4 +558,26 @@ func (r *courseRepository) UpdateResourceOrder(resourceID string, order int) err
 
 	resource.Order = order
 	return r.db.Save(&resource).Error
+}
+
+func (r *courseRepository) GetCoursesForTeacher(userEmail string) ([]model.Course, error) {
+	var courses []model.Course
+	err := r.db.Table("courses").
+		Where("created_by = ? OR ? = ANY(teaching_assistants)", userEmail, userEmail).
+		Find(&courses).Error
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving courses for teacher: %w", err)
+	}
+	return courses, nil
+}
+
+func (r *courseRepository) GetStudentsCount(courseID uint) (int, error) {
+	var count int64
+	err := r.db.Model(&model.Enrollment{}).
+		Where("course_id = ?", courseID).
+		Count(&count).Error
+	if err != nil {
+		return 0, fmt.Errorf("error counting students for course %d: %w", courseID, err)
+	}
+	return int(count), nil
 }

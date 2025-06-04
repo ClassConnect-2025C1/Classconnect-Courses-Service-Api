@@ -43,6 +43,7 @@ type CourseHandler interface {
 	GetSubmissionByUserID(c *gin.Context)
 	GetSubmissions(c *gin.Context)
 	GradeSubmission(c *gin.Context)
+	GetAIGeneratedGradeAndFeedback(c *gin.Context)
 
 	// Course Approval
 	ApproveCourses(c *gin.Context)
@@ -55,8 +56,13 @@ type CourseHandler interface {
 	// Resource Management
 	CreateModule(c *gin.Context)
 	CreateResource(c *gin.Context)
+	PatchModule(c *gin.Context)
 	GetResources(c *gin.Context)
 	PatchResources(c *gin.Context)
 	DeleteResource(c *gin.Context)
 	DeleteModule(c *gin.Context)
+
+	// Statistics
+	GetCoursesStatistics(c *gin.Context)
+	GetUserStatisticsForCourse(c *gin.Context)
 }

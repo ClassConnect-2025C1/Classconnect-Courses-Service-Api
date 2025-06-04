@@ -16,6 +16,7 @@ type Resource struct {
 	Order    int    `gorm:"not null;default:0" json:"order"` // Add default value
 	Type     string `gorm:"not null" json:"type"`
 	URL      string `gorm:"not null" json:"url"`
+	Name     string `json:"name"`
 
 	// Associations
 	Module Module `gorm:"foreignKey:ModuleID;references:ID" json:"-"` // Fix relationship

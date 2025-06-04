@@ -80,6 +80,8 @@ type CourseRepository interface {
 
 	GetResourcesByModuleID(moduleID uint) ([]model.Resource, error)
 
+	UpdateModule(moduleID uint, newName string) error
+
 	DeleteResource(resourceID string) error
 
 	DeleteModule(moduleID uint) error
@@ -87,4 +89,8 @@ type CourseRepository interface {
 	UpdateModuleOrder(moduleID uint, newOrder int) error
 
 	UpdateResourceOrder(resourceID string, newOrder int) error
+
+	GetStudentsCount(courseID uint) (int, error)
+
+	GetCoursesForTeacher(userEmail string) ([]model.Course, error)
 }

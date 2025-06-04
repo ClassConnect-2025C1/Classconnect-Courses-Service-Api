@@ -138,14 +138,14 @@ func SetupRoutes() http.Handler {
 		// Get current user's submission for an assignment
 		api.GET("/:course_id/assignment/:assignment_id/submission", courseHandler.GetSubmissionOfCurrentUser)
 
-		// Get a specific user's submission
-		api.GET("/:course_id/assignment/:assignment_id/submission/:user_id", courseHandler.GetSubmissionByUserID)
-
 		// Get all submissions for an assignment
 		api.GET("/:course_id/assignment/:assignment_id/submissions", courseHandler.GetSubmissions)
 
 		// Grade and provide feedback on a submission
 		api.PATCH("/:course_id/assignment/:assignment_id/submission/:submission_id", courseHandler.GradeSubmission)
+
+		// Get AI generated grade and feedback for a submission
+		api.GET("/:course_id/assignment/:assignment_id/submission/:submission_id/ai-grade", courseHandler.GetAIGeneratedGradeAndFeedback)
 
 		// Delete current user's submission
 		api.DELETE("/:course_id/assignment/:assignment_id/submission", courseHandler.DeleteSubmissionOfCurrentUser)
@@ -160,7 +160,10 @@ func SetupRoutes() http.Handler {
 		// Create a resource in a specific module
 		api.POST("/:course_id/resource/module/:module_id", courseHandler.CreateResource)
 
-		// // Get all resources(modules) from a course
+		// Patch a module name
+		api.PATCH("/:course_id/resource/module/:module_id", courseHandler.PatchModule)
+
+		// Get all resources(modules) from a course
 		api.GET("/:course_id/resources", courseHandler.GetResources)
 
 		// Patch order of modules and resources inside a course
@@ -171,6 +174,16 @@ func SetupRoutes() http.Handler {
 
 		// Delete a module and all its resources
 		api.DELETE("/:course_id/resource/module/:module_id", courseHandler.DeleteModule)
+
+		// =============================================
+		// Statistics
+		// =============================================
+
+		// Get statistics for all courses of the teacher
+		api.GET("/statistics", courseHandler.GetCoursesStatistics)
+
+		// Get statistics for a user
+		api.GET("/statistics/course/:course_id/user/:user_id", courseHandler.GetUserStatisticsForCourse)
 	}
 
 	return r
