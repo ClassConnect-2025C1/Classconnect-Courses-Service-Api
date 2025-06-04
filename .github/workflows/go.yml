@@ -43,13 +43,11 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '1.22.2'
-
+        go-version: '1.24.0'
 
     - name: Install Go dependencies
       run: |
           go mod tidy
-
     
     - name: Define env variables
       run: |
@@ -73,13 +71,18 @@ jobs:
     - name: Clean previous coverage files
       run: rm -f coverage/coverage.out
 
-
     - name: Run Tests with Coverage
       run: |
-          mkdir -p coverage
-            go test -coverpkg=./... -coverprofile=coverage/coverage.out.tmp -v ./... || (echo "❌ Go tests failed" && exit 1)
-            (head -1 coverage/coverage.out.tmp && tail -n +2 coverage/coverage.out.tmp | grep -v "internals/handlers/course_handler.go") > coverage/coverage.out
-            rm coverage/coverage.out.tmp
+        mkdir -p coverage
+
+        echo "📋 Listando paquetes..."
+        EXCLUDED="templateGo/cmd|templateGo/config|templateGo/internal/handlers|templateGo/internal/model|templateGo/internal/repositories"
+        INCLUDED_PACKAGES=$(go list ./... | grep -vE "$EXCLUDED" | paste -sd "," -)
+
+        echo "🏃 Ejecutando tests..."
+        go test -coverpkg="$INCLUDED_PACKAGES" -coverprofile=coverage/coverage.out -v $(go list ./... | grep -vE "$EXCLUDED") || (echo "❌ Go tests failed" && exit 1)
+
+        echo "✅ Tests ejecutados y coverage generado."
           
     - name: Check coverage file
       run: |
