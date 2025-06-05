@@ -52,19 +52,26 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 				continue
 			}
 			totalGrade := 0.0
-			totalSubmissionsCount := 0.0
+			submissionsCount := 0.0
+			ratedSubmissionsCount := 0.0
 			for _, submission := range submissions {
-				totalSubmissionsCount += 1
+				submissionsCount += 1
 				if submission.Grade > 0 {
 					totalGrade += float64(submission.Grade)
+					ratedSubmissionsCount += 1
 				}
 			}
-			submissionsCount := len(submissions)
 			if submissionsCount == 0 {
 				continue
 			}
-			averageGrade := totalGrade / float64(submissionsCount)
-			submissionRate := totalSubmissionsCount / float64(studentsCount)
+			averageGrade := 0.0
+			submissionRate := 0.0
+			if ratedSubmissionsCount > 0 {
+				averageGrade = totalGrade / float64(ratedSubmissionsCount)
+			}
+			if studentsCount > 0 {
+				submissionRate = submissionsCount / float64(studentsCount)
+			}
 			statisticsForDates = append(statisticsForDates, model.StatisticsForDate{
 				Date:           assignment.CreatedAt,
 				AverageGrade:   averageGrade,
@@ -108,6 +115,7 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 
 	totalGrades := 0.0
 	totalSubmissionsCount := 0.0
+	totalRatedSubmissionsCount := 0.0
 	statisticsForDates := make([]model.StatisticsForDate, 0)
 	assignments, err := h.repo.GetAssignmentsPreviews(courseID, userID)
 	if err != nil {
@@ -131,6 +139,7 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 		totalSubmissionsCount += 1
 		if submission.Grade > 0 {
 			totalGrades += float64(submission.Grade)
+			totalRatedSubmissionsCount += 1
 		}
 		statisticsForDates = append(statisticsForDates, model.StatisticsForDate{
 			Date:           assignment.CreatedAt,
@@ -139,7 +148,7 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 		})
 	}
 	assignmentsCount := len(assignments)
-	averageGrade := totalGrades / float64(totalSubmissionsCount)
+	averageGrade := totalGrades / float64(totalRatedSubmissionsCount)
 	submissionRate := totalSubmissionsCount / float64(assignmentsCount)
 
 	userStatistics := model.UserCourseStatistics{
