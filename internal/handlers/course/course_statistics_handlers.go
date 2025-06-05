@@ -121,6 +121,11 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 			return
 		}
 		if submission == nil {
+			statisticsForDates = append(statisticsForDates, model.StatisticsForDate{
+				Date:           assignment.CreatedAt,
+				AverageGrade:   0.0,
+				SubmissionRate: 0.0,
+			})
 			continue
 		}
 		totalSubmissionsCount += 1
@@ -134,7 +139,7 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 		})
 	}
 	assignmentsCount := len(assignments)
-	averageGrade := totalGrades / float64(assignmentsCount)
+	averageGrade := totalGrades / float64(totalSubmissionsCount)
 	submissionRate := totalSubmissionsCount / float64(assignmentsCount)
 
 	userStatistics := model.UserCourseStatistics{
