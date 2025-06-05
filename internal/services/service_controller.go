@@ -6,6 +6,7 @@ import (
 	"templateGo/internal/handlers/ai"
 	"templateGo/internal/handlers/course"
 	"templateGo/internal/handlers/notification"
+	"templateGo/internal/logger"
 	middleware "templateGo/internal/middlewares"
 	"templateGo/internal/repositories"
 
@@ -13,17 +14,46 @@ import (
 )
 
 // SetupRoutes configura las rutas del servidor y retorna un http.Handler.
-func SetupRoutes() http.Handler {
+func SetupRoutes(ddLogger *logger.DatadogLogger) http.Handler {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
+	// Add middleware to log requests with Gin
+	r.Use(func(c *gin.Context) {
+		// Process request
+		c.Next()
+
+		// After request is processed
+		if ddLogger != nil {
+			status := c.Writer.Status()
+			path := c.Request.URL.Path
+			method := c.Request.Method
+
+			attributes := map[string]interface{}{
+				"status":    status,
+				"path":      path,
+				"method":    method,
+				"client_ip": c.ClientIP(),
+			}
+
+			if status >= 400 {
+				ddLogger.Error(fmt.Sprintf("%s %s - %d", method, path, status), attributes, nil)
+			} else {
+				ddLogger.Info(fmt.Sprintf("%s %s - %d", method, path, status), attributes, nil)
+			}
+		}
+	})
+
 	// Health check endpoint
 	r.GET("/", func(c *gin.Context) {
+		if ddLogger != nil {
+			ddLogger.Info("Health check request", nil, []string{"endpoint:health"})
+		}
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 		fmt.Println("Response: healthcheck running wild")
 	})
 
-	// Create handlers
+	// Create handlers with logger
 	courseRepo := repositories.NewCourseRepository()
 	notificationClient := notification.NewNotificationClient(nil)
 	aiAnalyzer := ai.NewGeminiAnalyzer()
