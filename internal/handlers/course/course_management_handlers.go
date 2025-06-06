@@ -3,6 +3,7 @@ package course
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"templateGo/internal/model"
 	"templateGo/internal/utils"
 
@@ -25,6 +26,22 @@ func (h *courseHandlerImpl) CreateCourse(c *gin.Context) {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error creating course")
 		return
 	}
+
+	// Track course creation metric
+	if h.metricsClient != nil {
+		// Add relevant tags for better filtering and visualization
+		tags := []string{
+			fmt.Sprintf("course_id:%d", course.ID),
+			fmt.Sprintf("course_name:%s", course.Title),
+			fmt.Sprintf("course_type:%d", course.Capacity),
+			fmt.Sprintf("environment:%s", os.Getenv("ENVIRONMENT")),
+		}
+
+		if err := h.metricsClient.IncrementCounter("classconnect.courses.created", tags); err != nil {
+			fmt.Printf("Error sending course creation metric: %v\n", err)
+		}
+	}
+
 	c.JSON(http.StatusCreated, gin.H{"message": "Course created successfully", "id": formatCourseResponse(course)["id"]})
 
 }

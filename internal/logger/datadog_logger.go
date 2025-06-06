@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -36,7 +36,7 @@ type LogEntry struct {
 func NewDatadogLogger(apiKey string) *DatadogLogger {
 	hostname, err := os.Hostname()
 	if err != nil {
-		hostname = "unknown"
+		hostname = "Render"
 	}
 
 	// Get site from environment or use provided default
@@ -112,7 +112,7 @@ func (d *DatadogLogger) SendLogs(logs []LogEntry) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 300 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("error from Datadog API: status code %d, body: %s",
 			resp.StatusCode, string(body))
 	}

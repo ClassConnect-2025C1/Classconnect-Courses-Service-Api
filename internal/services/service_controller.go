@@ -3,6 +3,8 @@ package services
 import (
 	"fmt"
 	"net/http"
+	"templateGo/internal/metrics"
+
 	"templateGo/internal/handlers/ai"
 	"templateGo/internal/handlers/course"
 	"templateGo/internal/handlers/notification"
@@ -14,7 +16,7 @@ import (
 )
 
 // SetupRoutes configura las rutas del servidor y retorna un http.Handler.
-func SetupRoutes(ddLogger *logger.DatadogLogger) http.Handler {
+func SetupRoutes(ddLogger *logger.DatadogLogger, ddMetrics *metrics.DatadogMetricsClient) http.Handler {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
@@ -53,11 +55,11 @@ func SetupRoutes(ddLogger *logger.DatadogLogger) http.Handler {
 		fmt.Println("Response: healthcheck running wild")
 	})
 
-	// Create handlers with logger
+	// Create handlers with logger and metrics
 	courseRepo := repositories.NewCourseRepository()
 	notificationClient := notification.NewNotificationClient(nil)
 	aiAnalyzer := ai.NewGeminiAnalyzer()
-	courseHandler := course.NewCourseHandler(courseRepo, notificationClient, aiAnalyzer)
+	courseHandler := course.NewCourseHandler(courseRepo, notificationClient, aiAnalyzer, ddMetrics)
 
 	api := r.Group("/")
 	api.Use(middleware.AuthMiddleware())

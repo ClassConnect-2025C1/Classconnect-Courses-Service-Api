@@ -2,7 +2,9 @@ package course
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"os"
 	"templateGo/internal/utils"
 
 	"github.com/gin-gonic/gin"
@@ -33,6 +35,25 @@ func (h *courseHandlerImpl) EnrollUserInCourse(c *gin.Context) {
 	if !ok {
 		return
 	}
+
+	// Track enrollment metric
+	if h.metricsClient != nil {
+		// Add relevant tags for better filtering and visualization
+		tags := []string{
+			fmt.Sprintf("course_id:%d", courseID),
+			fmt.Sprintf("course_title:%s", course.Title),
+			fmt.Sprintf("user_id:%s", userID),
+			fmt.Sprintf("environment:%s", os.Getenv("ENVIRONMENT")),
+		}
+
+		fmt.Printf("Sending metric: classconnect.course.enrollment.created with tags: %v\n", tags)
+		if err := h.metricsClient.IncrementCounter("classconnect.course.enrollment.created", tags); err != nil {
+			fmt.Printf("Error sending course enrollment metric: %v\n", err)
+		} else {
+			fmt.Println("Successfully sent enrollment metric to Datadog")
+		}
+	}
+
 	h.notification.SendNotificationEmail(userID, course.Title)
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully enrolled"})
 

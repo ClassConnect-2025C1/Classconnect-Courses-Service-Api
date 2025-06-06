@@ -7,6 +7,7 @@ import (
 	"os"
 	"templateGo/config"
 	"templateGo/internal/logger"
+	"templateGo/internal/metrics"
 	"templateGo/internal/repositories"
 	controller "templateGo/internal/services"
 	"time"
@@ -14,14 +15,15 @@ import (
 	"github.com/rs/cors"
 )
 
-// Global logger
+// Global clients
 var datadogLogger *logger.DatadogLogger
+var datadogMetrics *metrics.DatadogMetricsClient
 
 func main() {
 	// Load environment variables from .env file
 	config.LoadEnv()
 
-	// Initialize Datadog logger
+	// Initialize Datadog logger and metrics
 	apiKey := "072654f5de729cf15440b7483822d1e5"
 
 	if apiKey == "" {
@@ -31,6 +33,7 @@ func main() {
 		os.Setenv("DATADOG_SITE", "us5.datadoghq.com")
 
 		datadogLogger = logger.NewDatadogLogger(apiKey)
+		datadogMetrics = metrics.NewDatadogMetricsClient(apiKey)
 
 		// Log application startup
 		err := datadogLogger.Info("Application starting up", map[string]interface{}{
@@ -53,8 +56,8 @@ func main() {
 	}
 	defer dbManager.CloseDB()
 
-	// Setup routes with logger
-	mux := controller.SetupRoutes(datadogLogger)
+	// Setup routes with logger and metrics
+	mux := controller.SetupRoutes(datadogLogger, datadogMetrics)
 
 	// Configurar CORS
 	corsHandler := cors.New(cors.Options{

@@ -3,6 +3,7 @@ package course
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"templateGo/internal/model"
 	"templateGo/internal/utils"
 
@@ -56,6 +57,24 @@ func (h *courseHandlerImpl) CreateCourseFeedback(c *gin.Context) {
 	if err := h.repo.CreateFeedback(feedback); err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error creating feedback")
 		return
+	}
+
+	// Track feedback creation metric
+	if h.metricsClient != nil {
+		// Add relevant tags for better filtering and visualization
+		tags := []string{
+			fmt.Sprintf("course_id:%d", courseID),
+			fmt.Sprintf("rating:%d", req.Rating),
+			fmt.Sprintf("user_id:%s", userID),
+			fmt.Sprintf("environment:%s", os.Getenv("ENVIRONMENT")),
+		}
+
+		fmt.Printf("Sending metric: classconnect.course.feedback.created with tags: %v\n", tags)
+		if err := h.metricsClient.IncrementCounter("classconnect.course.feedback.created", tags); err != nil {
+			fmt.Printf("Error sending course feedback creation metric: %v\n", err)
+		} else {
+			fmt.Println("Successfully sent feedback creation metric to Datadog")
+		}
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Feedback submitted successfully"})
