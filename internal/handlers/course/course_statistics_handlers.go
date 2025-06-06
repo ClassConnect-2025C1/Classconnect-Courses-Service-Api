@@ -36,6 +36,7 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 		}
 		globalTotalAverageGrade := 0.0
 		globalTotalSubmissionRate := 0.0
+		globalAssignmentsWithGradesCount := 0.0
 		statisticsForDates := make([]model.StatisticsForDate, 0)
 		assignments, err := h.repo.GetAssignmentsPreviews(course.ID, userID)
 		if err != nil {
@@ -68,6 +69,7 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 			submissionRate := 0.0
 			if ratedSubmissionsCount > 0 {
 				averageGrade = totalGrade / float64(ratedSubmissionsCount)
+				globalAssignmentsWithGradesCount += 1
 			}
 			if studentsCount > 0 {
 				submissionRate = submissionsCount / float64(studentsCount)
@@ -80,11 +82,10 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 			globalTotalAverageGrade += averageGrade
 			globalTotalSubmissionRate += submissionRate
 		}
-		if len(statisticsForDates) == 0 {
-			continue
+		if len(statisticsForDates) != 0 {
+			globalTotalAverageGrade /= globalAssignmentsWithGradesCount
+			globalTotalSubmissionRate /= float64(len(statisticsForDates))
 		}
-		globalTotalAverageGrade /= float64(len(statisticsForDates))
-		globalTotalSubmissionRate /= float64(len(statisticsForDates))
 		statistics = append(statistics, model.CourseStatistics{
 			CourseID:             course.ID,
 			CourseName:           course.Title,
