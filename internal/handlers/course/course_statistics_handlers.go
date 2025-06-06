@@ -39,18 +39,15 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 		globalAssignmentsWithGradesCount := 0.0
 		statisticsForDates := make([]model.StatisticsForDate, 0)
 		assignments, err := h.repo.GetAssignmentsPreviews(course.ID, userID, userEmail)
-		if err != nil {
+		if err != nil && err.Error() != "record not found" {
 			utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve assignments", "Error retrieving assignments: "+err.Error())
 			return
 		}
 		for _, assignment := range assignments {
 			submissions, err := h.repo.GetSubmissions(course.ID, assignment.ID)
-			if err != nil {
+			if err != nil && err.Error() != "record not found" {
 				utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve submissions", "Error retrieving submissions: "+err.Error())
 				return
-			}
-			if len(submissions) == 0 {
-				continue
 			}
 			totalGrade := 0.0
 			submissionsCount := 0.0
@@ -61,9 +58,6 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 					totalGrade += float64(submission.Grade)
 					ratedSubmissionsCount += 1
 				}
-			}
-			if submissionsCount == 0 {
-				continue
 			}
 			averageGrade := 0.0
 			submissionRate := 0.0
@@ -155,9 +149,15 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 			SubmissionRate: 1.0,
 		})
 	}
+	averageGrade := 0.0
+	submissionRate := 0.0
 	assignmentsCount := len(assignments)
-	averageGrade := totalGrades / float64(totalRatedSubmissionsCount)
-	submissionRate := totalSubmissionsCount / float64(assignmentsCount)
+	if totalRatedSubmissionsCount > 0 {
+		averageGrade = totalGrades / totalRatedSubmissionsCount
+	}
+	if assignmentsCount > 0 {
+		submissionRate = totalSubmissionsCount / float64(assignmentsCount)
+	}
 
 	userStatistics := model.UserCourseStatistics{
 		AverageGrade:       averageGrade,
