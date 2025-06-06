@@ -186,7 +186,7 @@ func (r *courseRepository) DeleteAssignment(assignmentID uint) error {
 	return DB.Delete(&model.Assignment{}, assignmentID).Error
 }
 
-func (r *courseRepository) GetAssignmentsPreviews(courseID uint, userID string) ([]model.AssignmentPreview, error) {
+func (r *courseRepository) GetAssignmentsPreviews(courseID uint, userID string, userEmail string) ([]model.AssignmentPreview, error) {
 	var assignments []model.Assignment
 	err := DB.Where("course_id = ?", courseID).Preload("Files").Find(&assignments).Error
 	if err != nil {
@@ -201,7 +201,7 @@ func (r *courseRepository) GetAssignmentsPreviews(courseID uint, userID string) 
 		// if there is no session, then it is pending
 		// status is none if the userID is of the course creator
 		var status string
-		if course.CreatedBy == userID {
+		if course.CreatedBy == userEmail {
 			status = "none"
 		} else {
 			var submissionCount int64

@@ -134,8 +134,13 @@ func (h *courseHandlerImpl) GetAssignmentsPreviews(c *gin.Context) {
 	if !ok {
 		return
 	}
+	userEmail, ok := h.getUserEmailFromToken(c)
+	if !ok {
+		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "User email not found in context")
+		return
+	}
 
-	assignments, err := h.repo.GetAssignmentsPreviews(courseID, userID)
+	assignments, err := h.repo.GetAssignmentsPreviews(courseID, userID, userEmail)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving assignments")
 		return

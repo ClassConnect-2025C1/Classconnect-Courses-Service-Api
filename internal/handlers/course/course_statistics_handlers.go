@@ -38,7 +38,7 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 		globalTotalSubmissionRate := 0.0
 		globalAssignmentsWithGradesCount := 0.0
 		statisticsForDates := make([]model.StatisticsForDate, 0)
-		assignments, err := h.repo.GetAssignmentsPreviews(course.ID, userID)
+		assignments, err := h.repo.GetAssignmentsPreviews(course.ID, userID, userEmail)
 		if err != nil {
 			utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve assignments", "Error retrieving assignments: "+err.Error())
 			return
@@ -105,6 +105,11 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "User ID not found in context")
 		return
 	}
+	userEmail, ok := h.getUserEmailFromToken(c)
+	if !ok {
+		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "User email not found in context")
+		return
+	}
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
@@ -118,7 +123,7 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 	totalSubmissionsCount := 0.0
 	totalRatedSubmissionsCount := 0.0
 	statisticsForDates := make([]model.StatisticsForDate, 0)
-	assignments, err := h.repo.GetAssignmentsPreviews(courseID, userID)
+	assignments, err := h.repo.GetAssignmentsPreviews(courseID, userID, userEmail)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve assignments", "Error retrieving assignments: "+err.Error())
 		return
