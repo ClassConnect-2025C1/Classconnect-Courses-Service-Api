@@ -83,8 +83,10 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 			globalTotalSubmissionRate += submissionRate
 		}
 		if len(statisticsForDates) != 0 {
-			globalTotalAverageGrade /= globalAssignmentsWithGradesCount
 			globalTotalSubmissionRate /= float64(len(statisticsForDates))
+		}
+		if globalAssignmentsWithGradesCount != 0 {
+			globalTotalAverageGrade /= globalAssignmentsWithGradesCount
 		}
 		statistics = append(statistics, model.CourseStatistics{
 			CourseID:             course.ID,
