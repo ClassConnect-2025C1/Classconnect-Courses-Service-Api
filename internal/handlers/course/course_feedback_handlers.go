@@ -103,8 +103,8 @@ func (h *courseHandlerImpl) GetCourseFeedbacks(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": feedbackList})
 }
 
-// GetAIFeedbackAnalysis returns AI-generated analysis of course feedback
-func (h *courseHandlerImpl) GetAIFeedbackAnalysis(c *gin.Context) {
+// GetAICourseFeedbackAnalysis returns AI-generated analysis of course feedback
+func (h *courseHandlerImpl) GetAICourseFeedbackAnalysis(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
 		return
@@ -132,7 +132,42 @@ func (h *courseHandlerImpl) GetAIFeedbackAnalysis(c *gin.Context) {
 	}
 
 	// Use the AI analyzer to analyze the feedback
-	analysis, err := h.aiAnalyzer.AnalyzeFeedback(course.Title, feedbacks)
+	analysis, err := h.aiAnalyzer.GenerateCourseFeedbackAnalysis(course.Title, feedbacks)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "AI Analysis Error", err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"data":           analysis,
+		"feedback_count": len(feedbacks),
+	})
+}
+
+func (h *courseHandlerImpl) GetAIUserFeedbackAnalysis(c *gin.Context) {
+	// Get user ID from url
+	userID, ok := h.getUserID(c)
+	if !ok {
+		return
+	}
+
+	// Get all feedback for the user
+	feedbacks, err := h.repo.GetUserFeedbacks(userID)
+	if err != nil {
+		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error retrieving user feedback")
+		return
+	}
+
+	// If there's no feedback, return an appropriate message
+	if len(feedbacks) == 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"message": "No feedback available for analysis",
+		})
+		return
+	}
+
+	// Use the AI analyzer to analyze the feedback
+	analysis, err := h.aiAnalyzer.GenerateUserFeedbackAnalysis(feedbacks)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "AI Analysis Error", err.Error())
 		return
