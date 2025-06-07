@@ -46,6 +46,7 @@ func (h *courseHandlerImpl) ApproveCourses(c *gin.Context) {
 		return
 	}
 
+	h.notification.SendNotification(userID, course.Title, "course_approve")
 	c.JSON(http.StatusOK, gin.H{"message": "Course approved successfully"})
 }
 

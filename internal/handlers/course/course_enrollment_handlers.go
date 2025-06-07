@@ -55,6 +55,7 @@ func (h *courseHandlerImpl) EnrollUserInCourse(c *gin.Context) {
 	}
 
 	h.notification.SendNotificationEmail(userID, course.Title)
+	h.notification.SendNotification(userID, course.Title, "enrollment")
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully enrolled"})
 
 }
