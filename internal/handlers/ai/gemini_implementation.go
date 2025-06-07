@@ -101,18 +101,26 @@ func (g *GeminiAnalyzer) GenerateGradeAndFeedback(submissionDescription string, 
 	return grade, feedback, nil
 }
 
-// AnalyzeFeedback analyzes course feedback using the Gemini API
-func (g *GeminiAnalyzer) AnalyzeFeedback(courseTitle string, feedbacks []model.CourseFeedback) (string, error) {
+// GenerateCourseFeedbackAnalysis analyzes course feedback using the Gemini API
+func (g *GeminiAnalyzer) GenerateCourseFeedbackAnalysis(courseTitle string, feedbacks []model.CourseFeedback) (string, error) {
 	// Format the feedback for the Gemini API
-	feedbackText := formatFeedbackForAnalysis(courseTitle, feedbacks)
+	feedbackText := formatCourseFeedbackForAnalysis(courseTitle, feedbacks)
 
 	// Call Gemini API
 	return g.callGeminiAPI(feedbackText)
 }
 
-// formatFeedbackForAnalysis formats the feedback data into text format for Gemini
-func formatFeedbackForAnalysis(courseTitle string, feedbacks []model.CourseFeedback) string {
-	// Calculate the average rating
+// GenerateUserFeedbackAnalysis analyzes user feedback using the Gemini API
+func (g *GeminiAnalyzer) GenerateUserFeedbackAnalysis(feedbacks []model.UserFeedback) (string, error) {
+	// Format the feedback for the Gemini API
+	feedbackText := formatUserFeedbackForAnalysis(feedbacks)
+
+	// Call Gemini API
+	return g.callGeminiAPI(feedbackText)
+}
+
+// formatCourseFeedbackForAnalysis formats the feedback data into text format for Gemini
+func formatCourseFeedbackForAnalysis(courseTitle string, feedbacks []model.CourseFeedback) string {
 	// Calculate the average rating
 	var totalRating int
 
@@ -124,7 +132,7 @@ func formatFeedbackForAnalysis(courseTitle string, feedbacks []model.CourseFeedb
 
 	var builder strings.Builder
 	builder.WriteString(fmt.Sprintf(
-		"You are analyzing course feedbacks for '%s'. Your task is to provide a short and clear summary of the most common themes mentioned by students. First tell the average rating which is '%s', then identify key strengths and areas where the course can improve, considering the ratings are on a scale from 1 to 5. Output strictly plain text. Do not use lists, bullet points, bold text, markdown, or any kind of formatting. Keep it as a simple paragraph.",
+		"You are analyzing course feedbacks for '%s'. Your task is to provide a short and clear summary of the most common themes mentioned by students. First tell the average rating which is '%s' (you don't have to recalculate it), then identify key strengths and areas where the course can improve considering that the ratings go from 1 to 5. Output strictly plain text. Do not use lists, bullet points, bold text, markdown, or any kind of formatting.",
 		courseTitle,
 		averageRating,
 	))
@@ -135,6 +143,35 @@ func formatFeedbackForAnalysis(courseTitle string, feedbacks []model.CourseFeedb
 		if feedback.Summary != "" {
 			builder.WriteString(fmt.Sprintf("Summary: %s\n", feedback.Summary))
 		}
+		if feedback.Comment != "" {
+			builder.WriteString(fmt.Sprintf("Comment: %s\n", feedback.Comment))
+		}
+		builder.WriteString("\n")
+	}
+
+	return builder.String()
+}
+
+// formatUserFeedbackForAnalysis formats the feedback data into text format for Gemini
+func formatUserFeedbackForAnalysis(feedbacks []model.UserFeedback) string {
+	// Calculate the average rating
+	var totalRating uint
+
+	for _, feedback := range feedbacks {
+		totalRating += feedback.Rating
+	}
+
+	averageRating := fmt.Sprintf("%.2f", float64(totalRating)/float64(len(feedbacks)))
+
+	var builder strings.Builder
+	builder.WriteString(fmt.Sprintf(
+		"You are analyzing feedbacks given to a student. Your task is to provide a short and clear summary of the comments and ratings from the teachers. First tell the average rating which is '%s' (you don't have to recalculate it), then identify key strengths and areas where the student can improve considering that the ratings go from 1 to 5. Output strictly plain text. Do not use lists, bullet points, bold text, markdown, or any kind of formatting.",
+		averageRating,
+	))
+
+	for i, feedback := range feedbacks {
+		builder.WriteString(fmt.Sprintf("Feedback %d:\n", i+1))
+		builder.WriteString(fmt.Sprintf("Rating: %d/100\n", feedback.Rating))
 		if feedback.Comment != "" {
 			builder.WriteString(fmt.Sprintf("Comment: %s\n", feedback.Comment))
 		}

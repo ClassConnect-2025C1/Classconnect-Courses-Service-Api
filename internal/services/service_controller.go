@@ -128,8 +128,8 @@ func SetupRoutes(ddLogger *logger.DatadogLogger, ddMetrics *metrics.DatadogMetri
 		// Get all feedback for a course
 		api.GET("/:course_id/feedbacks", courseHandler.GetCourseFeedbacks)
 
-		// Get AI-generated analysis of course feedback
-		api.GET("/:course_id/ai-feedback-analysis", courseHandler.GetAIFeedbackAnalysis)
+		// Get AI-generated analysis of course feedbacks
+		api.GET("/:course_id/ai-feedback-analysis", courseHandler.GetAICourseFeedbackAnalysis)
 
 		// =============================================
 		// User Feedback & Ratings
@@ -140,6 +140,9 @@ func SetupRoutes(ddLogger *logger.DatadogLogger, ddMetrics *metrics.DatadogMetri
 
 		// Get all feedback for a user
 		api.GET("/user/:user_id/feedbacks", courseHandler.GetUserFeedbacks)
+
+		// // Get AI-generated analysis of user feedbacks
+		api.GET("/user/:user_id/ai-feedback-analysis", courseHandler.GetAIUserFeedbackAnalysis)
 
 		// =============================================
 		// Assignment Management

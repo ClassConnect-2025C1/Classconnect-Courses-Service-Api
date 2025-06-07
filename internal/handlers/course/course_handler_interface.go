@@ -23,11 +23,12 @@ type CourseHandler interface {
 	// Course Feedback Management
 	CreateCourseFeedback(c *gin.Context)
 	GetCourseFeedbacks(c *gin.Context)
-	GetAIFeedbackAnalysis(c *gin.Context)
+	GetAICourseFeedbackAnalysis(c *gin.Context)
 
 	// User Feedback Management
 	CreateUserFeedback(c *gin.Context)
 	GetUserFeedbacks(c *gin.Context)
+	GetAIUserFeedbackAnalysis(c *gin.Context)
 
 	// Assignment Management
 	CreateAssignment(c *gin.Context)
