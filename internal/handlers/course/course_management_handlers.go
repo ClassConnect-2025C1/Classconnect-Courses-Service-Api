@@ -124,6 +124,11 @@ func (h *courseHandlerImpl) GetAvailableCourses(c *gin.Context) {
 		return
 	}
 
+	if userID == "" {
+		utils.NewErrorResponse(c, http.StatusBadRequest, "Unauthorized", "User not authenticated")
+		return
+	}
+
 	// Get all courses the user is not enrolled in
 	availableCourses, err := h.repo.GetAvailableCourses(userID)
 	if err != nil {
