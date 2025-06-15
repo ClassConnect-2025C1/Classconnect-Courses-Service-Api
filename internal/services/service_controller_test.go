@@ -15,6 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,6 +23,13 @@ var router http.Handler
 
 // // TestMain is the entry point for the test suite.
 func TestMain(m *testing.M) {
+	err := godotenv.Load("../../.env")
+	if err != nil {
+		log.Println("No .env file found or couldn't load it, using system environment variables (expected in deployment environments)")
+	} else {
+		log.Println("Loaded environment variables from .env file")
+	}
+
 	// Set up test environment
 	gin.SetMode(gin.ReleaseMode)
 
