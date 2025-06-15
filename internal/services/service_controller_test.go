@@ -3,7 +3,6 @@ package services
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -16,7 +15,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
-	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -26,15 +24,6 @@ var router http.Handler
 func TestMain(m *testing.M) {
 	// Set up test environment
 	gin.SetMode(gin.ReleaseMode)
-
-	// Try to load .env from different possible locations
-	err := godotenv.Load(".env")
-	if err != nil {
-		err = godotenv.Load("../.env")
-		if err != nil {
-			fmt.Println("No .env file found, using environment variables")
-		}
-	}
 
 	// Connect to test database
 	dbManager := repositories.NewDatabaseManager()

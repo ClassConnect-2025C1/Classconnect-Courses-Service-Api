@@ -5,13 +5,13 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"templateGo/config"
 	"templateGo/internal/logger"
 	"templateGo/internal/metrics"
 	"templateGo/internal/repositories"
 	controller "templateGo/internal/services"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 )
 
@@ -20,11 +20,14 @@ var datadogLogger *logger.DatadogLogger
 var datadogMetrics *metrics.DatadogMetricsClient
 
 func main() {
-	// Load environment variables from .env file
-	config.LoadEnv()
+	err := godotenv.Load("../.env")
+	if err != nil {
+		log.Println("No .env file found or couldn't load it, using system environment variables (expected in deployment environments)")
+	} else {
+		log.Println("Loaded environment variables from .env file")
+	}
 
-	// Initialize Datadog logger and metrics
-	apiKey := "072654f5de729cf15440b7483822d1e5"
+	apiKey := os.Getenv("DATADOG_API_KEY")
 
 	if apiKey == "" {
 		log.Println("Warning: DATADOG_API_KEY not set, logging to Datadog is disabled")
@@ -36,7 +39,7 @@ func main() {
 		datadogMetrics = metrics.NewDatadogMetricsClient(apiKey)
 
 		// Log application startup
-		err := datadogLogger.Info("Application starting up", map[string]interface{}{
+		err := datadogLogger.Info("Application starting up", map[string]any{
 			"version":     "1.0.0",
 			"environment": os.Getenv("ENVIRONMENT"),
 		}, []string{"startup", "init"})

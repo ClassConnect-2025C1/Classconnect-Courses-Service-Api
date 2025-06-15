@@ -15,8 +15,6 @@ func NewNotificationClient(client HttpDoer) *NotificationClient {
 	usersServiceURL := os.Getenv("URL_USERS")
 
 	if notificationURL == "" || usersServiceURL == "" {
-		notificationURL = "http://localhost:8003"
-		usersServiceURL = "http://localhost:8081"
 		log.Fatalf("Algunas variables de entorno no están configuradas correctamente.")
 	}
 
