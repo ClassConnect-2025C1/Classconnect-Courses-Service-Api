@@ -40,16 +40,6 @@ func main() {
 	datadogLogger = logger.NewDatadogLogger(apiKey)
 	datadogMetrics = metrics.NewDatadogMetricsClient(apiKey)
 
-	// Log application startup
-	err = datadogLogger.Info("Application starting up", map[string]any{
-		"version":     "1.0.0",
-		"environment": os.Getenv("ENVIRONMENT"),
-	}, []string{"startup", "init"})
-
-	if err != nil {
-		log.Printf("Error logging to Datadog: %v", err)
-	}
-
 	// Connect to database
 	dbManager := repositories.NewDatabaseManager()
 	if err := dbManager.ConnectDB(); err != nil {
@@ -75,6 +65,16 @@ func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
+	}
+
+	// Log application startup
+	err = datadogLogger.Info("Application starting up", map[string]any{
+		"version":     "1.0.0",
+		"environment": os.Getenv("ENVIRONMENT"),
+	}, []string{"startup", "init"})
+
+	if err != nil {
+		log.Printf("Error logging to Datadog: %v", err)
 	}
 
 	logInfo("Server starting", map[string]interface{}{

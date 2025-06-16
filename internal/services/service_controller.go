@@ -31,7 +31,7 @@ func SetupRoutes(ddLogger *logger.DatadogLogger, ddMetrics *metrics.DatadogMetri
 			path := c.Request.URL.Path
 			method := c.Request.Method
 
-			attributes := map[string]interface{}{
+			attributes := map[string]any{
 				"status":    status,
 				"path":      path,
 				"method":    method,
