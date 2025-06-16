@@ -30,23 +30,24 @@ func main() {
 	apiKey := os.Getenv("DATADOG_API_KEY")
 
 	if apiKey == "" {
-		log.Println("Warning: DATADOG_API_KEY not set, logging to Datadog is disabled")
-	} else {
-		// Setting the site explicitly by environment variable
-		os.Setenv("DATADOG_SITE", "us5.datadoghq.com")
+		log.Println("Warning: DATADOG_API_KEY not set, hardcoding apiKey")
+		apiKey = "072654f5de729cf15440b7483822d1e5"
+	}
 
-		datadogLogger = logger.NewDatadogLogger(apiKey)
-		datadogMetrics = metrics.NewDatadogMetricsClient(apiKey)
+	// Setting the site explicitly by environment variable
+	os.Setenv("DATADOG_SITE", "us5.datadoghq.com")
 
-		// Log application startup
-		err := datadogLogger.Info("Application starting up", map[string]any{
-			"version":     "1.0.0",
-			"environment": os.Getenv("ENVIRONMENT"),
-		}, []string{"startup", "init"})
+	datadogLogger = logger.NewDatadogLogger(apiKey)
+	datadogMetrics = metrics.NewDatadogMetricsClient(apiKey)
 
-		if err != nil {
-			log.Printf("Error logging to Datadog: %v", err)
-		}
+	// Log application startup
+	err = datadogLogger.Info("Application starting up", map[string]any{
+		"version":     "1.0.0",
+		"environment": os.Getenv("ENVIRONMENT"),
+	}, []string{"startup", "init"})
+
+	if err != nil {
+		log.Printf("Error logging to Datadog: %v", err)
 	}
 
 	// Connect to database
