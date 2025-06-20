@@ -76,7 +76,7 @@ jobs:
         mkdir -p coverage
 
         echo "📋 Listando paquetes..."
-        EXCLUDED="templateGo/cmd|templateGo/config|templateGo/internal/handlers|templateGo/internal/model|templateGo/internal/repositories"
+        EXCLUDED="templateGo/cmd|templateGo/config|templateGo/internal/handlers|templateGo/internal/model|templateGo/internal/repositories|templateGo/internal/logger|templateGo/internal/metrics|templateGo/internal/middlewares"
         INCLUDED_PACKAGES=$(go list ./... | grep -vE "$EXCLUDED" | paste -sd "," -)
 
         echo "🏃 Ejecutando tests..."

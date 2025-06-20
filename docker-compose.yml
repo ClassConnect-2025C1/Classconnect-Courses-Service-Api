@@ -1,0 +1,38 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8002"
+    environment:
+      - DATADOG_API_KEY=${DATADOG_API_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - PORT=${PORT:-8002}
+      - DATADOG_SITE=${DATADOG_SITE:-us5.datadoghq.com}
+      # database environment variables
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=user
+      - DB_PASSWORD=password
+      - DB_NAME=classconnect
+      # notification environment variables
+      - URL_NOTIFICATION=http://localhost:8003
+      - URL_USERS=http://localhost:8001
+
+    depends_on:
+      - db
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: classconnect
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
