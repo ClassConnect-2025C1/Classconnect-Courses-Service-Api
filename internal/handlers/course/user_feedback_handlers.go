@@ -62,6 +62,7 @@ func (h *courseHandlerImpl) CreateUserFeedback(c *gin.Context) {
 		return
 	}
 
+	h.notification.SendNotification(studentID, course.Title, "feedback")
 	c.JSON(http.StatusCreated, gin.H{"message": "Feedback created successfully"})
 }
 
