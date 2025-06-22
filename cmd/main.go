@@ -77,7 +77,7 @@ func main() {
 		log.Printf("Error logging to Datadog: %v", err)
 	}
 
-	logInfo("Server starting", map[string]interface{}{
+	logInfo("Server starting", map[string]any{
 		"port": port,
 	})
 

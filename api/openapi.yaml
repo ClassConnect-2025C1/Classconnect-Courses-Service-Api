@@ -2,12 +2,28 @@ openapi: 3.0.0
 info:
   title: ClassConnect Courses Service API
   version: 1.0.0
+  description: API for managing courses, enrollments, assignments, and more
 
 security:
   - bearerAuth: []
 
 paths:
   /:
+    get:
+      summary: Health check endpoint
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /course:
     post:
       summary: Create a new course
       requestBody:
@@ -26,25 +42,14 @@ paths:
                 properties:
                   data:
                     $ref: '#/components/schemas/Course'
-        '401':
-          description: Unauthorized (no or invalid token)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
         '400':
-          description: Bad request error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/InternalServerError'
 
+  /courses:
     get:
       summary: Retrieve all courses of the current user
       responses:
@@ -60,26 +65,17 @@ paths:
                     items:
                       $ref: '#/components/schemas/Course'
         '401':
-          description: Unauthorized (no or invalid token)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/Unauthorized'
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/InternalServerError'
 
   /available:
     get:
       summary: Retrieve all available courses for the current user
-      description:
-        Returns all courses that the currently authenticated user is eligible to join. Eligibility is determined based on user role, prerequisites, and availability.
+      description: Returns all courses that the currently authenticated user is eligible to join
       responses:
         '200':
-          description: A list of courses
+          description: A list of available courses
           content:
             application/json:
               schema:
@@ -90,30 +86,240 @@ paths:
                     items:
                       $ref: '#/components/schemas/Course'
         '401':
-          description: Unauthorized (no or invalid token)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/Unauthorized'
         '500':
-          description: Internal server error
+          $ref: '#/components/responses/InternalServerError'
+
+  /enrolled:
+    get:
+      summary: Get courses the current user is enrolled in
+      responses:
+        '200':
+          description: A list of enrolled courses
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Course'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
+  /approved:
+    get:
+      summary: Get approved courses for the current user
+      responses:
+        '200':
+          description: A list of approved courses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Course'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
-  /{course_id}/enroll:
+  /approve/{user_id}/{course_id}:
     post:
-      summary: Enroll the current user in a course
-      description:
-        Enrolls the currently authenticated user into the specified course. Eligibility is determined based on user role, prerequisites, and availability.
+      summary: Approve a user for a specific course
       parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
         - name: course_id
           in: path
           required: true
           schema:
             type: string
+      responses:
+        '200':
+          description: User approved for course
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /statistics:
+    get:
+      summary: Get statistics for all courses of the teacher
+      responses:
+        '200':
+          description: Course statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /user/{user_id}/feedbacks:
+    get:
+      summary: Get all feedback for a user
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of user feedbacks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Feedback'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /user/{user_id}/ai-feedback-analysis:
+    get:
+      summary: Get AI-generated analysis of user feedbacks
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: AI analysis of user feedbacks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}:
+    get:
+      summary: Retrieve a course by ID
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '200':
+          description: Course retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Course'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    patch:
+      summary: Update a course by ID
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCourseRequest'
+      responses:
+        '204':
+          description: Course updated successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    delete:
+      summary: Delete a course by ID
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '204':
+          description: Course deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/favorite/toggle:
+    patch:
+      summary: Mark/unmark a course as favorite
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '200':
+          description: Favorite status toggled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/enroll:
+    post:
+      summary: Enroll the current user in a course
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
       responses:
         '200':
           description: Successfully enrolled
@@ -126,40 +332,18 @@ paths:
                     type: string
                     example: Successfully enrolled
         '400':
-          description: User is not eligible or already enrolled
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Unauthorized (no or invalid token)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Course not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/NotFound'
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/InternalServerError'
 
     delete:
       summary: Unenroll the current user from a course
-      description:
-        Unenrolls the currently authenticated user from the specified course.
       parameters:
-        - name: course_id
-          in: path
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/CourseId'
       responses:
         '200':
           description: Successfully unenrolled
@@ -172,149 +356,19 @@ paths:
                     type: string
                     example: Successfully unenrolled
         '400':
-          description: User is not enrolled in the course
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Unauthorized (no or invalid token)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Course not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/NotFound'
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /{course_id}:
-    get:
-      summary: Retrieve a course by ID
-      parameters:
-        - in: path
-          name: course_id
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Course retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    $ref: '#/components/schemas/Course'
-        '401':
-          description: Unauthorized (no or invalid token)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Course not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-    patch:
-      summary: Update a course by ID
-      parameters:
-        - in: path
-          name: course_id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateCourseRequest'
-      responses:
-        '204':
-          description: Course updated successfully
-        '400':
-          description: Bad request error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Unauthorized (no or invalid token)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Course not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-    delete:
-      summary: Delete a course by ID
-      parameters:
-        - in: path
-          name: course_id
-          required: true
-          schema:
-            type: string
-      responses:
-        '204':
-          description: Course deleted successfully
-        '401':
-          description: Unauthorized (no or invalid token)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Course not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/InternalServerError'
 
   /{course_id}/members:
     get:
       summary: Retrieve members list for a course ID
       parameters:
-        - in: path
-          name: course_id
-          required: true
-          schema:
-            type: string
+        - $ref: '#/components/parameters/CourseId'
       responses:
         '200':
           description: Members list retrieved successfully
@@ -323,35 +377,119 @@ paths:
               schema:
                 $ref: '#/components/schemas/MembersList'
         '401':
-          description: Unauthorized (no or invalid token)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Course not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/NotFound'
         '500':
-          description: Internal server error
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/approved-users:
+    get:
+      summary: Get approved users for a specific course
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '200':
+          description: List of approved users
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
-  /{course_id}/members/{user_email}:
-    patch:
-      summary: Update a member's role in a course
+  /{course_id}/feedback:
+    post:
+      summary: Submit feedback for a course
       parameters:
-        - in: path
-          name: course_id
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: user_email
+        - $ref: '#/components/parameters/CourseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FeedbackRequest'
+      responses:
+        '201':
+          description: Feedback submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Feedback'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/feedbacks:
+    get:
+      summary: Get all feedback for a course
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '200':
+          description: List of course feedbacks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Feedback'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/ai-feedback-analysis:
+    get:
+      summary: Get AI-generated analysis of course feedbacks
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '200':
+          description: AI analysis of course feedbacks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/user/{user_id}/feedback:
+    post:
+      summary: Add feedback for a user in a course
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - name: user_id
+          in: path
           required: true
           schema:
             type: string
@@ -360,45 +498,552 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                role:
-                  type: string
+              $ref: '#/components/schemas/FeedbackRequest'
+      responses:
+        '201':
+          description: User feedback submitted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Feedback'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/assignment:
+    post:
+      summary: Create a new assignment for a course
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignmentRequest'
+      responses:
+        '201':
+          description: Assignment created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Assignment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/assignments:
+    get:
+      summary: Get preview of all assignments in a course
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '200':
+          description: List of assignments previews
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AssignmentPreview'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/assignment/{assignment_id}:
+    get:
+      summary: Get details of a specific assignment
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - $ref: '#/components/parameters/AssignmentId'
+      responses:
+        '200':
+          description: Assignment details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Assignment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    patch:
+      summary: Update an existing assignment
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - $ref: '#/components/parameters/AssignmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignmentRequest'
       responses:
         '204':
-          description: Member role updated successfully
+          description: Assignment updated successfully
         '400':
-          description: Bad request error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Unauthorized (no or invalid token)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/Unauthorized'
         '404':
-          description: Course or user not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/NotFound'
         '500':
-          description: Internal server error
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      summary: Delete an assignment
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - $ref: '#/components/parameters/AssignmentId'
+      responses:
+        '204':
+          description: Assignment deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/assignment/{assignment_id}/submission:
+    put:
+      summary: Submit or update current user's assignment submission
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - $ref: '#/components/parameters/AssignmentId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmissionRequest'
+      responses:
+        '200':
+          description: Submission created or updated successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ErrorResponse'
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Submission'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    get:
+      summary: Get current user's submission for an assignment
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - $ref: '#/components/parameters/AssignmentId'
+      responses:
+        '200':
+          description: User's submission
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Submission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      summary: Delete current user's submission
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - $ref: '#/components/parameters/AssignmentId'
+      responses:
+        '204':
+          description: Submission deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
+  /{course_id}/assignment/{assignment_id}/submissions:
+    get:
+      summary: Get all submissions for an assignment
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - $ref: '#/components/parameters/AssignmentId'
+      responses:
+        '200':
+          description: List of submissions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Submission'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/assignment/{assignment_id}/submission/{submission_id}:
+    patch:
+      summary: Grade and provide feedback on a submission
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - $ref: '#/components/parameters/AssignmentId'
+        - name: submission_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GradeRequest'
+      responses:
+        '204':
+          description: Submission graded successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/assignment/{assignment_id}/submission/{submission_id}/ai-grade:
+    get:
+      summary: Get AI generated grade and feedback for a submission
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - $ref: '#/components/parameters/AssignmentId'
+        - name: submission_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: AI generated grade and feedback
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/resource/module:
+    post:
+      summary: Create a module for resources in a course
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModuleRequest'
+      responses:
+        '201':
+          description: Module created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Module'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/resource/module/{module_id}:
+    post:
+      summary: Create a resource in a specific module
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - name: module_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceRequest'
+      responses:
+        '201':
+          description: Resource created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Resource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    patch:
+      summary: Patch a module name
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - name: module_id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModuleRequest'
+      responses:
+        '204':
+          description: Module updated successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    delete:
+      summary: Delete a module and all its resources
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - name: module_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Module deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/resource/module/{module_id}/{resource_id}:
+    delete:
+      summary: Delete a resource in a specific module
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - name: module_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: resource_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Resource deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{course_id}/resources:
+    get:
+      summary: Get all resources(modules) from a course
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      responses:
+        '200':
+          description: List of resources
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Module'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    
+    patch:
+      summary: Patch order of modules and resources inside a course
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                modules:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '204':
+          description: Resources order updated successfully
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /statistics/course/{course_id}/user/{user_id}:
+    get:
+      summary: Get statistics for a user in a course
+      parameters:
+        - $ref: '#/components/parameters/CourseId'
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User statistics for course
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
 
 components:
+  parameters:
+    CourseId:
+      name: course_id
+      in: path
+      required: true
+      schema:
+        type: string
+    AssignmentId:
+      name: assignment_id
+      in: path
+      required: true
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: Bad request error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: Unauthorized (no or invalid token)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
   schemas:
     Course:
       type: object
@@ -434,6 +1079,168 @@ components:
           type: string
         description:
           type: string
+      required:
+        - title
+
+    Feedback:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        rating:
+          type: number
+        createdBy:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    FeedbackRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        rating:
+          type: number
+      required:
+        - content
+
+    Assignment:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        totalPoints:
+          type: number
+
+    AssignmentPreview:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        totalPoints:
+          type: number
+
+    AssignmentRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        dueDate:
+          type: string
+          format: date-time
+        totalPoints:
+          type: number
+      required:
+        - title
+
+    Submission:
+      type: object
+      properties:
+        id:
+          type: string
+        content:
+          type: string
+        attachments:
+          type: array
+          items:
+            type: string
+        submittedBy:
+          type: string
+        submittedAt:
+          type: string
+          format: date-time
+        grade:
+          type: number
+        feedback:
+          type: string
+
+    SubmissionRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        attachments:
+          type: array
+          items:
+            type: string
+      required:
+        - content
+
+    GradeRequest:
+      type: object
+      properties:
+        grade:
+          type: number
+        feedback:
+          type: string
+      required:
+        - grade
+
+    Module:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        resources:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
+
+    Resource:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        type:
+          type: string
+        content:
+          type: string
+        url:
+          type: string
+
+    ModuleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+
+    ResourceRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+        content:
+          type: string
+        url:
+          type: string
+      required:
+        - title
+        - type
 
     ErrorResponse:
       type: object
