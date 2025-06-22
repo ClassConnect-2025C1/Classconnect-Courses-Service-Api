@@ -56,22 +56,22 @@ func NewDatadogLogger(apiKey string) *DatadogLogger {
 }
 
 // Info logs an informational message
-func (d *DatadogLogger) Info(message string, attributes map[string]interface{}, tags []string) error {
+func (d *DatadogLogger) Info(message string, attributes map[string]any, tags []string) error {
 	return d.Log(message, "info", attributes, tags)
 }
 
 // Error logs an error message
-func (d *DatadogLogger) Error(message string, attributes map[string]interface{}, tags []string) error {
+func (d *DatadogLogger) Error(message string, attributes map[string]any, tags []string) error {
 	return d.Log(message, "error", attributes, tags)
 }
 
 // Warn logs a warning message
-func (d *DatadogLogger) Warn(message string, attributes map[string]interface{}, tags []string) error {
+func (d *DatadogLogger) Warn(message string, attributes map[string]any, tags []string) error {
 	return d.Log(message, "warning", attributes, tags)
 }
 
 // Log sends a log message to Datadog
-func (d *DatadogLogger) Log(message, status string, attributes map[string]interface{}, tags []string) error {
+func (d *DatadogLogger) Log(message, status string, attributes map[string]any, tags []string) error {
 	entry := LogEntry{
 		Message:    message,
 		Status:     status,

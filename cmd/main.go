@@ -50,24 +50,20 @@ func main() {
 	}
 	defer dbManager.CloseDB()
 
-	// Setup routes with logger and metrics
 	mux := controller.SetupRoutes(datadogLogger, datadogMetrics)
 
-	// Configurar CORS
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:8081"}, // Permitir tu frontend
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
-		AllowCredentials: true, // Si tu frontend necesita enviar cookies o auth
+		AllowCredentials: true,
 	}).Handler(httpLoggerMiddleware(mux))
 
-	// Get port from environment variable, default to 8080
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
 
-	// Log application startup
 	err = datadogLogger.Info("Application starting up", map[string]any{
 		"version":     "1.0.0",
 		"environment": os.Getenv("ENVIRONMENT"),
@@ -82,9 +78,8 @@ func main() {
 	})
 
 	fmt.Printf("Server listening on port %s\n", port)
-	// Usamos corsHandler en vez de mux directamente
 	if err := http.ListenAndServe(":"+port, corsHandler); err != nil {
-		logError("Server failed to start", map[string]interface{}{
+		logError("Server failed to start", map[string]any{
 			"error": err.Error(),
 		})
 		log.Fatalf("Error starting server: %v", err)
@@ -92,7 +87,7 @@ func main() {
 }
 
 // Helper function to log errors
-func logError(message string, attributes map[string]interface{}) {
+func logError(message string, attributes map[string]any) {
 	log.Printf("ERROR: %s %v", message, attributes)
 	if datadogLogger != nil {
 		if err := datadogLogger.Error(message, attributes, nil); err != nil {
@@ -102,7 +97,7 @@ func logError(message string, attributes map[string]interface{}) {
 }
 
 // Helper function to log info
-func logInfo(message string, attributes map[string]interface{}) {
+func logInfo(message string, attributes map[string]any) {
 	log.Printf("INFO: %s %v", message, attributes)
 	if datadogLogger != nil {
 		if err := datadogLogger.Info(message, attributes, nil); err != nil {
@@ -117,7 +112,7 @@ func httpLoggerMiddleware(next http.Handler) http.Handler {
 		start := time.Now()
 
 		// Log request
-		logInfo("HTTP Request", map[string]interface{}{
+		logInfo("HTTP Request", map[string]any{
 			"method":      r.Method,
 			"path":        r.URL.Path,
 			"remote_addr": r.RemoteAddr,
@@ -135,7 +130,7 @@ func httpLoggerMiddleware(next http.Handler) http.Handler {
 
 		// Log response
 		duration := time.Since(start).Milliseconds()
-		attributes := map[string]interface{}{
+		attributes := map[string]any{
 			"method":      r.Method,
 			"path":        r.URL.Path,
 			"status_code": lrw.statusCode,

@@ -48,9 +48,6 @@ func SetupRoutes(ddLogger *logger.DatadogLogger, ddMetrics *metrics.DatadogMetri
 
 	// Health check endpoint
 	r.GET("/", func(c *gin.Context) {
-		if ddLogger != nil {
-			ddLogger.Info("Health check request", nil, []string{"endpoint:health"})
-		}
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 		fmt.Println("Response: healthcheck running wild")
 	})
