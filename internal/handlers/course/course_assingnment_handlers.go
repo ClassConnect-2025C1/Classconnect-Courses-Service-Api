@@ -9,6 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const TIPO_NOTIFICACTION = "new_assignment"
+
 // CreateAssignment creates a new assignment for a course
 func (h *courseHandlerImpl) CreateAssignment(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
@@ -17,7 +19,7 @@ func (h *courseHandlerImpl) CreateAssignment(c *gin.Context) {
 	}
 
 	// Check if course exists
-	_, ok = h.getCourseByID(c, courseID)
+	course, ok := h.getCourseByID(c, courseID)
 	if !ok {
 		return
 	}
@@ -42,6 +44,8 @@ func (h *courseHandlerImpl) CreateAssignment(c *gin.Context) {
 		return
 	}
 
+	courseMembers, _ := h.repo.GetCourseMembers(courseID)
+	h.notification.SendNotificationToAll(courseMembers, course.Title, TIPO_NOTIFICACTION)
 	c.JSON(http.StatusCreated, gin.H{"data": assignment})
 }
 

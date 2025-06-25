@@ -124,6 +124,10 @@ func (sender *NotificationClient) SendNotification(userId, courseName, notificat
 		subject = approvedSubjectTemplate
 		TextTemplate = textAppovedTemplate
 		HtmlTemplate = htmlAppovedTemplate
+	case "new_assignment":
+		subject = newAssigmentSubjectTemplate
+		TextTemplate = textNewAssigmentTemplate
+		HtmlTemplate = htmlNewAssigmentTemplate
 	default:
 		subject, TextTemplate, HtmlTemplate = "", "", ""
 	}
@@ -160,5 +164,13 @@ func (sender *NotificationClient) SendNotification(userId, courseName, notificat
 
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("unexpected status code from notification: %d", resp.StatusCode)
+	}
+}
+
+func (sender *NotificationClient) SendNotificationToAll(allUsers []map[string]any, courseName, notification_type string) {
+	for _, m := range allUsers {
+		if userID, ok := m["user_id"]; ok {
+			sender.SendNotification(userID.(string), courseName, notification_type)
+		}
 	}
 }

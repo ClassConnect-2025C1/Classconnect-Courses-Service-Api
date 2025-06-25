@@ -52,6 +52,21 @@ Tenes feedback del curso %s.`
   Tenes feedback del curso %s.</p>
 </body>
 </html>`
+
+	newAssigmentSubjectTemplate = "ClassConnect - Nueva tarea"
+	textNewAssigmentTemplate    = `Hola %s!.
+Se ha creado una nueva tarea para el curso %s.`
+	htmlNewAssigmentTemplate = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Nueva tarea</title>
+</head>
+<body>
+  <p>Hola %s!<br>
+  Se ha creado una nueva tarea para el curso %s.</p>
+</body>
+</html>`
 )
 
 // CurseEnrollNotification represents the data structure for an enrollment notification
