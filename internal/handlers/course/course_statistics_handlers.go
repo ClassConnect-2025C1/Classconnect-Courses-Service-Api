@@ -216,9 +216,9 @@ func calculateTendency(stats []model.StatisticsForDate) (string, string) {
 		const epsilon = 0.01 // margen para considerar estable
 		switch {
 		case slope > epsilon:
-			return "crecent"
+			return "crescent"
 		case slope < -epsilon:
-			return "decrecent"
+			return "decrescent"
 		default:
 			return "stable"
 		}
