@@ -10,13 +10,14 @@ import (
 	"templateGo/internal/handlers/notification"
 	"templateGo/internal/logger"
 	middleware "templateGo/internal/middlewares"
+	"templateGo/internal/queue"
 	"templateGo/internal/repositories"
 
 	"github.com/gin-gonic/gin"
 )
 
-// SetupRoutes configura las rutas del servidor y retorna un http.Handler.
-func SetupRoutes(ddLogger *logger.DatadogLogger, ddMetrics *metrics.DatadogMetricsClient) http.Handler {
+// SetupRoutes configura las rutas del servidor y retorna un ServiceManager que maneja el ciclo de vida de los servicios.
+func SetupRoutes(ddLogger *logger.DatadogLogger, ddMetrics *metrics.DatadogMetricsClient) *ServiceManager {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
 
@@ -56,7 +57,11 @@ func SetupRoutes(ddLogger *logger.DatadogLogger, ddMetrics *metrics.DatadogMetri
 	courseRepo := repositories.NewCourseRepository()
 	notificationClient := notification.NewNotificationClient(nil)
 	aiAnalyzer := ai.NewGeminiAnalyzer()
-	courseHandler := course.NewCourseHandler(courseRepo, notificationClient, aiAnalyzer, ddMetrics)
+
+	// Create the statistics service (will be started by service manager)
+	statisticsService := queue.NewStatisticsService(courseRepo, aiAnalyzer)
+
+	courseHandler := course.NewCourseHandler(courseRepo, notificationClient, aiAnalyzer, ddMetrics, statisticsService)
 
 	api := r.Group("/")
 	api.Use(middleware.AuthMiddleware())
@@ -218,5 +223,9 @@ func SetupRoutes(ddLogger *logger.DatadogLogger, ddMetrics *metrics.DatadogMetri
 		api.GET("/statistics/course/:course_id/user/:user_id", courseHandler.GetUserStatisticsForCourse)
 	}
 
-	return r
+	// Create service manager to handle lifecycle
+	serviceManager := NewServiceManager(statisticsService, r)
+	serviceManager.Start()
+
+	return serviceManager
 }

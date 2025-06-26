@@ -52,8 +52,9 @@ func (h *courseHandlerImpl) PutSubmissionOfCurrentUser(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{"message": "Submission created/updated successfully"})
 
-	h.CalculateAndStoreCourseStatistics(courseID, userID, userEmail)
-	h.CalculateAndStoreUserCourseStatistics(courseID, userID, userEmail)
+	// Enqueue statistics calculation tasks
+	h.statisticsService.EnqueueCourseStatisticsCalculation(courseID, userID, userEmail)
+	h.statisticsService.EnqueueUserCourseStatisticsCalculation(courseID, userID, userEmail)
 }
 
 // DeleteSubmissionOfCurrentUser removes a user's submission
@@ -103,8 +104,9 @@ func (h *courseHandlerImpl) DeleteSubmissionOfCurrentUser(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Submission deleted successfully"})
 
-	h.CalculateAndStoreCourseStatistics(courseID, userID, userEmail)
-	h.CalculateAndStoreUserCourseStatistics(courseID, userID, userEmail)
+	// Enqueue statistics calculation tasks
+	h.statisticsService.EnqueueCourseStatisticsCalculation(courseID, userID, userEmail)
+	h.statisticsService.EnqueueUserCourseStatisticsCalculation(courseID, userID, userEmail)
 }
 
 // GetSubmissionOfCurrentUser returns the current user's submission
@@ -213,8 +215,9 @@ func (h *courseHandlerImpl) GradeSubmission(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Submission graded successfully"})
 
-	h.CalculateAndStoreCourseStatistics(courseID, userID, userEmail)
-	h.CalculateAndStoreUserCourseStatistics(courseID, studentID, userEmail)
+	// Enqueue statistics calculation tasks
+	h.statisticsService.EnqueueCourseStatisticsCalculation(courseID, userID, userEmail)
+	h.statisticsService.EnqueueUserCourseStatisticsCalculation(courseID, studentID, userEmail)
 }
 
 // GetAIGeneratedGrade retrieves AI-generated grade for a submission
