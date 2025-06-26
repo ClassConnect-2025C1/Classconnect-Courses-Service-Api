@@ -89,20 +89,20 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 		if len(statisticsForDates) > 10 {
 			last10Statistics = statisticsForDates[len(statisticsForDates)-10:]
 		}
-		Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency :=
-			calculateTendency(last10Statistics)
+		last10DaysAverageGradeTendency, last10DaysSubmissionRateTendency, last10AssignmentsAverageGrade :=
+			calculateTendencyAndAverageGrade(last10Statistics)
 
-		suggestions, _ := h.aiAnalyzer.GenerateCourseSuggestionsBasedOnStats(Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency)
+		suggestions, _ := h.aiAnalyzer.GenerateCourseSuggestionsBasedOnStats(last10DaysAverageGradeTendency, last10DaysSubmissionRateTendency, last10AssignmentsAverageGrade)
 
 		statistics = append(statistics, model.CourseStatistics{
-			CourseID:                         course.ID,
-			CourseName:                       course.Title,
-			GlobalAverageGrade:               globalTotalAverageGrade,
-			GlobalSubmissionRate:             globalTotalSubmissionRate,
-			Last10DaysAverageGradeTendency:   Last10DaysAverageGradeTendency,
-			Last10DaysSubmissionRateTendency: Last10DaysSubmissionRateTendency,
-			Suggestions:                      suggestions,
-			StatisticsForAssignments:         statisticsForDates,
+			CourseID:                                course.ID,
+			CourseName:                              course.Title,
+			GlobalAverageGrade:                      globalTotalAverageGrade,
+			GlobalSubmissionRate:                    globalTotalSubmissionRate,
+			Last10AssignmentsAverageGradeTendency:   last10DaysAverageGradeTendency,
+			Last10AssignmentsSubmissionRateTendency: last10DaysSubmissionRateTendency,
+			Suggestions:                             suggestions,
+			StatisticsForAssignments:                statisticsForDates,
 		})
 	}
 
@@ -180,25 +180,31 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 		last10Statistics = statisticsForAssignments[len(statisticsForAssignments)-10:]
 	}
 
-	Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency :=
-		calculateTendency(last10Statistics)
+	Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency, _ :=
+		calculateTendencyAndAverageGrade(last10Statistics)
 
 	userStatistics := model.UserCourseStatistics{
-		AverageGrade:                     averageGrade,
-		SubmissionRate:                   submissionRate,
-		Last10DaysAverageGradeTendency:   Last10DaysAverageGradeTendency,
-		Last10DaysSubmissionRateTendency: Last10DaysSubmissionRateTendency,
-		StatisticsForAssignments:         statisticsForAssignments,
+		AverageGrade:                            averageGrade,
+		SubmissionRate:                          submissionRate,
+		Last10AssignmentsAverageGradeTendency:   Last10DaysAverageGradeTendency,
+		Last10AssignmentsSubmissionRateTendency: Last10DaysSubmissionRateTendency,
+		StatisticsForAssignments:                statisticsForAssignments,
 	}
 
 	c.JSON(http.StatusOK, gin.H{"statistics": userStatistics})
 }
 
-func calculateTendency(stats []model.StatisticsForAssignment) (string, string) {
+func calculateTendencyAndAverageGrade(stats []model.StatisticsForAssignment) (string, string, float64) {
 	n := len(stats)
 	if n == 0 {
-		return "stable", "stable"
+		return "stable", "stable", 0
 	}
+	// calculate the average first
+	averageGrade := 0.0
+	for _, stat := range stats {
+		averageGrade += stat.AverageGrade
+	}
+	averageGrade /= float64(n)
 
 	x := make([]float64, n)
 	yGrade := make([]float64, n)
@@ -225,7 +231,7 @@ func calculateTendency(stats []model.StatisticsForAssignment) (string, string) {
 		}
 	}
 
-	return classify(slopeGrade), classify(slopeSubmission)
+	return classify(slopeGrade), classify(slopeSubmission), averageGrade
 }
 
 func (h *courseHandlerImpl) CalculateAndStoreCourseStatistics(courseID uint, userID string, userEmail string) {
@@ -292,20 +298,20 @@ func (h *courseHandlerImpl) CalculateAndStoreCourseStatistics(courseID uint, use
 	if len(statisticsForAssignments) > 10 {
 		last10Statistics = statisticsForAssignments[len(statisticsForAssignments)-10:]
 	}
-	Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency :=
-		calculateTendency(last10Statistics)
+	Last10AssignmentsAverageGradeTendency, Last10AssignmentsSubmissionRateTendency, Last10AssignmentsAverageGrade :=
+		calculateTendencyAndAverageGrade(last10Statistics)
 
-	suggestions, _ := h.aiAnalyzer.GenerateCourseSuggestionsBasedOnStats(Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency)
+	suggestions, _ := h.aiAnalyzer.GenerateCourseSuggestionsBasedOnStats(Last10AssignmentsAverageGradeTendency, Last10AssignmentsSubmissionRateTendency, Last10AssignmentsAverageGrade)
 
 	statistics := model.CourseStatistics{
-		CourseID:                         course.ID,
-		CourseName:                       course.Title,
-		GlobalAverageGrade:               globalTotalAverageGrade,
-		GlobalSubmissionRate:             globalTotalSubmissionRate,
-		Last10DaysAverageGradeTendency:   Last10DaysAverageGradeTendency,
-		Last10DaysSubmissionRateTendency: Last10DaysSubmissionRateTendency,
-		Suggestions:                      suggestions,
-		StatisticsForAssignments:         statisticsForAssignments,
+		CourseID:                                course.ID,
+		CourseName:                              course.Title,
+		GlobalAverageGrade:                      globalTotalAverageGrade,
+		GlobalSubmissionRate:                    globalTotalSubmissionRate,
+		Last10AssignmentsAverageGradeTendency:   Last10AssignmentsAverageGradeTendency,
+		Last10AssignmentsSubmissionRateTendency: Last10AssignmentsSubmissionRateTendency,
+		Suggestions:                             suggestions,
+		StatisticsForAssignments:                statisticsForAssignments,
 	}
 
 	err = h.repo.SaveCourseStatistics(statistics, course.ID)
@@ -315,17 +321,17 @@ func (h *courseHandlerImpl) CalculateAndStoreCourseStatistics(courseID uint, use
 	}
 }
 
-func (h *courseHandlerImpl) CalculateAndStoreUserCourseStatistics(courseID uint, userID string, userEmail string) {
+func (h *courseHandlerImpl) CalculateAndStoreUserCourseStatistics(courseID uint, studentID string, userEmail string) {
 	totalGrades := 0.0
 	totalSubmissionsCount := 0.0
 	totalRatedSubmissionsCount := 0.0
 	statisticsForDates := make([]model.StatisticsForAssignment, 0)
-	assignments, err := h.repo.GetAssignmentsPreviews(courseID, userID, userEmail)
+	assignments, err := h.repo.GetAssignmentsPreviews(courseID, studentID, userEmail)
 	if err != nil {
 		return
 	}
 	for _, assignment := range assignments {
-		submission, err := h.repo.GetSubmissionByUserID(courseID, assignment.ID, userID)
+		submission, err := h.repo.GetSubmissionByUserID(courseID, assignment.ID, studentID)
 		if err != nil && err.Error() != "record not found" {
 			return
 		}
@@ -363,18 +369,18 @@ func (h *courseHandlerImpl) CalculateAndStoreUserCourseStatistics(courseID uint,
 		last10Statistics = statisticsForDates[len(statisticsForDates)-10:]
 	}
 
-	Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency :=
-		calculateTendency(last10Statistics)
+	Last10AssignmentsAverageGradeTendency, Last10AssignmentsSubmissionRateTendency, _ :=
+		calculateTendencyAndAverageGrade(last10Statistics)
 
 	userStatistics := model.UserCourseStatistics{
-		AverageGrade:                     averageGrade,
-		SubmissionRate:                   submissionRate,
-		Last10DaysAverageGradeTendency:   Last10DaysAverageGradeTendency,
-		Last10DaysSubmissionRateTendency: Last10DaysSubmissionRateTendency,
-		StatisticsForAssignments:         statisticsForDates,
+		AverageGrade:                            averageGrade,
+		SubmissionRate:                          submissionRate,
+		Last10AssignmentsAverageGradeTendency:   Last10AssignmentsAverageGradeTendency,
+		Last10AssignmentsSubmissionRateTendency: Last10AssignmentsSubmissionRateTendency,
+		StatisticsForAssignments:                statisticsForDates,
 	}
 
-	err = h.repo.SaveUserCourseStatistics(userStatistics, courseID, userID)
+	err = h.repo.SaveUserCourseStatistics(userStatistics, courseID, studentID)
 	if err != nil {
 		return
 	}

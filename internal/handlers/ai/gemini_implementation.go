@@ -260,13 +260,21 @@ func (g *GeminiAnalyzer) callGeminiAPI(feedbackText string) (string, error) {
 	return text, nil
 }
 
-func (g *GeminiAnalyzer) GenerateCourseSuggestionsBasedOnStats(lastGradeTendency string, lastSubmissionRateTendency string) (string, error) {
+func (g *GeminiAnalyzer) GenerateCourseSuggestionsBasedOnStats(lastGradeTendency string, lastSubmissionRateTendency string, averageGrade float64) (string, error) {
+	fmt.Println("Generating course suggestions based on statistics...")
+	fmt.Println("Last Grade Tendency:", lastGradeTendency)
+	fmt.Println("Last Submission Rate Tendency:", lastSubmissionRateTendency)
+	fmt.Println("Average Grade:", averageGrade)
+	if averageGrade == 0.0 {
+		return "No stats to analyze", fmt.Errorf("assuming there is no submissions, average grade is 0")
+	}
 	return "placeholder", nil
 	// Format the input for the Gemini API
 	inputText := fmt.Sprintf(
-		"You are analyzing a course's statistics. The last grade tendency is '%s' and the last submission rate tendency is '%s'. Your task is to provide suggestions for improving the course based on these tendencies. Output strictly plain text. Do not use lists, bullet points, bold text, markdown, or any kind of formatting.",
+		"You are analyzing a course's statistics. The last grade tendency is '%s', the last submission rate tendency is '%s' and the last average grade is '%s'. Your task is to provide suggestions for improving the course based on these tendencies. Output strictly plain text. Do not use lists, bullet points, bold text, markdown, or any kind of formatting.",
 		lastGradeTendency,
 		lastSubmissionRateTendency,
+		strconv.FormatFloat(averageGrade, 'f', 2, 64),
 	)
 
 	// Call Gemini API

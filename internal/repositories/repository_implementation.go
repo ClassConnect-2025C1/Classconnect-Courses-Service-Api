@@ -590,16 +590,18 @@ func (r *courseRepository) SaveCourseStatistics(stats model.CourseStatistics, co
 	}
 	var existingStats model.CourseAnalytics
 	err = r.db.Where("course_id = ?", courseID).First(&existingStats).Error
-	newStats := model.CourseAnalytics{
-		CourseID:   courseID,
-		Statistics: data,
-	}
+
 	if err == gorm.ErrRecordNotFound {
+		newStats := model.CourseAnalytics{
+			CourseID:   courseID,
+			Statistics: data,
+		}
 		return r.db.Create(&newStats).Error
 	} else if err != nil {
 		return err
 	}
-	existingStats = newStats
+
+	existingStats.Statistics = data
 	return r.db.Save(&existingStats).Error
 }
 
@@ -610,42 +612,36 @@ func (r *courseRepository) SaveUserCourseStatistics(stats model.UserCourseStatis
 	}
 	var existingStats model.UserCourseAnalytics
 	err = r.db.Where("course_id = ? AND user_id = ?", courseID, userID).First(&existingStats).Error
-	newStats := model.UserCourseAnalytics{
-		CourseID:   courseID,
-		UserID:     userID,
-		Statistics: data,
-	}
+
 	if err == gorm.ErrRecordNotFound {
+		newStats := model.UserCourseAnalytics{
+			CourseID:   courseID,
+			UserID:     userID,
+			Statistics: data,
+		}
 		return r.db.Create(&newStats).Error
 	} else if err != nil {
 		return err
 	}
-	existingStats = newStats
+
+	existingStats.Statistics = data
 	return r.db.Save(&existingStats).Error
 }
 
 func (r *courseRepository) GetCourseStatistics(courseID uint) (string, error) {
-	var stats model.CourseStatistics
+	var stats model.CourseAnalytics
 	err := r.db.Where("course_id = ?", courseID).First(&stats).Error
 	if err != nil {
 		return "", fmt.Errorf("error retrieving course statistics: %w", err)
 	}
-	data, err := json.Marshal(stats)
-	if err != nil {
-		return "", fmt.Errorf("error marshalling course statistics: %w", err)
-	}
-	return string(data), nil
+	return string(stats.Statistics), nil
 }
 
 func (r *courseRepository) GetUserCourseStatistics(courseID uint, userID string) (string, error) {
-	var stats model.UserCourseStatistics
+	var stats model.UserCourseAnalytics
 	err := r.db.Where("course_id = ? AND user_id = ?", courseID, userID).First(&stats).Error
 	if err != nil {
 		return "", fmt.Errorf("error retrieving user course statistics: %w", err)
 	}
-	data, err := json.Marshal(stats)
-	if err != nil {
-		return "", fmt.Errorf("error marshalling user course statistics: %w", err)
-	}
-	return string(data), nil
+	return string(stats.Statistics), nil
 }

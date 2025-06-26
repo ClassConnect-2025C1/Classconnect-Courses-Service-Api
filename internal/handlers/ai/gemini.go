@@ -14,5 +14,5 @@ type FeedbackAnalyzer interface {
 	GenerateUserFeedbackAnalysis(feedbacks []model.UserFeedback) (string, error)
 
 	// GenerateCourseSuggestionsBasedOnStats generates course suggestions based on statistics
-	GenerateCourseSuggestionsBasedOnStats(lastGradeTendency string, lastSubmissionRateTendency string) (string, error)
+	GenerateCourseSuggestionsBasedOnStats(lastGradeTendency string, lastSubmissionRateTendency string, averageGrade float64) (string, error)
 }

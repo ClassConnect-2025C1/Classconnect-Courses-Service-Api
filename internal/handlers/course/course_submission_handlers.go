@@ -197,6 +197,7 @@ func (h *courseHandlerImpl) GradeSubmission(c *gin.Context) {
 		utils.NewErrorResponse(c, http.StatusNotFound, "Not Found", "Submission not found")
 		return
 	}
+	studentID := submission.UserID
 	var req model.GradeSubmissionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		utils.NewErrorResponse(c, http.StatusBadRequest, "Validation Error", err.Error())
@@ -213,7 +214,7 @@ func (h *courseHandlerImpl) GradeSubmission(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Submission graded successfully"})
 
 	h.CalculateAndStoreCourseStatistics(courseID, userID, userEmail)
-	h.CalculateAndStoreUserCourseStatistics(courseID, userID, userEmail)
+	h.CalculateAndStoreUserCourseStatistics(courseID, studentID, userEmail)
 }
 
 // GetAIGeneratedGrade retrieves AI-generated grade for a submission
