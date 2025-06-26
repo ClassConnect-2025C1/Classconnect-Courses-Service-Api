@@ -588,46 +588,39 @@ func (r *courseRepository) SaveCourseStatistics(stats model.CourseStatistics, co
 	if err != nil {
 		return err
 	}
-	var parsedStats model.CourseStatistics
-	if err := json.Unmarshal(data, &parsedStats); err != nil {
-		return err
-	}
-	var existingStats model.CourseStatistics
+	var existingStats model.CourseAnalytics
 	err = r.db.Where("course_id = ?", courseID).First(&existingStats).Error
-
+	newStats := model.CourseAnalytics{
+		CourseID:   courseID,
+		Statistics: data,
+	}
 	if err == gorm.ErrRecordNotFound {
-		return r.db.Create(&parsedStats).Error
+		return r.db.Create(&newStats).Error
 	} else if err != nil {
 		return err
 	}
-
-	// Overwrite existingStats with parsed JSON data
-	existingStats = parsedStats
-
+	existingStats = newStats
 	return r.db.Save(&existingStats).Error
 }
 
-func (r *courseRepository) SaveUserCourseStatistics(stats model.UserCourseStatistics, courseId uint, userId string) error {
+func (r *courseRepository) SaveUserCourseStatistics(stats model.UserCourseStatistics, courseID uint, userID string) error {
 	data, err := json.Marshal(stats)
 	if err != nil {
 		return err
 	}
-	var parsedStats model.UserCourseStatistics
-	if err := json.Unmarshal(data, &parsedStats); err != nil {
-		return err
+	var existingStats model.UserCourseAnalytics
+	err = r.db.Where("course_id = ? AND user_id = ?", courseID, userID).First(&existingStats).Error
+	newStats := model.UserCourseAnalytics{
+		CourseID:   courseID,
+		UserID:     userID,
+		Statistics: data,
 	}
-	var existingStats model.UserCourseStatistics
-	err = r.db.Where("user_id = ? AND course_id = ?", userId, courseId).First(&existingStats).Error
-
 	if err == gorm.ErrRecordNotFound {
-		return r.db.Create(&parsedStats).Error
+		return r.db.Create(&newStats).Error
 	} else if err != nil {
 		return err
 	}
-
-	// Overwrite existingStats with parsed JSON data
-	existingStats = parsedStats
-
+	existingStats = newStats
 	return r.db.Save(&existingStats).Error
 }
 

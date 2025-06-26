@@ -10,7 +10,7 @@ import (
 type CourseAnalytics struct {
 	gorm.Model
 	CourseID   uint   `json:"course_id" gorm:"not null;index"`
-	Statistics string `json:"statistics" gorm:"type:text"` // JSON with course-wide statistics
+	Statistics []byte `json:"statistics" gorm:"type:json"` // JSON with course-wide statistics
 
 	// Foreign key relationship
 	Course Course `json:"course" gorm:"foreignKey:CourseID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
@@ -23,7 +23,7 @@ type UserCourseAnalytics struct {
 	gorm.Model
 	UserID     string `json:"user_id" gorm:"not null;index:idx_user_course,unique"`   // User identifier
 	CourseID   uint   `json:"course_id" gorm:"not null;index:idx_user_course,unique"` // Course ID
-	Statistics string `json:"statistics" gorm:"type:text"`                            // JSON with user-specific statistics
+	Statistics []byte `json:"statistics" gorm:"type:json"`                            // JSON with course-wide statistics
 
 	// Foreign key relationship
 	Course Course `json:"course" gorm:"foreignKey:CourseID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`

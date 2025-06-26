@@ -1,6 +1,7 @@
 package course
 
 import (
+	"fmt"
 	"net/http"
 	"templateGo/internal/model"
 	"templateGo/internal/utils"
@@ -38,7 +39,7 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 		globalTotalAverageGrade := 0.0
 		globalTotalSubmissionRate := 0.0
 		globalAssignmentsWithGradesCount := 0.0
-		statisticsForDates := make([]model.StatisticsForDate, 0)
+		statisticsForDates := make([]model.StatisticsForAssignment, 0)
 		assignments, err := h.repo.GetAssignmentsPreviews(course.ID, userID, userEmail)
 		if err != nil && err.Error() != "record not found" {
 			utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve assignments", "Error retrieving assignments: "+err.Error())
@@ -69,7 +70,7 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 			if studentsCount > 0 {
 				submissionRate = submissionsCount / float64(studentsCount)
 			}
-			statisticsForDates = append(statisticsForDates, model.StatisticsForDate{
+			statisticsForDates = append(statisticsForDates, model.StatisticsForAssignment{
 				Date:           assignment.CreatedAt,
 				AverageGrade:   averageGrade,
 				SubmissionRate: submissionRate,
@@ -101,7 +102,7 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 			Last10DaysAverageGradeTendency:   Last10DaysAverageGradeTendency,
 			Last10DaysSubmissionRateTendency: Last10DaysSubmissionRateTendency,
 			Suggestions:                      suggestions,
-			StatisticsForDates:               statisticsForDates,
+			StatisticsForAssignments:         statisticsForDates,
 		})
 	}
 
@@ -133,7 +134,7 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 	totalGrades := 0.0
 	totalSubmissionsCount := 0.0
 	totalRatedSubmissionsCount := 0.0
-	statisticsForDates := make([]model.StatisticsForDate, 0)
+	statisticsForAssignments := make([]model.StatisticsForAssignment, 0)
 	assignments, err := h.repo.GetAssignmentsPreviews(courseID, userID, userEmail)
 	if err != nil {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve assignments", "Error retrieving assignments: "+err.Error())
@@ -146,7 +147,7 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 			return
 		}
 		if submission == nil {
-			statisticsForDates = append(statisticsForDates, model.StatisticsForDate{
+			statisticsForAssignments = append(statisticsForAssignments, model.StatisticsForAssignment{
 				Date:           assignment.CreatedAt,
 				AverageGrade:   0.0,
 				SubmissionRate: 0.0,
@@ -158,7 +159,7 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 			totalGrades += float64(submission.Grade)
 			totalRatedSubmissionsCount += 1
 		}
-		statisticsForDates = append(statisticsForDates, model.StatisticsForDate{
+		statisticsForAssignments = append(statisticsForAssignments, model.StatisticsForAssignment{
 			Date:           assignment.CreatedAt,
 			AverageGrade:   float64(submission.Grade),
 			SubmissionRate: 1.0,
@@ -174,9 +175,9 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 		submissionRate = totalSubmissionsCount / float64(assignmentsCount)
 	}
 
-	last10Statistics := statisticsForDates
-	if len(statisticsForDates) > 10 {
-		last10Statistics = statisticsForDates[len(statisticsForDates)-10:]
+	last10Statistics := statisticsForAssignments
+	if len(statisticsForAssignments) > 10 {
+		last10Statistics = statisticsForAssignments[len(statisticsForAssignments)-10:]
 	}
 
 	Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency :=
@@ -187,13 +188,13 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 		SubmissionRate:                   submissionRate,
 		Last10DaysAverageGradeTendency:   Last10DaysAverageGradeTendency,
 		Last10DaysSubmissionRateTendency: Last10DaysSubmissionRateTendency,
-		StatisticsForDates:               statisticsForDates,
+		StatisticsForAssignments:         statisticsForAssignments,
 	}
 
 	c.JSON(http.StatusOK, gin.H{"statistics": userStatistics})
 }
 
-func calculateTendency(stats []model.StatisticsForDate) (string, string) {
+func calculateTendency(stats []model.StatisticsForAssignment) (string, string) {
 	n := len(stats)
 	if n == 0 {
 		return "stable", "stable"
@@ -230,20 +231,27 @@ func calculateTendency(stats []model.StatisticsForDate) (string, string) {
 func (h *courseHandlerImpl) CalculateAndStoreCourseStatistics(courseID uint, userID string, userEmail string) {
 	course, err := h.repo.GetByID(courseID)
 	if err != nil {
+		fmt.Println("Error retrieving course:", err)
 		return
 	}
 	studentsCount, err := h.repo.GetStudentsCount(courseID)
 	if err != nil {
+		fmt.Println("Error retrieving students count:", err)
 		return
 	}
 	globalTotalAverageGrade := 0.0
 	globalTotalSubmissionRate := 0.0
 	globalAssignmentsWithGradesCount := 0.0
-	statisticsForDates := make([]model.StatisticsForDate, 0)
+	statisticsForAssignments := make([]model.StatisticsForAssignment, 0)
 	assignments, err := h.repo.GetAssignmentsPreviews(course.ID, userID, userEmail)
+	if err != nil && err.Error() != "record not found" {
+		fmt.Println("Error retrieving assignments:", err)
+		return
+	}
 	for _, assignment := range assignments {
 		submissions, err := h.repo.GetSubmissions(course.ID, assignment.ID)
 		if err != nil && err.Error() != "record not found" {
+			fmt.Println("Error retrieving submissions:", err)
 			return
 		}
 		totalGrade := 0.0
@@ -265,7 +273,7 @@ func (h *courseHandlerImpl) CalculateAndStoreCourseStatistics(courseID uint, use
 		if studentsCount > 0 {
 			submissionRate = submissionsCount / float64(studentsCount)
 		}
-		statisticsForDates = append(statisticsForDates, model.StatisticsForDate{
+		statisticsForAssignments = append(statisticsForAssignments, model.StatisticsForAssignment{
 			Date:           assignment.CreatedAt,
 			AverageGrade:   averageGrade,
 			SubmissionRate: submissionRate,
@@ -273,16 +281,16 @@ func (h *courseHandlerImpl) CalculateAndStoreCourseStatistics(courseID uint, use
 		globalTotalAverageGrade += averageGrade
 		globalTotalSubmissionRate += submissionRate
 	}
-	if len(statisticsForDates) != 0 {
-		globalTotalSubmissionRate /= float64(len(statisticsForDates))
+	if len(statisticsForAssignments) != 0 {
+		globalTotalSubmissionRate /= float64(len(statisticsForAssignments))
 	}
 	if globalAssignmentsWithGradesCount != 0 {
 		globalTotalAverageGrade /= globalAssignmentsWithGradesCount
 	}
 
-	last10Statistics := statisticsForDates
-	if len(statisticsForDates) > 10 {
-		last10Statistics = statisticsForDates[len(statisticsForDates)-10:]
+	last10Statistics := statisticsForAssignments
+	if len(statisticsForAssignments) > 10 {
+		last10Statistics = statisticsForAssignments[len(statisticsForAssignments)-10:]
 	}
 	Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency :=
 		calculateTendency(last10Statistics)
@@ -297,11 +305,12 @@ func (h *courseHandlerImpl) CalculateAndStoreCourseStatistics(courseID uint, use
 		Last10DaysAverageGradeTendency:   Last10DaysAverageGradeTendency,
 		Last10DaysSubmissionRateTendency: Last10DaysSubmissionRateTendency,
 		Suggestions:                      suggestions,
-		StatisticsForDates:               statisticsForDates,
+		StatisticsForAssignments:         statisticsForAssignments,
 	}
 
 	err = h.repo.SaveCourseStatistics(statistics, course.ID)
 	if err != nil {
+		fmt.Println("Error saving course statistics:", err)
 		return
 	}
 }
@@ -310,7 +319,7 @@ func (h *courseHandlerImpl) CalculateAndStoreUserCourseStatistics(courseID uint,
 	totalGrades := 0.0
 	totalSubmissionsCount := 0.0
 	totalRatedSubmissionsCount := 0.0
-	statisticsForDates := make([]model.StatisticsForDate, 0)
+	statisticsForDates := make([]model.StatisticsForAssignment, 0)
 	assignments, err := h.repo.GetAssignmentsPreviews(courseID, userID, userEmail)
 	if err != nil {
 		return
@@ -321,7 +330,7 @@ func (h *courseHandlerImpl) CalculateAndStoreUserCourseStatistics(courseID uint,
 			return
 		}
 		if submission == nil {
-			statisticsForDates = append(statisticsForDates, model.StatisticsForDate{
+			statisticsForDates = append(statisticsForDates, model.StatisticsForAssignment{
 				Date:           assignment.CreatedAt,
 				AverageGrade:   0.0,
 				SubmissionRate: 0.0,
@@ -333,7 +342,7 @@ func (h *courseHandlerImpl) CalculateAndStoreUserCourseStatistics(courseID uint,
 			totalGrades += float64(submission.Grade)
 			totalRatedSubmissionsCount += 1
 		}
-		statisticsForDates = append(statisticsForDates, model.StatisticsForDate{
+		statisticsForDates = append(statisticsForDates, model.StatisticsForAssignment{
 			Date:           assignment.CreatedAt,
 			AverageGrade:   float64(submission.Grade),
 			SubmissionRate: 1.0,
@@ -362,7 +371,7 @@ func (h *courseHandlerImpl) CalculateAndStoreUserCourseStatistics(courseID uint,
 		SubmissionRate:                   submissionRate,
 		Last10DaysAverageGradeTendency:   Last10DaysAverageGradeTendency,
 		Last10DaysSubmissionRateTendency: Last10DaysSubmissionRateTendency,
-		StatisticsForDates:               statisticsForDates,
+		StatisticsForAssignments:         statisticsForDates,
 	}
 
 	err = h.repo.SaveUserCourseStatistics(userStatistics, courseID, userID)

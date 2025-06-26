@@ -261,6 +261,7 @@ func (g *GeminiAnalyzer) callGeminiAPI(feedbackText string) (string, error) {
 }
 
 func (g *GeminiAnalyzer) GenerateCourseSuggestionsBasedOnStats(lastGradeTendency string, lastSubmissionRateTendency string) (string, error) {
+	return "placeholder", nil
 	// Format the input for the Gemini API
 	inputText := fmt.Sprintf(
 		"You are analyzing a course's statistics. The last grade tendency is '%s' and the last submission rate tendency is '%s'. Your task is to provide suggestions for improving the course based on these tendencies. Output strictly plain text. Do not use lists, bullet points, bold text, markdown, or any kind of formatting.",
