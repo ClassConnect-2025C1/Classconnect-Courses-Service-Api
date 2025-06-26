@@ -35,4 +35,6 @@ var ModelsToMigrate = []any{
 	&model.UserFeedback{},
 	&model.Module{},
 	&model.Resource{},
+	&model.CourseAnalytics{},
+	&model.UserCourseAnalytics{},
 }

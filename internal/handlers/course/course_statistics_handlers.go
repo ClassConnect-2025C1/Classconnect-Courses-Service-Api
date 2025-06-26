@@ -6,6 +6,7 @@ import (
 	"templateGo/internal/utils"
 
 	"github.com/gin-gonic/gin"
+	"gonum.org/v1/gonum/stat"
 )
 
 // GetCoursesStatistics retrieves statistics for all courses of the teacher (whether it's the creator or an teaching assistant)
@@ -159,11 +160,55 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 		submissionRate = totalSubmissionsCount / float64(assignmentsCount)
 	}
 
+	last10Statistics := statisticsForDates
+	if len(statisticsForDates) > 10 {
+		last10Statistics = statisticsForDates[len(statisticsForDates)-10:]
+	}
+
+	Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency :=
+		calculateTendency(last10Statistics)
+
 	userStatistics := model.UserCourseStatistics{
-		AverageGrade:       averageGrade,
-		SubmissionRate:     submissionRate,
-		StatisticsForDates: statisticsForDates,
+		AverageGrade:                     averageGrade,
+		SubmissionRate:                   submissionRate,
+		Last10DaysAverageGradeTendency:   Last10DaysAverageGradeTendency,
+		Last10DaysSubmissionRateTendency: Last10DaysSubmissionRateTendency,
+		StatisticsForDates:               statisticsForDates,
 	}
 
 	c.JSON(http.StatusOK, gin.H{"statistics": userStatistics})
+}
+
+func calculateTendency(stats []model.StatisticsForDate) (string, string) {
+	n := len(stats)
+	if n == 0 {
+		return "stable", "stable"
+	}
+
+	x := make([]float64, n)
+	yGrade := make([]float64, n)
+	ySubmission := make([]float64, n)
+
+	for i := 0; i < n; i++ {
+		x[i] = float64(i)
+		yGrade[i] = stats[i].AverageGrade
+		ySubmission[i] = stats[i].SubmissionRate
+	}
+
+	_, slopeGrade := stat.LinearRegression(x, yGrade, nil, false)
+	_, slopeSubmission := stat.LinearRegression(x, ySubmission, nil, false)
+
+	classify := func(slope float64) string {
+		const epsilon = 0.01 // margen para considerar estable
+		switch {
+		case slope > epsilon:
+			return "crecient"
+		case slope < -epsilon:
+			return "decrecient"
+		default:
+			return "stable"
+		}
+	}
+
+	return classify(slopeGrade), classify(slopeSubmission)
 }

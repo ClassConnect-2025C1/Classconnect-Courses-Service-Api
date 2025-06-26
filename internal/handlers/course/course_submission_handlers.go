@@ -46,6 +46,8 @@ func (h *courseHandlerImpl) PutSubmissionOfCurrentUser(c *gin.Context) {
 		return
 	}
 
+	// agregar la tarea a la queue para calcular estadisticas actualizadas
+
 	c.JSON(http.StatusCreated, gin.H{"message": "Submission created/updated successfully"})
 
 }
@@ -184,6 +186,8 @@ func (h *courseHandlerImpl) GradeSubmission(c *gin.Context) {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error grading submission")
 		return
 	}
+
+	// agregar la tarea a la queue para calcular estadisticas actualizadas
 
 	c.JSON(http.StatusOK, gin.H{"message": "Submission graded successfully"})
 }
