@@ -7,6 +7,7 @@ type CourseStatistics struct {
 	CourseName                       string              `json:"course_name"`
 	Last10DaysAverageGradeTendency   string              `json:"last_10_days_average_grade_tendency"`
 	Last10DaysSubmissionRateTendency string              `json:"last_10_days_submission_rate_tendency"`
+	Suggestions                      string              `json:"suggestions"`
 	GlobalAverageGrade               float64             `json:"global_average_grade" gorm:"default:0"`
 	GlobalSubmissionRate             float64             `json:"global_submission_rate" gorm:"default:0"`
 	StatisticsForDates               []StatisticsForDate `json:"statistics_for_dates"`

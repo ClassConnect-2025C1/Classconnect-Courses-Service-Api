@@ -83,12 +83,25 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 		if globalAssignmentsWithGradesCount != 0 {
 			globalTotalAverageGrade /= globalAssignmentsWithGradesCount
 		}
+
+		last10Statistics := statisticsForDates
+		if len(statisticsForDates) > 10 {
+			last10Statistics = statisticsForDates[len(statisticsForDates)-10:]
+		}
+		Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency :=
+			calculateTendency(last10Statistics)
+
+		suggestions, _ := h.aiAnalyzer.GenerateCourseSuggestionsBasedOnStats(Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency)
+
 		statistics = append(statistics, model.CourseStatistics{
-			CourseID:             course.ID,
-			CourseName:           course.Title,
-			GlobalAverageGrade:   globalTotalAverageGrade,
-			GlobalSubmissionRate: globalTotalSubmissionRate,
-			StatisticsForDates:   statisticsForDates,
+			CourseID:                         course.ID,
+			CourseName:                       course.Title,
+			GlobalAverageGrade:               globalTotalAverageGrade,
+			GlobalSubmissionRate:             globalTotalSubmissionRate,
+			Last10DaysAverageGradeTendency:   Last10DaysAverageGradeTendency,
+			Last10DaysSubmissionRateTendency: Last10DaysSubmissionRateTendency,
+			Suggestions:                      suggestions,
+			StatisticsForDates:               statisticsForDates,
 		})
 	}
 	c.JSON(http.StatusOK, gin.H{"statistics": statistics})
@@ -202,9 +215,9 @@ func calculateTendency(stats []model.StatisticsForDate) (string, string) {
 		const epsilon = 0.01 // margen para considerar estable
 		switch {
 		case slope > epsilon:
-			return "crecient"
+			return "crecent"
 		case slope < -epsilon:
-			return "decrecient"
+			return "decrecent"
 		default:
 			return "stable"
 		}

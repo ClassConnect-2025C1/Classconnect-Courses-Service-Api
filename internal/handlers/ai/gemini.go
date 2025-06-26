@@ -13,6 +13,6 @@ type FeedbackAnalyzer interface {
 	// GenerateUserFeedbackAnalysis generates AI analysis for user feedback
 	GenerateUserFeedbackAnalysis(feedbacks []model.UserFeedback) (string, error)
 
-	// // GenerateCourseSuggestionsBasedOnStats generates course suggestions based on statistics
-	// GenerateCourseSuggestionsBasedOnStats(courseTitle string, stats model.CourseStatistics) (string, error)
+	// GenerateCourseSuggestionsBasedOnStats generates course suggestions based on statistics
+	GenerateCourseSuggestionsBasedOnStats(lastGradeTendency string, lastSubmissionRateTendency string) (string, error)
 }
