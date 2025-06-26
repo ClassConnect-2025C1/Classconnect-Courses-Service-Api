@@ -225,12 +225,18 @@ func (stp *StatisticsTaskProcessor) calculateTendencyAndAverageGrade(stats []mod
 	if n == 0 {
 		return "stable", "stable", 0
 	}
+
 	// calculate the average first
 	averageGrade := 0.0
 	for _, stat := range stats {
 		averageGrade += stat.AverageGrade
 	}
 	averageGrade /= float64(n)
+
+	// If we only have one data point, we can't calculate a trend
+	if n == 1 {
+		return "stable", "stable", averageGrade
+	}
 
 	x := make([]float64, n)
 	yGrade := make([]float64, n)
@@ -246,6 +252,11 @@ func (stp *StatisticsTaskProcessor) calculateTendencyAndAverageGrade(stats []mod
 	_, slopeSubmission := stat.LinearRegression(x, ySubmission, nil, false)
 
 	classify := func(slope float64) string {
+		// Handle NaN or infinite values
+		if slope != slope || slope == 0 { // NaN check (NaN != NaN is true)
+			return "stable"
+		}
+
 		const epsilon = 0.01 // margen para considerar estable
 		switch {
 		case slope > epsilon:
@@ -257,5 +268,16 @@ func (stp *StatisticsTaskProcessor) calculateTendencyAndAverageGrade(stats []mod
 		}
 	}
 
-	return classify(slopeGrade), classify(slopeSubmission), averageGrade
+	gradesTendency := classify(slopeGrade)
+	submissionTendency := classify(slopeSubmission)
+
+	// Additional safety check - ensure we never return empty strings
+	if gradesTendency == "" {
+		gradesTendency = "stable"
+	}
+	if submissionTendency == "" {
+		submissionTendency = "stable"
+	}
+
+	return gradesTendency, submissionTendency, averageGrade
 }
