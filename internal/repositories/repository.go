@@ -98,7 +98,7 @@ type CourseRepository interface {
 
 	SaveUserCourseStatistics(statistics model.UserCourseStatistics, courseId uint, userId string) error
 
-	GetCourseStatistics(courseId uint) (string, error)
+	GetCourseStatistics(courseId uint) (model.CourseStatistics, error)
 
-	GetUserCourseStatistics(courseId uint, userId string) (string, error)
+	GetUserCourseStatistics(courseId uint, userId string) (model.UserCourseStatistics, error)
 }

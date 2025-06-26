@@ -628,20 +628,35 @@ func (r *courseRepository) SaveUserCourseStatistics(stats model.UserCourseStatis
 	return r.db.Save(&existingStats).Error
 }
 
-func (r *courseRepository) GetCourseStatistics(courseID uint) (string, error) {
+func (r *courseRepository) GetCourseStatistics(courseID uint) (model.CourseStatistics, error) {
 	var stats model.CourseAnalytics
 	err := r.db.Where("course_id = ?", courseID).First(&stats).Error
+
+	var statistics model.CourseStatistics
 	if err != nil {
-		return "", fmt.Errorf("error retrieving course statistics: %w", err)
+		statistics = model.CourseStatistics{}
+		return statistics, fmt.Errorf("error retrieving course statistics: %w", err)
 	}
-	return string(stats.Statistics), nil
+	// Unmarshal the JSON data into the CourseStatistics struct
+	err = json.Unmarshal(stats.Statistics, &statistics)
+	if err != nil {
+		return statistics, fmt.Errorf("error unmarshalling course statistics: %w", err)
+	}
+	return statistics, nil
 }
 
-func (r *courseRepository) GetUserCourseStatistics(courseID uint, userID string) (string, error) {
+func (r *courseRepository) GetUserCourseStatistics(courseID uint, userID string) (model.UserCourseStatistics, error) {
 	var stats model.UserCourseAnalytics
 	err := r.db.Where("course_id = ? AND user_id = ?", courseID, userID).First(&stats).Error
+	var statistics model.UserCourseStatistics
 	if err != nil {
-		return "", fmt.Errorf("error retrieving user course statistics: %w", err)
+		statistics = model.UserCourseStatistics{}
+		return statistics, fmt.Errorf("error retrieving user course statistics: %w", err)
 	}
-	return string(stats.Statistics), nil
+	// Unmarshal the JSON data into the CourseStatistics struct
+	err = json.Unmarshal(stats.Statistics, &statistics)
+	if err != nil {
+		return statistics, fmt.Errorf("error unmarshalling user course statistics: %w", err)
+	}
+	return statistics, nil
 }

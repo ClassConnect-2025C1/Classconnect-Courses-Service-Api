@@ -12,12 +12,6 @@ import (
 
 // GetCoursesStatistics retrieves statistics for all courses of the teacher (whether it's the creator or an teaching assistant)
 func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
-	// Get user email from the context
-	userID, ok := h.getUserIDFromToken(c)
-	if !ok {
-		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "User ID not found in token")
-		return
-	}
 	userEmail, ok := h.getUserEmailFromToken(c)
 	if !ok {
 		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "User email not found in token")
@@ -31,79 +25,24 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 	}
 	var statistics []model.CourseStatistics
 	for _, course := range courses {
-		studentsCount, err := h.repo.GetStudentsCount(course.ID)
+		if !h.isCourseCreatorOrAssistant(c, course.ID) {
+			utils.NewErrorResponse(c, http.StatusForbidden, "Forbidden", "You are not authorized to access this course statistics")
+			return
+		}
+		courseStatistics, err := h.repo.GetCourseStatistics(course.ID)
 		if err != nil {
-			utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve enrolled students count", "Error retrieving enrolled students count: "+err.Error())
-			return
-		}
-		globalTotalAverageGrade := 0.0
-		globalTotalSubmissionRate := 0.0
-		globalAssignmentsWithGradesCount := 0.0
-		statisticsForDates := make([]model.StatisticsForAssignment, 0)
-		assignments, err := h.repo.GetAssignmentsPreviews(course.ID, userID, userEmail)
-		if err != nil && err.Error() != "record not found" {
-			utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve assignments", "Error retrieving assignments: "+err.Error())
-			return
-		}
-		for _, assignment := range assignments {
-			submissions, err := h.repo.GetSubmissions(course.ID, assignment.ID)
-			if err != nil && err.Error() != "record not found" {
-				utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve submissions", "Error retrieving submissions: "+err.Error())
-				return
+			courseStatistics = model.CourseStatistics{
+				CourseID:                                course.ID,
+				CourseName:                              course.Title,
+				GlobalAverageGrade:                      0.0,
+				GlobalSubmissionRate:                    0.0,
+				Suggestions:                             "No statistics available",
+				Last10AssignmentsAverageGradeTendency:   "stable",
+				Last10AssignmentsSubmissionRateTendency: "stable",
+				StatisticsForAssignments:                []model.StatisticsForAssignment{},
 			}
-			totalGrade := 0.0
-			submissionsCount := 0.0
-			ratedSubmissionsCount := 0.0
-			for _, submission := range submissions {
-				submissionsCount += 1
-				if submission.Grade > 0 {
-					totalGrade += float64(submission.Grade)
-					ratedSubmissionsCount += 1
-				}
-			}
-			averageGrade := 0.0
-			submissionRate := 0.0
-			if ratedSubmissionsCount > 0 {
-				averageGrade = totalGrade / float64(ratedSubmissionsCount)
-				globalAssignmentsWithGradesCount += 1
-			}
-			if studentsCount > 0 {
-				submissionRate = submissionsCount / float64(studentsCount)
-			}
-			statisticsForDates = append(statisticsForDates, model.StatisticsForAssignment{
-				Date:           assignment.CreatedAt,
-				AverageGrade:   averageGrade,
-				SubmissionRate: submissionRate,
-			})
-			globalTotalAverageGrade += averageGrade
-			globalTotalSubmissionRate += submissionRate
 		}
-		if len(statisticsForDates) != 0 {
-			globalTotalSubmissionRate /= float64(len(statisticsForDates))
-		}
-		if globalAssignmentsWithGradesCount != 0 {
-			globalTotalAverageGrade /= globalAssignmentsWithGradesCount
-		}
-
-		last10Statistics := statisticsForDates
-		if len(statisticsForDates) > 10 {
-			last10Statistics = statisticsForDates[len(statisticsForDates)-10:]
-		}
-		last10DaysAverageGradeTendency, last10DaysSubmissionRateTendency, last10AssignmentsAverageGrade :=
-			calculateTendencyAndAverageGrade(last10Statistics)
-
-		suggestions, _ := h.aiAnalyzer.GenerateCourseSuggestionsBasedOnStats(last10DaysAverageGradeTendency, last10DaysSubmissionRateTendency, last10AssignmentsAverageGrade)
-
-		statistics = append(statistics, model.CourseStatistics{
-			CourseID:                                course.ID,
-			CourseName:                              course.Title,
-			GlobalAverageGrade:                      globalTotalAverageGrade,
-			GlobalSubmissionRate:                    globalTotalSubmissionRate,
-			Last10AssignmentsAverageGradeTendency:   last10DaysAverageGradeTendency,
-			Last10AssignmentsSubmissionRateTendency: last10DaysSubmissionRateTendency,
-			Suggestions:                             suggestions,
-			StatisticsForAssignments:                statisticsForDates,
-		})
+		statistics = append(statistics, courseStatistics)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"statistics": statistics})
@@ -111,15 +50,9 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 
 // GetUserStatistics retrieves statistics for a specific user in a course
 func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
-	// Get user email from the context
 	userID, ok := h.getUserID(c)
 	if !ok {
 		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "User ID not found in context")
-		return
-	}
-	userEmail, ok := h.getUserEmailFromToken(c)
-	if !ok {
-		utils.NewErrorResponse(c, http.StatusUnauthorized, "Unauthorized", "User email not found in context")
 		return
 	}
 	courseID, ok := h.getCourseID(c)
@@ -130,68 +63,17 @@ func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 		utils.NewErrorResponse(c, http.StatusForbidden, "Forbidden", "You are not authorized to access this course statistics")
 		return
 	}
-
-	totalGrades := 0.0
-	totalSubmissionsCount := 0.0
-	totalRatedSubmissionsCount := 0.0
-	statisticsForAssignments := make([]model.StatisticsForAssignment, 0)
-	assignments, err := h.repo.GetAssignmentsPreviews(courseID, userID, userEmail)
+	statistics, err := h.repo.GetUserCourseStatistics(courseID, userID)
 	if err != nil {
-		utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve assignments", "Error retrieving assignments: "+err.Error())
-		return
-	}
-	for _, assignment := range assignments {
-		submission, err := h.repo.GetSubmissionByUserID(courseID, assignment.ID, userID)
-		if err != nil && err.Error() != "record not found" {
-			utils.NewErrorResponse(c, http.StatusInternalServerError, "Failed to retrieve submission", "Error retrieving submission: "+err.Error())
-			return
+		statistics = model.UserCourseStatistics{
+			AverageGrade:                            0.0,
+			SubmissionRate:                          0.0,
+			Last10AssignmentsAverageGradeTendency:   "stable",
+			Last10AssignmentsSubmissionRateTendency: "stable",
+			StatisticsForAssignments:                []model.StatisticsForAssignment{},
 		}
-		if submission == nil {
-			statisticsForAssignments = append(statisticsForAssignments, model.StatisticsForAssignment{
-				Date:           assignment.CreatedAt,
-				AverageGrade:   0.0,
-				SubmissionRate: 0.0,
-			})
-			continue
-		}
-		totalSubmissionsCount += 1
-		if submission.Grade > 0 {
-			totalGrades += float64(submission.Grade)
-			totalRatedSubmissionsCount += 1
-		}
-		statisticsForAssignments = append(statisticsForAssignments, model.StatisticsForAssignment{
-			Date:           assignment.CreatedAt,
-			AverageGrade:   float64(submission.Grade),
-			SubmissionRate: 1.0,
-		})
 	}
-	averageGrade := 0.0
-	submissionRate := 0.0
-	assignmentsCount := len(assignments)
-	if totalRatedSubmissionsCount > 0 {
-		averageGrade = totalGrades / totalRatedSubmissionsCount
-	}
-	if assignmentsCount > 0 {
-		submissionRate = totalSubmissionsCount / float64(assignmentsCount)
-	}
-
-	last10Statistics := statisticsForAssignments
-	if len(statisticsForAssignments) > 10 {
-		last10Statistics = statisticsForAssignments[len(statisticsForAssignments)-10:]
-	}
-
-	Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency, _ :=
-		calculateTendencyAndAverageGrade(last10Statistics)
-
-	userStatistics := model.UserCourseStatistics{
-		AverageGrade:                            averageGrade,
-		SubmissionRate:                          submissionRate,
-		Last10AssignmentsAverageGradeTendency:   Last10DaysAverageGradeTendency,
-		Last10AssignmentsSubmissionRateTendency: Last10DaysSubmissionRateTendency,
-		StatisticsForAssignments:                statisticsForAssignments,
-	}
-
-	c.JSON(http.StatusOK, gin.H{"statistics": userStatistics})
+	c.JSON(http.StatusOK, gin.H{"statistics": statistics})
 }
 
 func calculateTendencyAndAverageGrade(stats []model.StatisticsForAssignment) (string, string, float64) {
