@@ -93,4 +93,12 @@ type CourseRepository interface {
 	GetStudentsCount(courseID uint) (int, error)
 
 	GetCoursesForTeacher(userEmail string) ([]model.Course, error)
+
+	SaveCourseStatistics(statistics model.CourseStatistics, courseId uint) error
+
+	SaveUserCourseStatistics(statistics model.UserCourseStatistics, courseId uint, userId string) error
+
+	GetCourseStatistics(courseId uint) (string, error)
+
+	GetUserCourseStatistics(courseId uint, userId string) (string, error)
 }

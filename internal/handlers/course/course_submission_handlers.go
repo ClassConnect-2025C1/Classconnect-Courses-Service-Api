@@ -23,6 +23,10 @@ func (h *courseHandlerImpl) PutSubmissionOfCurrentUser(c *gin.Context) {
 	if !ok {
 		return
 	}
+	userEmail, ok := h.getUserEmailFromToken(c)
+	if !ok {
+		return
+	}
 	// Check if course exists
 	_, ok = h.getCourseByID(c, courseID)
 	if !ok {
@@ -46,10 +50,10 @@ func (h *courseHandlerImpl) PutSubmissionOfCurrentUser(c *gin.Context) {
 		return
 	}
 
-	// agregar la tarea a la queue para calcular estadisticas actualizadas
-
 	c.JSON(http.StatusCreated, gin.H{"message": "Submission created/updated successfully"})
 
+	h.CalculateAndStoreCourseStatistics(courseID, userID, userEmail)
+	h.CalculateAndStoreUserCourseStatistics(courseID, userID, userEmail)
 }
 
 // DeleteSubmissionOfCurrentUser removes a user's submission
@@ -63,6 +67,10 @@ func (h *courseHandlerImpl) DeleteSubmissionOfCurrentUser(c *gin.Context) {
 		return
 	}
 	userID, ok := h.getUserIDFromToken(c)
+	if !ok {
+		return
+	}
+	userEmail, ok := h.getUserEmailFromToken(c)
 	if !ok {
 		return
 	}
@@ -94,6 +102,9 @@ func (h *courseHandlerImpl) DeleteSubmissionOfCurrentUser(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Submission deleted successfully"})
+
+	h.CalculateAndStoreCourseStatistics(courseID, userID, userEmail)
+	h.CalculateAndStoreUserCourseStatistics(courseID, userID, userEmail)
 }
 
 // GetSubmissionOfCurrentUser returns the current user's submission
@@ -165,6 +176,18 @@ func (h *courseHandlerImpl) GetSubmissions(c *gin.Context) {
 
 // GradeSubmission allows grading a submission with feedback
 func (h *courseHandlerImpl) GradeSubmission(c *gin.Context) {
+	courseID, ok := h.getCourseID(c)
+	if !ok {
+		return
+	}
+	userID, ok := h.getUserIDFromToken(c)
+	if !ok {
+		return
+	}
+	userEmail, ok := h.getUserEmailFromToken(c)
+	if !ok {
+		return
+	}
 	submissionID, ok := h.getSubmissionID(c)
 	if !ok {
 		return
@@ -187,9 +210,10 @@ func (h *courseHandlerImpl) GradeSubmission(c *gin.Context) {
 		return
 	}
 
-	// agregar la tarea a la queue para calcular estadisticas actualizadas
-
 	c.JSON(http.StatusOK, gin.H{"message": "Submission graded successfully"})
+
+	h.CalculateAndStoreCourseStatistics(courseID, userID, userEmail)
+	h.CalculateAndStoreUserCourseStatistics(courseID, userID, userEmail)
 }
 
 // GetAIGeneratedGrade retrieves AI-generated grade for a submission

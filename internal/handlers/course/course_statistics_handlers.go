@@ -104,6 +104,7 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 			StatisticsForDates:               statisticsForDates,
 		})
 	}
+
 	c.JSON(http.StatusOK, gin.H{"statistics": statistics})
 }
 
@@ -224,4 +225,148 @@ func calculateTendency(stats []model.StatisticsForDate) (string, string) {
 	}
 
 	return classify(slopeGrade), classify(slopeSubmission)
+}
+
+func (h *courseHandlerImpl) CalculateAndStoreCourseStatistics(courseID uint, userID string, userEmail string) {
+	course, err := h.repo.GetByID(courseID)
+	if err != nil {
+		return
+	}
+	studentsCount, err := h.repo.GetStudentsCount(courseID)
+	if err != nil {
+		return
+	}
+	globalTotalAverageGrade := 0.0
+	globalTotalSubmissionRate := 0.0
+	globalAssignmentsWithGradesCount := 0.0
+	statisticsForDates := make([]model.StatisticsForDate, 0)
+	assignments, err := h.repo.GetAssignmentsPreviews(course.ID, userID, userEmail)
+	for _, assignment := range assignments {
+		submissions, err := h.repo.GetSubmissions(course.ID, assignment.ID)
+		if err != nil && err.Error() != "record not found" {
+			return
+		}
+		totalGrade := 0.0
+		submissionsCount := 0.0
+		ratedSubmissionsCount := 0.0
+		for _, submission := range submissions {
+			submissionsCount += 1
+			if submission.Grade > 0 {
+				totalGrade += float64(submission.Grade)
+				ratedSubmissionsCount += 1
+			}
+		}
+		averageGrade := 0.0
+		submissionRate := 0.0
+		if ratedSubmissionsCount > 0 {
+			averageGrade = totalGrade / float64(ratedSubmissionsCount)
+			globalAssignmentsWithGradesCount += 1
+		}
+		if studentsCount > 0 {
+			submissionRate = submissionsCount / float64(studentsCount)
+		}
+		statisticsForDates = append(statisticsForDates, model.StatisticsForDate{
+			Date:           assignment.CreatedAt,
+			AverageGrade:   averageGrade,
+			SubmissionRate: submissionRate,
+		})
+		globalTotalAverageGrade += averageGrade
+		globalTotalSubmissionRate += submissionRate
+	}
+	if len(statisticsForDates) != 0 {
+		globalTotalSubmissionRate /= float64(len(statisticsForDates))
+	}
+	if globalAssignmentsWithGradesCount != 0 {
+		globalTotalAverageGrade /= globalAssignmentsWithGradesCount
+	}
+
+	last10Statistics := statisticsForDates
+	if len(statisticsForDates) > 10 {
+		last10Statistics = statisticsForDates[len(statisticsForDates)-10:]
+	}
+	Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency :=
+		calculateTendency(last10Statistics)
+
+	suggestions, _ := h.aiAnalyzer.GenerateCourseSuggestionsBasedOnStats(Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency)
+
+	statistics := model.CourseStatistics{
+		CourseID:                         course.ID,
+		CourseName:                       course.Title,
+		GlobalAverageGrade:               globalTotalAverageGrade,
+		GlobalSubmissionRate:             globalTotalSubmissionRate,
+		Last10DaysAverageGradeTendency:   Last10DaysAverageGradeTendency,
+		Last10DaysSubmissionRateTendency: Last10DaysSubmissionRateTendency,
+		Suggestions:                      suggestions,
+		StatisticsForDates:               statisticsForDates,
+	}
+
+	err = h.repo.SaveCourseStatistics(statistics, course.ID)
+	if err != nil {
+		return
+	}
+}
+
+func (h *courseHandlerImpl) CalculateAndStoreUserCourseStatistics(courseID uint, userID string, userEmail string) {
+	totalGrades := 0.0
+	totalSubmissionsCount := 0.0
+	totalRatedSubmissionsCount := 0.0
+	statisticsForDates := make([]model.StatisticsForDate, 0)
+	assignments, err := h.repo.GetAssignmentsPreviews(courseID, userID, userEmail)
+	if err != nil {
+		return
+	}
+	for _, assignment := range assignments {
+		submission, err := h.repo.GetSubmissionByUserID(courseID, assignment.ID, userID)
+		if err != nil && err.Error() != "record not found" {
+			return
+		}
+		if submission == nil {
+			statisticsForDates = append(statisticsForDates, model.StatisticsForDate{
+				Date:           assignment.CreatedAt,
+				AverageGrade:   0.0,
+				SubmissionRate: 0.0,
+			})
+			continue
+		}
+		totalSubmissionsCount += 1
+		if submission.Grade > 0 {
+			totalGrades += float64(submission.Grade)
+			totalRatedSubmissionsCount += 1
+		}
+		statisticsForDates = append(statisticsForDates, model.StatisticsForDate{
+			Date:           assignment.CreatedAt,
+			AverageGrade:   float64(submission.Grade),
+			SubmissionRate: 1.0,
+		})
+	}
+	averageGrade := 0.0
+	submissionRate := 0.0
+	assignmentsCount := len(assignments)
+	if totalRatedSubmissionsCount > 0 {
+		averageGrade = totalGrades / totalRatedSubmissionsCount
+	}
+	if assignmentsCount > 0 {
+		submissionRate = totalSubmissionsCount / float64(assignmentsCount)
+	}
+
+	last10Statistics := statisticsForDates
+	if len(statisticsForDates) > 10 {
+		last10Statistics = statisticsForDates[len(statisticsForDates)-10:]
+	}
+
+	Last10DaysAverageGradeTendency, Last10DaysSubmissionRateTendency :=
+		calculateTendency(last10Statistics)
+
+	userStatistics := model.UserCourseStatistics{
+		AverageGrade:                     averageGrade,
+		SubmissionRate:                   submissionRate,
+		Last10DaysAverageGradeTendency:   Last10DaysAverageGradeTendency,
+		Last10DaysSubmissionRateTendency: Last10DaysSubmissionRateTendency,
+		StatisticsForDates:               statisticsForDates,
+	}
+
+	err = h.repo.SaveUserCourseStatistics(userStatistics, courseID, userID)
+	if err != nil {
+		return
+	}
 }

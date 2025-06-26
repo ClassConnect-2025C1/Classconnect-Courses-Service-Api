@@ -5,6 +5,7 @@ import (
 	"templateGo/internal/model"
 	"time"
 
+	"encoding/json"
 	"templateGo/internal/utils"
 
 	"gorm.io/gorm"
@@ -580,4 +581,78 @@ func (r *courseRepository) GetStudentsCount(courseID uint) (int, error) {
 		return 0, fmt.Errorf("error counting students for course %d: %w", courseID, err)
 	}
 	return int(count), nil
+}
+
+func (r *courseRepository) SaveCourseStatistics(stats model.CourseStatistics, courseID uint) error {
+	data, err := json.Marshal(stats)
+	if err != nil {
+		return err
+	}
+	var parsedStats model.CourseStatistics
+	if err := json.Unmarshal(data, &parsedStats); err != nil {
+		return err
+	}
+	var existingStats model.CourseStatistics
+	err = r.db.Where("course_id = ?", courseID).First(&existingStats).Error
+
+	if err == gorm.ErrRecordNotFound {
+		return r.db.Create(&parsedStats).Error
+	} else if err != nil {
+		return err
+	}
+
+	// Overwrite existingStats with parsed JSON data
+	existingStats = parsedStats
+
+	return r.db.Save(&existingStats).Error
+}
+
+func (r *courseRepository) SaveUserCourseStatistics(stats model.UserCourseStatistics, courseId uint, userId string) error {
+	data, err := json.Marshal(stats)
+	if err != nil {
+		return err
+	}
+	var parsedStats model.UserCourseStatistics
+	if err := json.Unmarshal(data, &parsedStats); err != nil {
+		return err
+	}
+	var existingStats model.UserCourseStatistics
+	err = r.db.Where("user_id = ? AND course_id = ?", userId, courseId).First(&existingStats).Error
+
+	if err == gorm.ErrRecordNotFound {
+		return r.db.Create(&parsedStats).Error
+	} else if err != nil {
+		return err
+	}
+
+	// Overwrite existingStats with parsed JSON data
+	existingStats = parsedStats
+
+	return r.db.Save(&existingStats).Error
+}
+
+func (r *courseRepository) GetCourseStatistics(courseID uint) (string, error) {
+	var stats model.CourseStatistics
+	err := r.db.Where("course_id = ?", courseID).First(&stats).Error
+	if err != nil {
+		return "", fmt.Errorf("error retrieving course statistics: %w", err)
+	}
+	data, err := json.Marshal(stats)
+	if err != nil {
+		return "", fmt.Errorf("error marshalling course statistics: %w", err)
+	}
+	return string(data), nil
+}
+
+func (r *courseRepository) GetUserCourseStatistics(courseID uint, userID string) (string, error) {
+	var stats model.UserCourseStatistics
+	err := r.db.Where("course_id = ? AND user_id = ?", courseID, userID).First(&stats).Error
+	if err != nil {
+		return "", fmt.Errorf("error retrieving user course statistics: %w", err)
+	}
+	data, err := json.Marshal(stats)
+	if err != nil {
+		return "", fmt.Errorf("error marshalling user course statistics: %w", err)
+	}
+	return string(data), nil
 }
