@@ -226,30 +226,46 @@ func (stp *StatisticsTaskProcessor) calculateTendencyAndAverageGrade(stats []mod
 		return "stable", "stable", 0
 	}
 
+	graded_n := 0
+
 	// calculate the average first
 	averageGrade := 0.0
 	for _, stat := range stats {
-		averageGrade += stat.AverageGrade
+		if stat.AverageGrade > 0 {
+			averageGrade += stat.AverageGrade
+			graded_n += 1
+		}
 	}
-	averageGrade /= float64(n)
+	if graded_n > 0 {
+		averageGrade /= float64(graded_n)
+	}
 
-	// If we only have one data point, we can't calculate a trend
-	if n == 1 {
+	if n == 1 || graded_n <= 1 {
 		return "stable", "stable", averageGrade
 	}
 
-	x := make([]float64, n)
-	yGrade := make([]float64, n)
+	xGrade := make([]float64, graded_n)
+	yGradeFiltered := make([]float64, graded_n)
+
+	xSubmission := make([]float64, n)
 	ySubmission := make([]float64, n)
 
+	gradedIndex := 0
 	for i := 0; i < n; i++ {
-		x[i] = float64(i)
-		yGrade[i] = stats[i].AverageGrade
+		if stats[i].AverageGrade > 0 {
+			xGrade[gradedIndex] = float64(gradedIndex)
+			yGradeFiltered[gradedIndex] = stats[i].AverageGrade
+			gradedIndex++
+		}
+	}
+
+	for i := 0; i < n; i++ {
+		xSubmission[i] = float64(i)
 		ySubmission[i] = stats[i].SubmissionRate
 	}
 
-	_, slopeGrade := stat.LinearRegression(x, yGrade, nil, false)
-	_, slopeSubmission := stat.LinearRegression(x, ySubmission, nil, false)
+	_, slopeGrade := stat.LinearRegression(xGrade, yGradeFiltered, nil, false)
+	_, slopeSubmission := stat.LinearRegression(xSubmission, ySubmission, nil, false)
 
 	classify := func(slope float64) string {
 		// Handle NaN or infinite values
