@@ -660,3 +660,39 @@ func (r *courseRepository) GetUserCourseStatistics(courseID uint, userID string)
 	}
 	return statistics, nil
 }
+
+// SaveGlobalStatistics saves global statistics for a teacher
+func (r *courseRepository) SaveGlobalStatistics(statistics model.GlobalStatistics) error {
+	// Use GORM's Save method which will update if exists (based on ID) or create if new
+	// Since we have a unique index on teacher_email, we'll use FirstOrCreate with updates
+	var existingStats model.GlobalStatistics
+	result := r.db.Where("teacher_email = ?", statistics.TeacherEmail).First(&existingStats)
+
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			// Create new record
+			return r.db.Create(&statistics).Error
+		}
+		return result.Error
+	}
+
+	// Update existing record
+	existingStats.GlobalAverageGrade = statistics.GlobalAverageGrade
+	existingStats.GlobalSubmissionRate = statistics.GlobalSubmissionRate
+	return r.db.Save(&existingStats).Error
+}
+
+// GetGlobalStatistics retrieves global statistics for a teacher
+func (r *courseRepository) GetGlobalStatistics(teacherEmail string) (model.GlobalStatistics, error) {
+	var statistics model.GlobalStatistics
+	err := r.db.Where("teacher_email = ?", teacherEmail).First(&statistics).Error
+	if err != nil {
+		// Return default statistics if not found
+		return model.GlobalStatistics{
+			TeacherEmail:         teacherEmail,
+			GlobalAverageGrade:   0.0,
+			GlobalSubmissionRate: 0.0,
+		}, err
+	}
+	return statistics, nil
+}

@@ -101,4 +101,8 @@ type CourseRepository interface {
 	GetCourseStatistics(courseId uint) (model.CourseStatistics, error)
 
 	GetUserCourseStatistics(courseId uint, userId string) (model.UserCourseStatistics, error)
+
+	// Global Statistics
+	SaveGlobalStatistics(statistics model.GlobalStatistics) error
+	GetGlobalStatistics(teacherEmail string) (model.GlobalStatistics, error)
 }

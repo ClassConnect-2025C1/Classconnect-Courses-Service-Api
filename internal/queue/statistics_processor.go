@@ -31,6 +31,8 @@ func (stp *StatisticsTaskProcessor) ProcessTask(task Task) error {
 		return stp.processCourseStatisticsTask(task)
 	case TaskTypeUserCourseStatistics:
 		return stp.processUserCourseStatisticsTask(task)
+	case TaskTypeGlobalStatistics:
+		return stp.processGlobalStatisticsTask(task)
 	default:
 		return fmt.Errorf("unknown task type: %s", task.Type)
 	}
@@ -296,4 +298,74 @@ func (stp *StatisticsTaskProcessor) calculateTendencyAndAverageGrade(stats []mod
 	}
 
 	return gradesTendency, submissionTendency, averageGrade
+}
+
+// processGlobalStatisticsTask processes global statistics calculation
+func (stp *StatisticsTaskProcessor) processGlobalStatisticsTask(task Task) error {
+	data, ok := task.Data.(GlobalStatisticsTaskData)
+	if !ok {
+		return fmt.Errorf("invalid task data type for global statistics task")
+	}
+
+	log.Printf("Processing global statistics for teacher %s", data.TeacherEmail)
+
+	return stp.calculateAndStoreGlobalStatistics(data.TeacherEmail)
+}
+
+// calculateAndStoreGlobalStatistics calculates and stores global statistics for a teacher
+func (stp *StatisticsTaskProcessor) calculateAndStoreGlobalStatistics(teacherEmail string) error {
+	// Get all courses for the teacher
+	courses, err := stp.repo.GetCoursesForTeacher(teacherEmail)
+	if err != nil {
+		return fmt.Errorf("error retrieving courses for teacher %s: %w", teacherEmail, err)
+	}
+
+	if len(courses) == 0 {
+		log.Printf("No courses found for teacher %s", teacherEmail)
+		return nil
+	}
+
+	var totalAverageGrade float64
+	var totalSubmissionRate float64
+	validCourses := 0
+
+	// Calculate averages across all courses
+	for _, course := range courses {
+		courseStats, err := stp.repo.GetCourseStatistics(course.ID)
+		if err != nil {
+			log.Printf("Skipping course %d, no statistics available: %v", course.ID, err)
+			continue // Skip courses without statistics
+		}
+
+		totalAverageGrade += courseStats.GlobalAverageGrade
+		totalSubmissionRate += courseStats.GlobalSubmissionRate
+		validCourses++
+	}
+
+	if validCourses == 0 {
+		log.Printf("No valid courses with statistics found for teacher %s", teacherEmail)
+		return nil
+	}
+
+	// Calculate global averages (average of averages)
+	globalAverageGrade := totalAverageGrade / float64(validCourses)
+	globalSubmissionRate := totalSubmissionRate / float64(validCourses)
+
+	// Create global statistics
+	globalStats := model.GlobalStatistics{
+		TeacherEmail:         teacherEmail,
+		GlobalAverageGrade:   globalAverageGrade,
+		GlobalSubmissionRate: globalSubmissionRate,
+	}
+
+	// Save global statistics
+	err = stp.repo.SaveGlobalStatistics(globalStats)
+	if err != nil {
+		return fmt.Errorf("error saving global statistics for teacher %s: %w", teacherEmail, err)
+	}
+
+	log.Printf("Successfully calculated and stored global statistics for teacher %s (%.2f%% avg grade, %.2f%% submission rate from %d courses)",
+		teacherEmail, globalAverageGrade, globalSubmissionRate, validCourses)
+
+	return nil
 }

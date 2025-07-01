@@ -231,8 +231,11 @@ func SetupRoutes(ddLogger *logger.DatadogLogger, ddMetrics *metrics.DatadogMetri
 		// Statistics
 		// =============================================
 
-		// Get statistics for all courses of the teacher
-		api.GET("/statistics", courseHandler.GetCoursesStatistics)
+		// Get global statistics averages for all courses of the teacher
+		api.GET("/statistics/global", courseHandler.GetCoursesStatistics)
+
+		// Get statistics for a specific course
+		api.GET("/statistics/:course_id", courseHandler.GetCourseStatistics)
 
 		// Get statistics for a user
 		api.GET("/statistics/course/:course_id/user/:user_id", courseHandler.GetUserStatisticsForCourse)

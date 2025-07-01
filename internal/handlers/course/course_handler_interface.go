@@ -65,5 +65,6 @@ type CourseHandler interface {
 
 	// Statistics
 	GetCoursesStatistics(c *gin.Context)
+	GetCourseStatistics(c *gin.Context)
 	GetUserStatisticsForCourse(c *gin.Context)
 }

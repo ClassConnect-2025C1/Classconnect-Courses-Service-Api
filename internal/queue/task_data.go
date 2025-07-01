@@ -13,3 +13,8 @@ type UserCourseStatisticsTaskData struct {
 	UserID    string `json:"user_id"`
 	UserEmail string `json:"user_email"`
 }
+
+// GlobalStatisticsTaskData represents data for global statistics calculation task
+type GlobalStatisticsTaskData struct {
+	TeacherEmail string `json:"teacher_email"`
+}

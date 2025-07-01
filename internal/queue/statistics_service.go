@@ -68,6 +68,20 @@ func (ss *StatisticsService) EnqueueUserCourseStatisticsCalculation(courseID uin
 	return ss.taskQueue.EnqueueTask(task)
 }
 
+// EnqueueGlobalStatisticsCalculation enqueues a global statistics calculation task
+func (ss *StatisticsService) EnqueueGlobalStatisticsCalculation(teacherEmail string) error {
+	task := Task{
+		ID:   fmt.Sprintf("global-stats-%s-%s", teacherEmail, uuid.New().String()[:8]),
+		Type: TaskTypeGlobalStatistics,
+		Data: GlobalStatisticsTaskData{
+			TeacherEmail: teacherEmail,
+		},
+		MaxRetries: 3,
+	}
+
+	return ss.taskQueue.EnqueueTask(task)
+}
+
 // GetQueueSize returns the current queue size
 func (ss *StatisticsService) GetQueueSize() int {
 	return ss.taskQueue.GetQueueSize()

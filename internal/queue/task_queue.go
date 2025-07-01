@@ -14,6 +14,7 @@ type TaskType string
 const (
 	TaskTypeCourseStatistics     TaskType = "course_statistics"
 	TaskTypeUserCourseStatistics TaskType = "user_course_statistics"
+	TaskTypeGlobalStatistics     TaskType = "global_statistics"
 )
 
 // Task represents a task to be executed

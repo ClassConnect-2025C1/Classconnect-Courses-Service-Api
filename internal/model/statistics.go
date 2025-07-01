@@ -2,6 +2,13 @@ package model
 
 import "time"
 
+type GlobalStatistics struct {
+	ID                   uint    `json:"id" gorm:"primaryKey"`
+	TeacherEmail         string  `json:"teacher_email" gorm:"uniqueIndex;not null"`
+	GlobalAverageGrade   float64 `json:"global_average_grade" gorm:"default:0"`
+	GlobalSubmissionRate float64 `json:"global_submission_rate" gorm:"default:0"`
+}
+
 type CourseStatistics struct {
 	ID                                      uint                      `json:"id" gorm:"primaryKey"`
 	CourseID                                uint                      `json:"course_id"`

@@ -37,4 +37,5 @@ var ModelsToMigrate = []any{
 	&model.Resource{},
 	&model.CourseAnalytics{},
 	&model.UserCourseAnalytics{},
+	&model.GlobalStatistics{},
 }
