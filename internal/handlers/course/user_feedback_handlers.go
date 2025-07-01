@@ -9,6 +9,21 @@ import (
 )
 
 // CreateUserFeedback adds feedback for a user in a course
+// @Summary Add feedback for a user in a course
+// @Description Submit feedback for a specific user in a course context
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param user_id path string true "User ID"
+// @Param feedback body model.FeedbackRequest true "Feedback information"
+// @Success 201 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/user/{user_id}/feedback [post]
 func (h *courseHandlerImpl) CreateUserFeedback(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -67,6 +82,18 @@ func (h *courseHandlerImpl) CreateUserFeedback(c *gin.Context) {
 }
 
 // GetUserFeedbacks retrieves all feedback for a specific user
+// @Summary Get all feedback for a user
+// @Description Retrieve all feedback submitted for a specific user
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param user_id path string true "User ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /user/{user_id}/feedbacks [get]
 func (h *courseHandlerImpl) GetUserFeedbacks(c *gin.Context) {
 	userID, ok := h.getUserID(c)
 	if !ok {

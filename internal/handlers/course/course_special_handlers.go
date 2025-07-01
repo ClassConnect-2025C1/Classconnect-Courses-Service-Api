@@ -10,6 +10,20 @@ import (
 )
 
 // ApproveCourses approves a course for a user
+// @Summary Approve a user for a specific course
+// @Description Approve a user for enrollment in a specific course
+// @Tags approval
+// @Accept json
+// @Produce json
+// @Param user_id path string true "User ID"
+// @Param course_id path string true "Course ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /approve/{user_id}/{course_id} [post]
 func (h *courseHandlerImpl) ApproveCourses(c *gin.Context) {
 	userID, ok := h.getUserID(c)
 	if !ok {
@@ -51,6 +65,16 @@ func (h *courseHandlerImpl) ApproveCourses(c *gin.Context) {
 }
 
 // GetApprovedCourses returns all courses approved for a user
+// @Summary Get approved courses for the current user
+// @Description Retrieve all courses that the current user has been approved for
+// @Tags approval
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /approved [get]
 func (h *courseHandlerImpl) GetApprovedCourses(c *gin.Context) {
 	userID, ok := h.getUserIDFromToken(c)
 	if !ok {
@@ -67,6 +91,18 @@ func (h *courseHandlerImpl) GetApprovedCourses(c *gin.Context) {
 }
 
 // ToggleFavoriteStatus toggles a course's favorite status for a user
+// @Summary Mark/unmark a course as favorite
+// @Description Toggle the favorite status of a course for the current user
+// @Tags courses
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/favorite/toggle [patch]
 func (h *courseHandlerImpl) ToggleFavoriteStatus(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -89,6 +125,18 @@ func (h *courseHandlerImpl) ToggleFavoriteStatus(c *gin.Context) {
 }
 
 // GetApprovedUsersForCourse returns all users approved for a specific course
+// @Summary Get approved users for a specific course
+// @Description Retrieve all users that have been approved for a specific course
+// @Tags approval
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/approved-users [get]
 func (h *courseHandlerImpl) GetApprovedUsersForCourse(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {

@@ -11,6 +11,18 @@ import (
 )
 
 // CreateCourse handles course creation
+// @Summary Create a new course
+// @Description Create a new course with the provided information
+// @Tags courses
+// @Accept json
+// @Produce json
+// @Param course body model.CreateCourseRequest true "Course information"
+// @Success 201 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /course [post]
 func (h *courseHandlerImpl) CreateCourse(c *gin.Context) {
 	var request model.CreateCourseRequest
 
@@ -47,6 +59,16 @@ func (h *courseHandlerImpl) CreateCourse(c *gin.Context) {
 }
 
 // GetAllCourses returns all courses
+// @Summary Get all courses
+// @Description Retrieve all courses of the current user
+// @Tags courses
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.SuccessResponse{data=[]model.CourseResponse}
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /courses [get]
 func (h *courseHandlerImpl) GetAllCourses(c *gin.Context) {
 	courses, err := h.repo.GetAll()
 	if err != nil {
@@ -59,6 +81,18 @@ func (h *courseHandlerImpl) GetAllCourses(c *gin.Context) {
 }
 
 // GetCourseByID returns a specific course by ID
+// @Summary Retrieve a course by ID
+// @Description Get detailed information about a specific course
+// @Tags courses
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Success 200 {object} model.SuccessResponse{data=model.CourseResponse}
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id} [get]
 func (h *courseHandlerImpl) GetCourseByID(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -74,6 +108,20 @@ func (h *courseHandlerImpl) GetCourseByID(c *gin.Context) {
 }
 
 // UpdateCourse updates an existing course
+// @Summary Update a course by ID
+// @Description Update the details of an existing course
+// @Tags courses
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param course body model.CreateCourseRequest true "Updated course information"
+// @Success 204 "Course updated successfully"
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id} [patch]
 func (h *courseHandlerImpl) UpdateCourse(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -102,6 +150,18 @@ func (h *courseHandlerImpl) UpdateCourse(c *gin.Context) {
 }
 
 // DeleteCourse removes a course
+// @Summary Delete a course by ID
+// @Description Remove a course from the system
+// @Tags courses
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Success 204 "Course deleted successfully"
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id} [delete]
 func (h *courseHandlerImpl) DeleteCourse(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -118,6 +178,16 @@ func (h *courseHandlerImpl) DeleteCourse(c *gin.Context) {
 }
 
 // GetAvailableCourses returns courses the user can enroll in based on eligibility criteria
+// @Summary Retrieve all available courses for the current user
+// @Description Returns all courses that the currently authenticated user is eligible to join
+// @Tags courses
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.SuccessResponse{data=[]model.CourseResponse}
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /available [get]
 func (h *courseHandlerImpl) GetAvailableCourses(c *gin.Context) {
 	userID, ok := h.getUserIDFromToken(c)
 	if !ok {

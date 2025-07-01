@@ -11,6 +11,16 @@ import (
 )
 
 // GetCoursesStatistics retrieves statistics for all courses of the teacher (whether it's the creator or an teaching assistant)
+// @Summary Get statistics for all courses of the teacher
+// @Description Retrieve comprehensive statistics for all courses taught by the current user
+// @Tags statistics
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /statistics [get]
 func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 	userEmail, ok := h.getUserEmailFromToken(c)
 	if !ok {
@@ -49,6 +59,19 @@ func (h *courseHandlerImpl) GetCoursesStatistics(c *gin.Context) {
 }
 
 // GetUserStatistics retrieves statistics for a specific user in a course
+// @Summary Get statistics for a user in a course
+// @Description Retrieve detailed statistics for a specific user within a course
+// @Tags statistics
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param user_id path string true "User ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /statistics/course/{course_id}/user/{user_id} [get]
 func (h *courseHandlerImpl) GetUserStatisticsForCourse(c *gin.Context) {
 	userID, ok := h.getUserID(c)
 	if !ok {

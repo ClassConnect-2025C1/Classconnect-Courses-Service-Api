@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"templateGo/internal/metrics"
 
 	"templateGo/internal/handlers/ai"
@@ -14,6 +15,8 @@ import (
 	"templateGo/internal/repositories"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 // SetupRoutes configura las rutas del servidor y retorna un ServiceManager que maneja el ciclo de vida de los servicios.
@@ -48,10 +51,22 @@ func SetupRoutes(ddLogger *logger.DatadogLogger, ddMetrics *metrics.DatadogMetri
 	})
 
 	// Health check endpoint
+	// @Summary Health check endpoint
+	// @Description Get the health status of the API
+	// @Tags health
+	// @Accept json
+	// @Produce json
+	// @Success 200 {object} model.HealthCheckResponse
+	// @Router / [get]
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"status": "ok"})
 		fmt.Println("Response: healthcheck running wild")
 	})
+
+	// Swagger documentation routes (only in development or if explicitly enabled)
+	if os.Getenv("GIN_MODE") != "release" || os.Getenv("ENABLE_SWAGGER") == "true" {
+		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	}
 
 	// Create handlers with logger and metrics
 	courseRepo := repositories.NewCourseRepository()
@@ -143,7 +158,7 @@ func SetupRoutes(ddLogger *logger.DatadogLogger, ddMetrics *metrics.DatadogMetri
 		// Get all feedback for a user
 		api.GET("/user/:user_id/feedbacks", courseHandler.GetUserFeedbacks)
 
-		// // Get AI-generated analysis of user feedbacks
+		// Get AI-generated analysis of user feedbacks
 		api.GET("/user/:user_id/ai-feedback-analysis", courseHandler.GetAIUserFeedbackAnalysis)
 
 		// =============================================

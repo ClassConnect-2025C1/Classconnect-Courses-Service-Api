@@ -11,6 +11,19 @@ import (
 )
 
 // EnrollUserInCourse handles user enrollment in a course
+// @Summary Enroll the current user in a course
+// @Description Enroll the authenticated user in the specified course
+// @Tags enrollments
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Success 200 {object} model.SuccessResponse{message=string}
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/enroll [post]
 func (h *courseHandlerImpl) EnrollUserInCourse(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -61,6 +74,19 @@ func (h *courseHandlerImpl) EnrollUserInCourse(c *gin.Context) {
 }
 
 // UnenrollUserFromCourse handles user unenrollment from a course
+// @Summary Unenroll the current user from a course
+// @Description Remove the authenticated user's enrollment from the specified course
+// @Tags enrollments
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Success 200 {object} model.SuccessResponse{message=string}
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/enroll [delete]
 func (h *courseHandlerImpl) UnenrollUserFromCourse(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -82,6 +108,16 @@ func (h *courseHandlerImpl) UnenrollUserFromCourse(c *gin.Context) {
 }
 
 // GetEnrolledCourses returns courses the user is enrolled in
+// @Summary Get courses the current user is enrolled in
+// @Description Retrieve all courses where the current user has an active enrollment
+// @Tags enrollments
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.SuccessResponse{data=[]model.CourseResponse}
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /enrolled [get]
 func (h *courseHandlerImpl) GetEnrolledCourses(c *gin.Context) {
 	userID, ok := h.getUserIDFromToken(c)
 	if !ok {
@@ -106,6 +142,18 @@ func (h *courseHandlerImpl) GetEnrolledCourses(c *gin.Context) {
 }
 
 // GetCourseMembers returns all users enrolled in a course
+// @Summary Retrieve members list for a course ID
+// @Description Get all members enrolled in a specific course
+// @Tags courses
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/members [get]
 func (h *courseHandlerImpl) GetCourseMembers(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {

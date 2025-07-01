@@ -1,0 +1,1843 @@
+basePath: /
+definitions:
+  model.AssignmentRequest:
+    description: Request body for creating an assignment
+    properties:
+      description:
+        example: Complete the following programming tasks
+        type: string
+      dueDate:
+        example: "2023-12-31T23:59:59Z"
+        type: string
+      title:
+        example: Programming Exercise 1
+        type: string
+      totalPoints:
+        example: 100
+        type: integer
+    required:
+    - title
+    type: object
+  model.AssignmentResponse:
+    description: Assignment information
+    properties:
+      createdAt:
+        example: "2023-12-01T10:00:00Z"
+        type: string
+      description:
+        example: Implement a basic calculator
+        type: string
+      dueDate:
+        example: "2023-12-31T23:59:59Z"
+        type: string
+      id:
+        example: assign123
+        type: string
+      title:
+        example: Programming Assignment 1
+        type: string
+      totalPoints:
+        example: 100
+        type: integer
+    type: object
+  model.CourseResponse:
+    description: Course information
+    properties:
+      created_at:
+        example: "2023-01-15T10:00:00Z"
+        type: string
+      createdBy:
+        example: teacher123
+        type: string
+      description:
+        example: Learn the basics of programming with Python
+        type: string
+      id:
+        example: "12345"
+        type: string
+      title:
+        example: Introduction to Programming
+        type: string
+      updated_at:
+        example: "2023-01-15T10:00:00Z"
+        type: string
+    type: object
+  model.CreateCourseRequest:
+    description: Request body for creating a course
+    properties:
+      capacity:
+        example: 30
+        minimum: 1
+        type: integer
+      created_by:
+        example: teacher123
+        type: string
+      description:
+        example: Learn the basics of programming with Python
+        type: string
+      eligibility_criteria:
+        example:
+        - '["Computer Science Major"'
+        - ' "Sophomore level or above"]'
+        items:
+          type: string
+        type: array
+      teaching_assistants:
+        example:
+        - '["ta1@example.com"'
+        - ' "ta2@example.com"]'
+        items:
+          type: string
+        type: array
+      title:
+        example: Introduction to Programming
+        type: string
+    required:
+    - capacity
+    - created_by
+    - title
+    type: object
+  model.ErrorResponse:
+    description: Error response
+    properties:
+      code:
+        example: 400
+        type: integer
+      message:
+        example: Something went wrong
+        type: string
+      status:
+        example: error
+        type: string
+    type: object
+  model.FeedbackRequest:
+    description: Request body for course feedback
+    properties:
+      content:
+        example: This course was very helpful and well-structured
+        type: string
+      rating:
+        example: 4.5
+        type: number
+    required:
+    - content
+    type: object
+  model.FeedbackResponse:
+    description: Feedback information
+    properties:
+      content:
+        example: Great course!
+        type: string
+      createdAt:
+        example: "2023-12-30T10:00:00Z"
+        type: string
+      createdBy:
+        example: student123
+        type: string
+      id:
+        example: feedback123
+        type: string
+      rating:
+        example: 4.5
+        type: number
+    type: object
+  model.GradeRequest:
+    description: Request body for grading a submission
+    properties:
+      feedback:
+        example: Good work! Consider improving the algorithm efficiency.
+        type: string
+      grade:
+        example: 85.5
+        type: number
+    required:
+    - grade
+    type: object
+  model.HealthCheckResponse:
+    description: Health check response
+    properties:
+      status:
+        example: ok
+        type: string
+    type: object
+  model.ModuleRequest:
+    description: Request body for creating a module
+    properties:
+      name:
+        example: Introduction to Variables
+        type: string
+    required:
+    - name
+    type: object
+  model.ResourceRequest:
+    description: Request body for creating a resource
+    properties:
+      content:
+        example: Tutorial content here
+        type: string
+      title:
+        example: Python Variables Tutorial
+        type: string
+      type:
+        example: video
+        type: string
+      url:
+        example: https://example.com/video
+        type: string
+    required:
+    - title
+    - type
+    type: object
+  model.SubmissionRequest:
+    description: Request body for submitting an assignment
+    properties:
+      attachments:
+        example:
+        - '["file1.py"'
+        - ' "file2.txt"]'
+        items:
+          type: string
+        type: array
+      content:
+        example: Here is my solution to the assignment
+        type: string
+    required:
+    - content
+    type: object
+  model.SuccessResponse:
+    description: Success response
+    properties:
+      data: {}
+      message:
+        example: Operation completed successfully
+        type: string
+      status:
+        example: success
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API for managing courses, enrollments, assignments, and more in ClassConnect
+    platform
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: ClassConnect Courses Service API
+  version: 1.0.0
+paths:
+  /:
+    get:
+      consumes:
+      - application/json
+      description: Get the health status of the API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.HealthCheckResponse'
+      summary: Health check endpoint
+      tags:
+      - health
+  /{course_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a course from the system
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Course deleted successfully
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a course by ID
+      tags:
+      - courses
+    get:
+      consumes:
+      - application/json
+      description: Get detailed information about a specific course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.CourseResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Retrieve a course by ID
+      tags:
+      - courses
+    patch:
+      consumes:
+      - application/json
+      description: Update the details of an existing course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Updated course information
+        in: body
+        name: course
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateCourseRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Course updated successfully
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a course by ID
+      tags:
+      - courses
+  /{course_id}/ai-feedback-analysis:
+    get:
+      consumes:
+      - application/json
+      description: Get AI-powered analysis and insights from course feedback
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get AI-generated analysis of course feedbacks
+      tags:
+      - feedback
+  /{course_id}/approved-users:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all users that have been approved for a specific course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get approved users for a specific course
+      tags:
+      - approval
+  /{course_id}/assignment:
+    post:
+      consumes:
+      - application/json
+      description: Create a new assignment within the specified course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Assignment information
+        in: body
+        name: assignment
+        required: true
+        schema:
+          $ref: '#/definitions/model.AssignmentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.AssignmentResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new assignment for a course
+      tags:
+      - assignments
+  /{course_id}/assignment/{assignment_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an assignment and all related submissions
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Assignment ID
+        in: path
+        name: assignment_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Assignment deleted successfully
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete an assignment
+      tags:
+      - assignments
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed information about a specific assignment
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Assignment ID
+        in: path
+        name: assignment_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get details of a specific assignment
+      tags:
+      - assignments
+    patch:
+      consumes:
+      - application/json
+      description: Update the information of an existing assignment
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Assignment ID
+        in: path
+        name: assignment_id
+        required: true
+        type: string
+      - description: Updated assignment information
+        in: body
+        name: assignment
+        required: true
+        schema:
+          $ref: '#/definitions/model.AssignmentRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Assignment updated successfully
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update an existing assignment
+      tags:
+      - assignments
+  /{course_id}/assignment/{assignment_id}/submission:
+    delete:
+      consumes:
+      - application/json
+      description: Delete the current user's submission for an assignment
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Assignment ID
+        in: path
+        name: assignment_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Submission deleted successfully
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete current user's submission
+      tags:
+      - submissions
+    get:
+      consumes:
+      - application/json
+      description: Retrieve the current user's submission for a specific assignment
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Assignment ID
+        in: path
+        name: assignment_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user's submission for an assignment
+      tags:
+      - submissions
+    put:
+      consumes:
+      - application/json
+      description: Submit or update the current user's submission for an assignment
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Assignment ID
+        in: path
+        name: assignment_id
+        required: true
+        type: string
+      - description: Submission content
+        in: body
+        name: submission
+        required: true
+        schema:
+          $ref: '#/definitions/model.SubmissionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Submit or update current user's assignment submission
+      tags:
+      - submissions
+  /{course_id}/assignment/{assignment_id}/submission/{submission_id}:
+    patch:
+      consumes:
+      - application/json
+      description: Grade a student's submission and provide feedback
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Assignment ID
+        in: path
+        name: assignment_id
+        required: true
+        type: string
+      - description: Submission ID
+        in: path
+        name: submission_id
+        required: true
+        type: string
+      - description: Grade and feedback
+        in: body
+        name: grade
+        required: true
+        schema:
+          $ref: '#/definitions/model.GradeRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Submission graded successfully
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Grade and provide feedback on a submission
+      tags:
+      - submissions
+  /{course_id}/assignment/{assignment_id}/submission/{submission_id}/ai-grade:
+    get:
+      consumes:
+      - application/json
+      description: Get AI-powered grade and feedback suggestions for a submission
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Assignment ID
+        in: path
+        name: assignment_id
+        required: true
+        type: string
+      - description: Submission ID
+        in: path
+        name: submission_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get AI generated grade and feedback for a submission
+      tags:
+      - submissions
+  /{course_id}/assignment/{assignment_id}/submissions:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all submissions for a specific assignment (teacher only)
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Assignment ID
+        in: path
+        name: assignment_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all submissions for an assignment
+      tags:
+      - submissions
+  /{course_id}/assignments:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a preview list of all assignments in a specific course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get preview of all assignments in a course
+      tags:
+      - assignments
+  /{course_id}/enroll:
+    delete:
+      consumes:
+      - application/json
+      description: Remove the authenticated user's enrollment from the specified course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.SuccessResponse'
+            - properties:
+                message:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Unenroll the current user from a course
+      tags:
+      - enrollments
+    post:
+      consumes:
+      - application/json
+      description: Enroll the authenticated user in the specified course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.SuccessResponse'
+            - properties:
+                message:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Enroll the current user in a course
+      tags:
+      - enrollments
+  /{course_id}/favorite/toggle:
+    patch:
+      consumes:
+      - application/json
+      description: Toggle the favorite status of a course for the current user
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mark/unmark a course as favorite
+      tags:
+      - courses
+  /{course_id}/feedback:
+    post:
+      consumes:
+      - application/json
+      description: Submit feedback and rating for a specific course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Feedback information
+        in: body
+        name: feedback
+        required: true
+        schema:
+          $ref: '#/definitions/model.FeedbackRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.SuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/model.FeedbackResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Submit feedback for a course
+      tags:
+      - feedback
+  /{course_id}/feedbacks:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all feedback submitted for a specific course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all feedback for a course
+      tags:
+      - feedback
+  /{course_id}/members:
+    get:
+      consumes:
+      - application/json
+      description: Get all members enrolled in a specific course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Retrieve members list for a course ID
+      tags:
+      - courses
+  /{course_id}/resource/module:
+    post:
+      consumes:
+      - application/json
+      description: Create a new module to organize resources within a course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Module information
+        in: body
+        name: module
+        required: true
+        schema:
+          $ref: '#/definitions/model.ModuleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a module for resources in a course
+      tags:
+      - resources
+  /{course_id}/resource/module/{module_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a module and all resources contained within it
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Module ID
+        in: path
+        name: module_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Module deleted successfully
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a module and all its resources
+      tags:
+      - resources
+    patch:
+      consumes:
+      - application/json
+      description: Update the name of an existing module
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Module ID
+        in: path
+        name: module_id
+        required: true
+        type: string
+      - description: Updated module information
+        in: body
+        name: module
+        required: true
+        schema:
+          $ref: '#/definitions/model.ModuleRequest'
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Module updated successfully
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Patch a module name
+      tags:
+      - resources
+    post:
+      consumes:
+      - application/json
+      description: Add a new resource (document, video, link, etc.) to a module
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Module ID
+        in: path
+        name: module_id
+        required: true
+        type: string
+      - description: Resource information
+        in: body
+        name: resource
+        required: true
+        schema:
+          $ref: '#/definitions/model.ResourceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a resource in a specific module
+      tags:
+      - resources
+  /{course_id}/resource/module/{module_id}/{resource_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove a specific resource from a module
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Module ID
+        in: path
+        name: module_id
+        required: true
+        type: string
+      - description: Resource ID
+        in: path
+        name: resource_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Resource deleted successfully
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a resource in a specific module
+      tags:
+      - resources
+  /{course_id}/resources:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all modules and their resources for a specific course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all resources(modules) from a course
+      tags:
+      - resources
+    patch:
+      consumes:
+      - application/json
+      description: Update the order of modules and resources within a course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: Modules order information
+        in: body
+        name: order
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: Resources order updated successfully
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Patch order of modules and resources inside a course
+      tags:
+      - resources
+  /{course_id}/user/{user_id}/feedback:
+    post:
+      consumes:
+      - application/json
+      description: Submit feedback for a specific user in a course context
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Feedback information
+        in: body
+        name: feedback
+        required: true
+        schema:
+          $ref: '#/definitions/model.FeedbackRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add feedback for a user in a course
+      tags:
+      - feedback
+  /approve/{user_id}/{course_id}:
+    post:
+      consumes:
+      - application/json
+      description: Approve a user for enrollment in a specific course
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Approve a user for a specific course
+      tags:
+      - approval
+  /approved:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all courses that the current user has been approved for
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get approved courses for the current user
+      tags:
+      - approval
+  /available:
+    get:
+      consumes:
+      - application/json
+      description: Returns all courses that the currently authenticated user is eligible
+        to join
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.CourseResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Retrieve all available courses for the current user
+      tags:
+      - courses
+  /course:
+    post:
+      consumes:
+      - application/json
+      description: Create a new course with the provided information
+      parameters:
+      - description: Course information
+        in: body
+        name: course
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateCourseRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create a new course
+      tags:
+      - courses
+  /courses:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all courses of the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.CourseResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all courses
+      tags:
+      - courses
+  /enrolled:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all courses where the current user has an active enrollment
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/model.SuccessResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/model.CourseResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get courses the current user is enrolled in
+      tags:
+      - enrollments
+  /statistics:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve comprehensive statistics for all courses taught by the
+        current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get statistics for all courses of the teacher
+      tags:
+      - statistics
+  /statistics/course/{course_id}/user/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve detailed statistics for a specific user within a course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get statistics for a user in a course
+      tags:
+      - statistics
+  /user/{user_id}/ai-feedback-analysis:
+    get:
+      consumes:
+      - application/json
+      description: Get AI-powered analysis and insights from user feedback
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get AI-generated analysis of user feedbacks
+      tags:
+      - feedback
+  /user/{user_id}/feedbacks:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all feedback submitted for a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all feedback for a user
+      tags:
+      - feedback
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

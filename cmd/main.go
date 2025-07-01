@@ -1,3 +1,24 @@
+// @title ClassConnect Courses Service API
+// @version 1.0.0
+// @description API for managing courses, enrollments, assignments, and more in ClassConnect platform
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /
+// @schemes http https
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token.
+
 package main
 
 import (
@@ -10,6 +31,8 @@ import (
 	"templateGo/internal/repositories"
 	controller "templateGo/internal/services"
 	"time"
+
+	_ "templateGo/docs" // Import the generated docs
 
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"

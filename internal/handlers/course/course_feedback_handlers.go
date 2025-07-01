@@ -11,6 +11,20 @@ import (
 )
 
 // CreateCourseFeedback handles feedback submission for a course
+// @Summary Submit feedback for a course
+// @Description Submit feedback and rating for a specific course
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param feedback body model.FeedbackRequest true "Feedback information"
+// @Success 201 {object} model.SuccessResponse{data=model.FeedbackResponse}
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/feedback [post]
 func (h *courseHandlerImpl) CreateCourseFeedback(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 
@@ -82,6 +96,18 @@ func (h *courseHandlerImpl) CreateCourseFeedback(c *gin.Context) {
 }
 
 // GetCourseFeedbacks returns all feedback for a course
+// @Summary Get all feedback for a course
+// @Description Retrieve all feedback submitted for a specific course
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/feedbacks [get]
 func (h *courseHandlerImpl) GetCourseFeedbacks(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -104,6 +130,18 @@ func (h *courseHandlerImpl) GetCourseFeedbacks(c *gin.Context) {
 }
 
 // GetAICourseFeedbackAnalysis returns AI-generated analysis of course feedback
+// @Summary Get AI-generated analysis of course feedbacks
+// @Description Get AI-powered analysis and insights from course feedback
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/ai-feedback-analysis [get]
 func (h *courseHandlerImpl) GetAICourseFeedbackAnalysis(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -144,6 +182,19 @@ func (h *courseHandlerImpl) GetAICourseFeedbackAnalysis(c *gin.Context) {
 	})
 }
 
+// GetAIUserFeedbackAnalysis returns AI-generated analysis of user feedback
+// @Summary Get AI-generated analysis of user feedbacks
+// @Description Get AI-powered analysis and insights from user feedback
+// @Tags feedback
+// @Accept json
+// @Produce json
+// @Param user_id path string true "User ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /user/{user_id}/ai-feedback-analysis [get]
 func (h *courseHandlerImpl) GetAIUserFeedbackAnalysis(c *gin.Context) {
 	// Get user ID from url
 	userID, ok := h.getUserID(c)

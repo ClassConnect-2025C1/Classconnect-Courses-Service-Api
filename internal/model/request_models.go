@@ -3,13 +3,14 @@ package model
 import "time"
 
 // CreateCourseRequest represents the input for creating a course
+// @Description Request body for creating a course
 type CreateCourseRequest struct {
-	Title               string   `json:"title" binding:"required"`
-	Description         string   `json:"description"`
-	CreatedBy           string   `json:"created_by" binding:"required"`
-	Capacity            int      `json:"capacity" binding:"required,gte=1"`
-	EligibilityCriteria []string `json:"eligibility_criteria"`
-	TeachingAssistants  []string `json:"teaching_assistants"`
+	Title               string   `json:"title" binding:"required" example:"Introduction to Programming"`
+	Description         string   `json:"description" example:"Learn the basics of programming with Python"`
+	CreatedBy           string   `json:"created_by" binding:"required" example:"teacher123"`
+	Capacity            int      `json:"capacity" binding:"required,gte=1" example:"30"`
+	EligibilityCriteria []string `json:"eligibility_criteria" example:"[\"Computer Science Major\", \"Sophomore level or above\"]"`
+	TeachingAssistants  []string `json:"teaching_assistants" example:"[\"ta1@example.com\", \"ta2@example.com\"]"`
 }
 
 // ToModel converts API request to internal Course model

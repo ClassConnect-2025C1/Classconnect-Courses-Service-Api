@@ -12,6 +12,20 @@ import (
 const TIPO_NOTIFICACTION = "new_assignment"
 
 // CreateAssignment creates a new assignment for a course
+// @Summary Create a new assignment for a course
+// @Description Create a new assignment within the specified course
+// @Tags assignments
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param assignment body model.AssignmentRequest true "Assignment information"
+// @Success 201 {object} model.SuccessResponse{data=model.AssignmentResponse}
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/assignment [post]
 func (h *courseHandlerImpl) CreateAssignment(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -50,6 +64,21 @@ func (h *courseHandlerImpl) CreateAssignment(c *gin.Context) {
 }
 
 // UpdateAssignment updates an existing assignment
+// @Summary Update an existing assignment
+// @Description Update the information of an existing assignment
+// @Tags assignments
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param assignment_id path string true "Assignment ID"
+// @Param assignment body model.AssignmentRequest true "Updated assignment information"
+// @Success 204 "Assignment updated successfully"
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/assignment/{assignment_id} [patch]
 func (h *courseHandlerImpl) UpdateAssignment(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -94,6 +123,19 @@ func (h *courseHandlerImpl) UpdateAssignment(c *gin.Context) {
 }
 
 // DeleteAssignment removes an assignment
+// @Summary Delete an assignment
+// @Description Delete an assignment and all related submissions
+// @Tags assignments
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param assignment_id path string true "Assignment ID"
+// @Success 204 "Assignment deleted successfully"
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/assignment/{assignment_id} [delete]
 func (h *courseHandlerImpl) DeleteAssignment(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -122,6 +164,18 @@ func (h *courseHandlerImpl) DeleteAssignment(c *gin.Context) {
 }
 
 // GetAssignmentsPreviews returns previews of all assignments for a course
+// @Summary Get preview of all assignments in a course
+// @Description Retrieve a preview list of all assignments in a specific course
+// @Tags assignments
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/assignments [get]
 func (h *courseHandlerImpl) GetAssignmentsPreviews(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -155,6 +209,19 @@ func (h *courseHandlerImpl) GetAssignmentsPreviews(c *gin.Context) {
 }
 
 // GetAssignmentByID returns details of a specific assignment
+// @Summary Get details of a specific assignment
+// @Description Retrieve detailed information about a specific assignment
+// @Tags assignments
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param assignment_id path string true "Assignment ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/assignment/{assignment_id} [get]
 func (h *courseHandlerImpl) GetAssignmentByID(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {

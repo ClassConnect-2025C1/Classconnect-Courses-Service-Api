@@ -7,3 +7,7 @@
 # act
 .actrc
 bin
+
+# ingnore binary files
+*.exe
+*.o

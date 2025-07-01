@@ -16,6 +16,20 @@ import (
 )
 
 // CreateModule creates a new module for a course
+// @Summary Create a module for resources in a course
+// @Description Create a new module to organize resources within a course
+// @Tags resources
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param module body model.ModuleRequest true "Module information"
+// @Success 201 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/resource/module [post]
 func (h *courseHandlerImpl) CreateModule(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -44,6 +58,22 @@ func (h *courseHandlerImpl) CreateModule(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Module created successfully", "module_id": module.ID})
 }
 
+// CreateResource creates a new resource in a module
+// @Summary Create a resource in a specific module
+// @Description Add a new resource (document, video, link, etc.) to a module
+// @Tags resources
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param module_id path string true "Module ID"
+// @Param resource body model.ResourceRequest true "Resource information"
+// @Success 201 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/resource/module/{module_id} [post]
 func (h *courseHandlerImpl) CreateResource(c *gin.Context) {
 	moduleID, ok := h.getModuleID(c)
 	if !ok {
@@ -159,6 +189,21 @@ func (h *courseHandlerImpl) postResource(fileHeader *multipart.FileHeader, cours
 }
 
 // PatchModule updates the name of a module
+// @Summary Patch a module name
+// @Description Update the name of an existing module
+// @Tags resources
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param module_id path string true "Module ID"
+// @Param module body model.ModuleRequest true "Updated module information"
+// @Success 204 "Module updated successfully"
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/resource/module/{module_id} [patch]
 func (h *courseHandlerImpl) PatchModule(c *gin.Context) {
 	moduleID, ok := h.getModuleID(c)
 	if !ok {
@@ -183,6 +228,18 @@ func (h *courseHandlerImpl) PatchModule(c *gin.Context) {
 }
 
 // getResources retrieves all resources from a course as modules with their resources
+// @Summary Get all resources(modules) from a course
+// @Description Retrieve all modules and their resources for a specific course
+// @Tags resources
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/resources [get]
 func (h *courseHandlerImpl) GetResources(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -218,6 +275,21 @@ func (h *courseHandlerImpl) GetResources(c *gin.Context) {
 	})
 }
 
+// DeleteResource deletes a resource from a module
+// @Summary Delete a resource in a specific module
+// @Description Remove a specific resource from a module
+// @Tags resources
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param module_id path string true "Module ID"
+// @Param resource_id path string true "Resource ID"
+// @Success 204 "Resource deleted successfully"
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/resource/module/{module_id}/{resource_id} [delete]
 func (h *courseHandlerImpl) DeleteResource(c *gin.Context) {
 	resourceID := c.Param("resource_id")
 	if resourceID == "" {
@@ -232,6 +304,20 @@ func (h *courseHandlerImpl) DeleteResource(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Resource deleted successfully"})
 }
 
+// DeleteModule deletes a module and all its resources
+// @Summary Delete a module and all its resources
+// @Description Remove a module and all resources contained within it
+// @Tags resources
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param module_id path string true "Module ID"
+// @Success 204 "Module deleted successfully"
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/resource/module/{module_id} [delete]
 func (h *courseHandlerImpl) DeleteModule(c *gin.Context) {
 	moduleID, ok := h.getModuleID(c)
 	if !ok {
@@ -250,6 +336,20 @@ func (h *courseHandlerImpl) DeleteModule(c *gin.Context) {
 }
 
 // PatchResources updates the order of resources in a module
+// @Summary Patch order of modules and resources inside a course
+// @Description Update the order of modules and resources within a course
+// @Tags resources
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param order body object true "Modules order information"
+// @Success 204 "Resources order updated successfully"
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/resources [patch]
 func (h *courseHandlerImpl) PatchResources(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {

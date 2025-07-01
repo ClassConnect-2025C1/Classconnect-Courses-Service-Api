@@ -10,6 +10,21 @@ import (
 )
 
 // PutSubmissionOfCurrentUser creates or updates a submission
+// @Summary Submit or update current user's assignment submission
+// @Description Submit or update the current user's submission for an assignment
+// @Tags submissions
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param assignment_id path string true "Assignment ID"
+// @Param submission body model.SubmissionRequest true "Submission content"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/assignment/{assignment_id}/submission [put]
 func (h *courseHandlerImpl) PutSubmissionOfCurrentUser(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -58,6 +73,19 @@ func (h *courseHandlerImpl) PutSubmissionOfCurrentUser(c *gin.Context) {
 }
 
 // DeleteSubmissionOfCurrentUser removes a user's submission
+// @Summary Delete current user's submission
+// @Description Delete the current user's submission for an assignment
+// @Tags submissions
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param assignment_id path string true "Assignment ID"
+// @Success 204 "Submission deleted successfully"
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/assignment/{assignment_id}/submission [delete]
 func (h *courseHandlerImpl) DeleteSubmissionOfCurrentUser(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -102,7 +130,7 @@ func (h *courseHandlerImpl) DeleteSubmissionOfCurrentUser(c *gin.Context) {
 		utils.NewErrorResponse(c, http.StatusInternalServerError, "Server Error", "Error deleting submission")
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Submission deleted successfully"})
+	c.JSON(http.StatusNoContent, nil)
 
 	// Enqueue statistics calculation tasks
 	h.statisticsService.EnqueueCourseStatisticsCalculation(courseID, userID, userEmail)
@@ -110,6 +138,19 @@ func (h *courseHandlerImpl) DeleteSubmissionOfCurrentUser(c *gin.Context) {
 }
 
 // GetSubmissionOfCurrentUser returns the current user's submission
+// @Summary Get current user's submission for an assignment
+// @Description Retrieve the current user's submission for a specific assignment
+// @Tags submissions
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param assignment_id path string true "Assignment ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/assignment/{assignment_id}/submission [get]
 func (h *courseHandlerImpl) GetSubmissionOfCurrentUser(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -155,6 +196,19 @@ func (h *courseHandlerImpl) GetSubmissionByUserID(c *gin.Context) {
 }
 
 // GetSubmissions returns all submissions for an assignment
+// @Summary Get all submissions for an assignment
+// @Description Retrieve all submissions for a specific assignment (teacher only)
+// @Tags submissions
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param assignment_id path string true "Assignment ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/assignment/{assignment_id}/submissions [get]
 func (h *courseHandlerImpl) GetSubmissions(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -177,6 +231,22 @@ func (h *courseHandlerImpl) GetSubmissions(c *gin.Context) {
 }
 
 // GradeSubmission allows grading a submission with feedback
+// @Summary Grade and provide feedback on a submission
+// @Description Grade a student's submission and provide feedback
+// @Tags submissions
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param assignment_id path string true "Assignment ID"
+// @Param submission_id path string true "Submission ID"
+// @Param grade body model.GradeRequest true "Grade and feedback"
+// @Success 204 "Submission graded successfully"
+// @Failure 400 {object} model.ErrorResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/assignment/{assignment_id}/submission/{submission_id} [patch]
 func (h *courseHandlerImpl) GradeSubmission(c *gin.Context) {
 	courseID, ok := h.getCourseID(c)
 	if !ok {
@@ -221,6 +291,20 @@ func (h *courseHandlerImpl) GradeSubmission(c *gin.Context) {
 }
 
 // GetAIGeneratedGrade retrieves AI-generated grade for a submission
+// @Summary Get AI generated grade and feedback for a submission
+// @Description Get AI-powered grade and feedback suggestions for a submission
+// @Tags submissions
+// @Accept json
+// @Produce json
+// @Param course_id path string true "Course ID"
+// @Param assignment_id path string true "Assignment ID"
+// @Param submission_id path string true "Submission ID"
+// @Success 200 {object} model.SuccessResponse
+// @Failure 401 {object} model.ErrorResponse
+// @Failure 404 {object} model.ErrorResponse
+// @Failure 500 {object} model.ErrorResponse
+// @Security BearerAuth
+// @Router /{course_id}/assignment/{assignment_id}/submission/{submission_id}/ai-grade [get]
 func (h *courseHandlerImpl) GetAIGeneratedGradeAndFeedback(c *gin.Context) {
 	submissionID, ok := h.getSubmissionID(c)
 	if !ok {
