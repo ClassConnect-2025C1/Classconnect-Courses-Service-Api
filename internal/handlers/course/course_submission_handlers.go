@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"templateGo/internal/model"
 	"templateGo/internal/utils"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -70,7 +71,12 @@ func (h *courseHandlerImpl) PutSubmissionOfCurrentUser(c *gin.Context) {
 	// Enqueue statistics calculation tasks
 	h.statisticsService.EnqueueCourseStatisticsCalculation(courseID, userID, userEmail)
 	h.statisticsService.EnqueueUserCourseStatisticsCalculation(courseID, userID, userEmail)
-	h.enqueueGlobalStatisticsForAllTeachers(courseID)
+
+	// Enqueue global statistics calculation with a delay to ensure it runs after course/user stats
+	go func() {
+		time.Sleep(3 * time.Second) // Wait for course and user statistics to complete
+		h.enqueueGlobalStatisticsForAllTeachers(courseID)
+	}()
 }
 
 // DeleteSubmissionOfCurrentUser removes a user's submission
@@ -136,8 +142,12 @@ func (h *courseHandlerImpl) DeleteSubmissionOfCurrentUser(c *gin.Context) {
 	// Enqueue statistics calculation tasks
 	h.statisticsService.EnqueueCourseStatisticsCalculation(courseID, userID, userEmail)
 	h.statisticsService.EnqueueUserCourseStatisticsCalculation(courseID, userID, userEmail)
-	// Also enqueue global statistics calculation for all teachers (creator + teaching assistants)
-	h.enqueueGlobalStatisticsForAllTeachers(courseID)
+
+	// Enqueue global statistics calculation with a delay to ensure it runs after course/user stats
+	go func() {
+		time.Sleep(3 * time.Second) // Wait for course and user statistics to complete
+		h.enqueueGlobalStatisticsForAllTeachers(courseID)
+	}()
 }
 
 // GetSubmissionOfCurrentUser returns the current user's submission
@@ -291,8 +301,12 @@ func (h *courseHandlerImpl) GradeSubmission(c *gin.Context) {
 	// Enqueue statistics calculation tasks
 	h.statisticsService.EnqueueCourseStatisticsCalculation(courseID, userID, userEmail)
 	h.statisticsService.EnqueueUserCourseStatisticsCalculation(courseID, studentID, userEmail)
-	// Also enqueue global statistics calculation for all teachers (creator + teaching assistants)
-	h.enqueueGlobalStatisticsForAllTeachers(courseID)
+
+	// Enqueue global statistics calculation with a delay to ensure it runs after course/user stats
+	go func() {
+		time.Sleep(3 * time.Second) // Wait for course and user statistics to complete
+		h.enqueueGlobalStatisticsForAllTeachers(courseID)
+	}()
 }
 
 // GetAIGeneratedGrade retrieves AI-generated grade for a submission
