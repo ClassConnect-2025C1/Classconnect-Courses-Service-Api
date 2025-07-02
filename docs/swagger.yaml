@@ -1694,12 +1694,17 @@ paths:
       summary: Get courses the current user is enrolled in
       tags:
       - enrollments
-  /statistics:
+  /statistics/{course_id}:
     get:
       consumes:
       - application/json
-      description: Retrieve comprehensive statistics for all courses taught by the
-        current user
+      description: Retrieve comprehensive statistics for a specific course
+      parameters:
+      - description: Course ID
+        in: path
+        name: course_id
+        required: true
+        type: string
       produces:
       - application/json
       responses:
@@ -1711,13 +1716,21 @@ paths:
           description: Unauthorized
           schema:
             $ref: '#/definitions/model.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/model.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Get statistics for all courses of the teacher
+      summary: Get statistics for a specific course
       tags:
       - statistics
   /statistics/course/{course_id}/user/{user_id}:
@@ -1758,6 +1771,32 @@ paths:
       security:
       - BearerAuth: []
       summary: Get statistics for a user in a course
+      tags:
+      - statistics
+  /statistics/global:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve global average statistics across all courses taught by
+        the current user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.SuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/model.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get global statistics averages for the teacher
       tags:
       - statistics
   /user/{user_id}/ai-feedback-analysis:
